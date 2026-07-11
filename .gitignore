@@ -1,0 +1,28 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Java / Spring (backend)
+build/
+out/
+.gradle/
+*.class
+
+# Node / React (frontend)
+node_modules/
+dist/
+*.local
+
+# 환경 변수·비밀값 (DB 비밀번호 등 — 절대 커밋 금지)
+.env
+.env.*
+application-secret.yml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude Code 로컬 설정
+.claude/
+.agents/
