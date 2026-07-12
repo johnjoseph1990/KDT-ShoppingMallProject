@@ -86,13 +86,13 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 - [ ] 기능 명세서 / DB 설계 문서 작성 → [`document/`](./document)
 
 ### Step 3. Spring 기반 핵심 기능 구현
-- [ ] 상품 / 사용자 / 주문 CRUD 기능 구현
-- [ ] 회원가입, 로그인, 인증 및 권한 관리 구현
-- [ ] 상품 목록·상세·등록·수정 등 기본 쇼핑몰 화면 및 기능 구현
+- [x] 상품 CRUD 기능 구현
+- [x] 회원가입, 로그인, 인증 및 권한 관리 구현 (Spring Security)
+- [ ] 상품 목록·상세·등록·수정 등 기본 쇼핑몰 화면 및 기능 구현 (프론트엔드)
 
 ### Step 4. 주문 및 결제 흐름 구현
-- [ ] 상품 구매 흐름 설계 및 주문 생성 기능 구현
-- [ ] 주문 상태 관리 기본 로직 구성
+- [x] 상품 구매 흐름 설계 및 주문 생성 기능 구현 (Cart → Order)
+- [x] 주문 상태 관리 기본 로직 구성 (`OrderStatus`)
 - [ ] 주문 완료 이후 결제 및 처리 결과 흐름 연결
 
 ### Step 5. 재고 및 관리자 주문 처리 기능 확장
@@ -124,7 +124,8 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 |------|------|
 | **회원** | 회원가입, 로그인/로그아웃, 인증·인가(권한 분리) |
 | **상품** | 상품 목록/상세 조회, 등록/수정/삭제, 재고 관리 |
-| **주문** | 주문 생성, 주문 상태 흐름 관리, 결제 흐름 연결 |
+| **장바구니** | 장바구니 담기/수량 변경/삭제 |
+| **주문** | 장바구니 기반 주문 생성, 주문 상태 흐름 관리, 결제 흐름 연결 |
 | **재고** | 상품별 재고 관리, 동시 주문 재고 동기화 처리 |
 | **관리자** | 상품 관리, 주문 내역 조회, 주문 상태 변경, 재고 확인 |
 | **리뷰** | 리뷰 작성/조회/삭제, 평균 별점 계산 |
@@ -150,7 +151,12 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 
 ```
 KDT-ShoppingMallProject/
-├── backend/            # Spring Boot (Java 21, Gradle) - Web / Data JPA / H2 / Validation / Lombok
+├── backend/            # Spring Boot (Java 21, Gradle) - Web / Data JPA / Security / H2 / Validation / Lombok
+│   └── src/main/java/com/kdt/shoppingmall/
+│       ├── domain/     # member, product, cart, order, payment
+│       ├── controller/ # Auth, Product, Cart, Order
+│       ├── service/    # 도메인별 비즈니스 로직
+│       └── repository/ # Spring Data JPA repository
 ├── frontend/            # React (Vite)
 ├── document/            # 기획서, 기능 명세서, DB 설계 문서(ERD), 개념 인덱스
 └── README.md
