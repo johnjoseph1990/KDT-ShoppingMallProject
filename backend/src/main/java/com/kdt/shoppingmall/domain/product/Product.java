@@ -13,6 +13,7 @@ import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.kdt.shoppingmall.exception.InsufficientStockException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,6 +70,17 @@ public class Product {
         this.price = price;
         this.stockQuantity = stockQuantity;
         this.imageUrl = imageUrl;
+    }
+
+    public void decreaseStock(int quantity) {
+        if (this.stockQuantity < quantity) {
+            throw new InsufficientStockException("재고가 부족합니다. 상품: " + this.name + ", 재고: " + this.stockQuantity);
+        }
+        this.stockQuantity -= quantity;
+    }
+
+    public void increaseStock(int quantity) {
+        this.stockQuantity += quantity;
     }
 
     public void addTag(ProductTag tag) {
