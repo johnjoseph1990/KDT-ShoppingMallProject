@@ -11,20 +11,24 @@ import org.springframework.security.test.context.support.WithSecurityContextFact
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class WithMockMemberPrincipalSecurityContextFactory
-        implements WithSecurityContextFactory<WithMockMemberPrincipal> {
+    implements WithSecurityContextFactory<WithMockMemberPrincipal> {
 
-    @Override
-    public SecurityContext createSecurityContext(WithMockMemberPrincipal annotation) {
-        Member member = new Member(annotation.email(), "encoded", annotation.name(),
-                MemberRole.valueOf(annotation.role()));
-        ReflectionTestUtils.setField(member, "id", annotation.id());
+  @Override
+  public SecurityContext createSecurityContext(WithMockMemberPrincipal annotation) {
+    Member member =
+        new Member(
+            annotation.email(),
+            "encoded",
+            annotation.name(),
+            MemberRole.valueOf(annotation.role()));
+    ReflectionTestUtils.setField(member, "id", annotation.id());
 
-        MemberPrincipal principal = new MemberPrincipal(member);
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                principal, null, principal.getAuthorities());
+    MemberPrincipal principal = new MemberPrincipal(member);
+    Authentication auth =
+        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        return context;
-    }
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(auth);
+    return context;
+  }
 }

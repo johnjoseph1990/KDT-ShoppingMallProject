@@ -23,36 +23,38 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/cart")
 public class CartController {
 
-    private final CartService cartService;
+  private final CartService cartService;
 
-    public CartController(CartService cartService) {
-        this.cartService = cartService;
-    }
+  public CartController(CartService cartService) {
+    this.cartService = cartService;
+  }
 
-    @PostMapping
-    public ResponseEntity<CartItemResponse> addItem(
-            @AuthenticationPrincipal MemberPrincipal principal, @Valid @RequestBody CartItemRequest request) {
-        CartItemResponse response = cartService.addItem(principal.getMember().getId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping
+  public ResponseEntity<CartItemResponse> addItem(
+      @AuthenticationPrincipal MemberPrincipal principal,
+      @Valid @RequestBody CartItemRequest request) {
+    CartItemResponse response = cartService.addItem(principal.getMember().getId(), request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @GetMapping
-    public List<CartItemResponse> getCart(@AuthenticationPrincipal MemberPrincipal principal) {
-        return cartService.getCart(principal.getMember().getId());
-    }
+  @GetMapping
+  public List<CartItemResponse> getCart(@AuthenticationPrincipal MemberPrincipal principal) {
+    return cartService.getCart(principal.getMember().getId());
+  }
 
-    @PutMapping("/{cartItemId}")
-    public CartItemResponse updateQuantity(
-            @AuthenticationPrincipal MemberPrincipal principal,
-            @PathVariable Long cartItemId,
-            @Valid @RequestBody CartItemQuantityRequest request) {
-        return cartService.updateQuantity(principal.getMember().getId(), cartItemId, request.quantity());
-    }
+  @PutMapping("/{cartItemId}")
+  public CartItemResponse updateQuantity(
+      @AuthenticationPrincipal MemberPrincipal principal,
+      @PathVariable Long cartItemId,
+      @Valid @RequestBody CartItemQuantityRequest request) {
+    return cartService.updateQuantity(
+        principal.getMember().getId(), cartItemId, request.quantity());
+  }
 
-    @DeleteMapping("/{cartItemId}")
-    public ResponseEntity<Void> removeItem(
-            @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long cartItemId) {
-        cartService.removeItem(principal.getMember().getId(), cartItemId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{cartItemId}")
+  public ResponseEntity<Void> removeItem(
+      @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long cartItemId) {
+    cartService.removeItem(principal.getMember().getId(), cartItemId);
+    return ResponseEntity.noContent().build();
+  }
 }

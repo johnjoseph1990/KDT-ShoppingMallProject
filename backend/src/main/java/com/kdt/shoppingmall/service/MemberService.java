@@ -14,21 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class MemberService {
 
-    private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final MemberRepository memberRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
-        this.memberRepository = memberRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+  public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    this.memberRepository = memberRepository;
+    this.passwordEncoder = passwordEncoder;
+  }
 
-    @Transactional
-    public MemberResponse signup(SignupRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new DuplicateEmailException("이미 가입된 이메일입니다: " + request.email());
-        }
-        Member member = new Member(
-                request.email(), passwordEncoder.encode(request.password()), request.name(), MemberRole.USER);
-        return MemberResponse.from(memberRepository.save(member));
+  @Transactional
+  public MemberResponse signup(SignupRequest request) {
+    if (memberRepository.existsByEmail(request.email())) {
+      throw new DuplicateEmailException("이미 가입된 이메일입니다: " + request.email());
     }
+    Member member =
+        new Member(
+            request.email(),
+            passwordEncoder.encode(request.password()),
+            request.name(),
+            MemberRole.USER);
+    return MemberResponse.from(memberRepository.save(member));
+  }
 }

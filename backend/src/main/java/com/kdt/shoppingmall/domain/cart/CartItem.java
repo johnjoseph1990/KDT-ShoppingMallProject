@@ -19,31 +19,31 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartItem {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+  @ManyToOne
+  @JoinColumn(name = "member_id", nullable = false)
+  private Member member;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    private int quantity;
+  private int quantity;
 
-    public CartItem(Member member, Product product, int quantity) {
-        this.member = member;
-        this.product = product;
-        this.quantity = quantity;
-    }
+  public CartItem(Member member, Product product, int quantity) {
+    this.member = member;
+    this.product = product;
+    this.quantity = quantity;
+  }
 
-    public void changeQuantity(int quantity) {
-        this.quantity = quantity;
-    }
+  public void changeQuantity(int quantity) {
+    this.quantity = quantity;
+  }
 
-    public void addQuantity(int quantity) {
-        this.quantity += quantity;
-    }
+  public void addQuantity(int quantity) {
+    this.quantity += quantity;
+  }
 }

@@ -22,28 +22,28 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Payment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "orders_id", nullable = false, unique = true)
-    private Order order;
+  @OneToOne
+  @JoinColumn(name = "orders_id", nullable = false, unique = true)
+  private Order order;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private PaymentStatus status;
 
-    @Column(nullable = false)
-    private int amount;
+  @Column(nullable = false)
+  private int amount;
 
-    @Column(nullable = false)
-    private LocalDateTime paidAt;
+  @Column(nullable = false)
+  private LocalDateTime paidAt;
 
-    public Payment(Order order, PaymentStatus status, int amount) {
-        this.order = order;
-        this.status = status;
-        this.amount = amount;
-        this.paidAt = LocalDateTime.now();
-    }
+  public Payment(Order order, PaymentStatus status, int amount) {
+    this.order = order;
+    this.status = status;
+    this.amount = amount;
+    this.paidAt = LocalDateTime.now();
+  }
 }

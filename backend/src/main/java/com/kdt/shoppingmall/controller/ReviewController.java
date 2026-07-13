@@ -21,32 +21,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/products/{productId}/reviews")
 public class ReviewController {
 
-    private final ReviewService reviewService;
+  private final ReviewService reviewService;
 
-    public ReviewController(ReviewService reviewService) {
-        this.reviewService = reviewService;
-    }
+  public ReviewController(ReviewService reviewService) {
+    this.reviewService = reviewService;
+  }
 
-    @PostMapping
-    public ResponseEntity<ReviewResponse> create(
-            @PathVariable Long productId,
-            @Valid @RequestBody ReviewRequest request,
-            @AuthenticationPrincipal MemberPrincipal principal) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(reviewService.createReview(principal.getMember().getId(), productId, request));
-    }
+  @PostMapping
+  public ResponseEntity<ReviewResponse> create(
+      @PathVariable Long productId,
+      @Valid @RequestBody ReviewRequest request,
+      @AuthenticationPrincipal MemberPrincipal principal) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(reviewService.createReview(principal.getMember().getId(), productId, request));
+  }
 
-    @GetMapping
-    public List<ReviewResponse> getReviews(@PathVariable Long productId) {
-        return reviewService.getReviews(productId);
-    }
+  @GetMapping
+  public List<ReviewResponse> getReviews(@PathVariable Long productId) {
+    return reviewService.getReviews(productId);
+  }
 
-    @DeleteMapping("/{reviewId}")
-    public ResponseEntity<Void> delete(
-            @PathVariable Long productId,
-            @PathVariable Long reviewId,
-            @AuthenticationPrincipal MemberPrincipal principal) {
-        reviewService.deleteReview(principal.getMember().getId(), reviewId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{reviewId}")
+  public ResponseEntity<Void> delete(
+      @PathVariable Long productId,
+      @PathVariable Long reviewId,
+      @AuthenticationPrincipal MemberPrincipal principal) {
+    reviewService.deleteReview(principal.getMember().getId(), reviewId);
+    return ResponseEntity.noContent().build();
+  }
 }

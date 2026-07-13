@@ -17,21 +17,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductTag {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    private String name;
+  private String name;
 
-    public ProductTag(String name) {
-        this.name = name;
-    }
+  public ProductTag(String name) {
+    this.name = name;
+  }
 
-    void assignProduct(Product product) {
-        this.product = product;
-    }
+  void assignProduct(Product product) {
+    this.product = product;
+  }
 }

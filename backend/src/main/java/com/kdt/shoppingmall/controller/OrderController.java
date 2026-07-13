@@ -20,32 +20,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    private final OrderService orderService;
+  private final OrderService orderService;
 
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
+  public OrderController(OrderService orderService) {
+    this.orderService = orderService;
+  }
 
-    @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(
-            @AuthenticationPrincipal MemberPrincipal principal,
-            @RequestBody(required = false) OrderCreateRequest request) {
-        OrderResponse response = orderService.createOrder(principal.getMember().getId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping
+  public ResponseEntity<OrderResponse> createOrder(
+      @AuthenticationPrincipal MemberPrincipal principal,
+      @RequestBody(required = false) OrderCreateRequest request) {
+    OrderResponse response = orderService.createOrder(principal.getMember().getId(), request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @GetMapping
-    public List<OrderResponse> getOrders(@AuthenticationPrincipal MemberPrincipal principal) {
-        return orderService.getOrders(principal.getMember().getId());
-    }
+  @GetMapping
+  public List<OrderResponse> getOrders(@AuthenticationPrincipal MemberPrincipal principal) {
+    return orderService.getOrders(principal.getMember().getId());
+  }
 
-    @GetMapping("/{orderId}")
-    public OrderResponse getOrder(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
-        return orderService.getOrder(principal.getMember().getId(), orderId);
-    }
+  @GetMapping("/{orderId}")
+  public OrderResponse getOrder(
+      @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
+    return orderService.getOrder(principal.getMember().getId(), orderId);
+  }
 
-    @PostMapping("/{orderId}/pay")
-    public PaymentResponse pay(@AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
-        return orderService.pay(principal.getMember().getId(), orderId);
-    }
+  @PostMapping("/{orderId}/pay")
+  public PaymentResponse pay(
+      @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
+    return orderService.pay(principal.getMember().getId(), orderId);
+  }
 }

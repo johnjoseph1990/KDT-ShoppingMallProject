@@ -9,28 +9,28 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 public class MemberPrincipal implements UserDetails {
 
-    private final Member member;
+  private final Member member;
 
-    public MemberPrincipal(Member member) {
-        this.member = member;
-    }
+  public MemberPrincipal(Member member) {
+    this.member = member;
+  }
 
-    public Member getMember() {
-        return member;
-    }
+  public Member getMember() {
+    return member;
+  }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + member.getRole().name()));
-    }
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_" + member.getRole().name()));
+  }
 
-    @Override
-    public String getPassword() {
-        return member.getPassword();
-    }
+  @Override
+  public String getPassword() {
+    return member.getPassword();
+  }
 
-    @Override
-    public String getUsername() {
-        return member.getEmail();
-    }
+  @Override
+  public String getUsername() {
+    return member.getEmail();
+  }
 }

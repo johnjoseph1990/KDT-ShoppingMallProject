@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
-    List<CartItem> findByMemberId(Long memberId);
+  List<CartItem> findByMemberId(Long memberId);
 
-    Optional<CartItem> findByMemberAndProduct(Member member, Product product);
+  Optional<CartItem> findByMemberAndProduct(Member member, Product product);
 }

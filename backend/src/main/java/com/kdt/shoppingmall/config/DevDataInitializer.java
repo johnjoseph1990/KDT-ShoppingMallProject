@@ -12,13 +12,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DevDataInitializer {
 
-    @Bean
-    public ApplicationRunner seedAdmin(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
-        return (ApplicationArguments args) -> {
-            if (!memberRepository.existsByEmail("admin@shop.com")) {
-                memberRepository.save(new Member(
-                        "admin@shop.com", passwordEncoder.encode("admin1234"), "관리자", MemberRole.ADMIN));
-            }
-        };
-    }
+  @Bean
+  public ApplicationRunner seedAdmin(
+      MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    return (ApplicationArguments args) -> {
+      if (!memberRepository.existsByEmail("admin@shop.com")) {
+        memberRepository.save(
+            new Member(
+                "admin@shop.com", passwordEncoder.encode("admin1234"), "관리자", MemberRole.ADMIN));
+      }
+    };
+  }
 }

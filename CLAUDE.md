@@ -93,6 +93,36 @@ docs: 문서
 - 프론트엔드: Node 20 → npm ci → build 검증
 - 실패 시 merge 불가
 
+## 코딩 컨벤션
+
+**포맷터 (자동 적용, 수동 스타일 논쟁 금지):**
+- 백엔드: Gradle Spotless + Google Java Format
+  ```
+  cd backend
+  ./gradlew spotlessApply   # 포맷 자동 적용
+  ./gradlew spotlessCheck   # 포맷 위반 시 실패 (check 태스크에 포함되어 build 시 자동 검증)
+  ```
+- 프론트엔드: Prettier (`frontend/.prettierrc.json`, 세미콜론 없음·싱글쿼트·printWidth 100)
+  ```
+  cd frontend
+  npm run format         # 포맷 자동 적용
+  npm run format:check   # 포맷 위반 시 실패
+  npm run lint           # oxlint 정적 분석 (포맷과 별개)
+  ```
+- 커밋 전 반드시 `spotlessApply` / `format` 실행 후 diff 확인
+
+**네이밍 규칙:**
+- 클래스: `PascalCase` (예: `OrderService`, `ProductResponse`)
+- 메서드/변수: `camelCase`, 불리언은 `is`/`has` 접두사 (예: `isOutOfStock`)
+- DTO는 역할 접미사로 구분: `~Request`(입력), `~Response`(출력)
+- 커스텀 예외는 `~Exception` 접미사, `GlobalExceptionHandler`에서 일괄 처리
+
+**패키지 구조 (도메인 기준 분리):**
+- `domain/{도메인명}` — 엔티티 + 해당 도메인 전용 enum (예: `domain/order/OrderStatus`)
+- `controller`, `service`, `repository`, `dto/{도메인명}`, `exception` — 계층별 최상위 패키지
+
+**커밋 메시지:** 위 "커밋 메시지 컨벤션" 참고
+
 ## 보안 테스트 (필수)
 
 보안 테스트 진행 시 **OWASP TOP 10** 공격 방식을 중점적으로 체크할 것:

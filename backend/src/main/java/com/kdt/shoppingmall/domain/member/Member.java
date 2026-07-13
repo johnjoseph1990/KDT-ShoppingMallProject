@@ -19,35 +19,35 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Column(nullable = false)
-    private String password;
+  @Column(nullable = false)
+  private String password;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MemberRole role;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private MemberRole role;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+  @Column(nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    public Member(String email, String encodedPassword, String name, MemberRole role) {
-        this.email = email;
-        this.password = encodedPassword;
-        this.name = name;
-        this.role = role;
-    }
+  public Member(String email, String encodedPassword, String name, MemberRole role) {
+    this.email = email;
+    this.password = encodedPassword;
+    this.name = name;
+    this.role = role;
+  }
 
-    @jakarta.persistence.PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+  @jakarta.persistence.PrePersist
+  protected void onCreate() {
+    this.createdAt = LocalDateTime.now();
+  }
 }

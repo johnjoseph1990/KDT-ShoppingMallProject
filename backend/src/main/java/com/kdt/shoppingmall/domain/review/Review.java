@@ -18,42 +18,43 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "review",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "product_id"}))
+@Table(
+    name = "review",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "product_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Review {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+  @ManyToOne
+  @JoinColumn(name = "member_id", nullable = false)
+  private Member member;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    @Column(nullable = false)
-    private int rating;
+  @Column(nullable = false)
+  private int rating;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+  @Column(columnDefinition = "TEXT")
+  private String content;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+  @Column(nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    public Review(Member member, Product product, int rating, String content) {
-        this.member = member;
-        this.product = product;
-        this.rating = rating;
-        this.content = content;
-    }
+  public Review(Member member, Product product, int rating, String content) {
+    this.member = member;
+    this.product = product;
+    this.rating = rating;
+    this.content = content;
+  }
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+  @PrePersist
+  protected void onCreate() {
+    this.createdAt = LocalDateTime.now();
+  }
 }

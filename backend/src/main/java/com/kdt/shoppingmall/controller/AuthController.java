@@ -28,44 +28,48 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final MemberService memberService;
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+  private final MemberService memberService;
+  private final AuthenticationManager authenticationManager;
+  private final SecurityContextRepository securityContextRepository =
+      new HttpSessionSecurityContextRepository();
 
-    public AuthController(MemberService memberService, AuthenticationManager authenticationManager) {
-        this.memberService = memberService;
-        this.authenticationManager = authenticationManager;
-    }
+  public AuthController(MemberService memberService, AuthenticationManager authenticationManager) {
+    this.memberService = memberService;
+    this.authenticationManager = authenticationManager;
+  }
 
-    @PostMapping("/signup")
-    public ResponseEntity<MemberResponse> signup(@Valid @RequestBody SignupRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(memberService.signup(request));
-    }
+  @PostMapping("/signup")
+  public ResponseEntity<MemberResponse> signup(@Valid @RequestBody SignupRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(memberService.signup(request));
+  }
 
-    @PostMapping("/login")
-    public MemberResponse login(
-            @Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+  @PostMapping("/login")
+  public MemberResponse login(
+      @Valid @RequestBody LoginRequest request,
+      HttpServletRequest httpRequest,
+      HttpServletResponse httpResponse) {
+    Authentication authentication =
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(authentication);
+    SecurityContextHolder.setContext(context);
+    securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
-        MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
-        return MemberResponse.from(principal.getMember());
-    }
+    MemberPrincipal principal = (MemberPrincipal) authentication.getPrincipal();
+    return MemberResponse.from(principal.getMember());
+  }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
-        request.getSession().invalidate();
-        SecurityContextHolder.clearContext();
-        return ResponseEntity.noContent().build();
-    }
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(HttpServletRequest request) {
+    request.getSession().invalidate();
+    SecurityContextHolder.clearContext();
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/me")
-    public MemberResponse me(@AuthenticationPrincipal MemberPrincipal principal) {
-        return MemberResponse.from(principal.getMember());
-    }
+  @GetMapping("/me")
+  public MemberResponse me(@AuthenticationPrincipal MemberPrincipal principal) {
+    return MemberResponse.from(principal.getMember());
+  }
 }

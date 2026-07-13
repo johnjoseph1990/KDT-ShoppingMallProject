@@ -18,31 +18,31 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "orders_id", nullable = false)
-    private Order order;
+  @ManyToOne
+  @JoinColumn(name = "orders_id", nullable = false)
+  private Order order;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    @jakarta.persistence.Column(nullable = false)
-    private int orderPrice;
+  @jakarta.persistence.Column(nullable = false)
+  private int orderPrice;
 
-    @jakarta.persistence.Column(nullable = false)
-    private int quantity;
+  @jakarta.persistence.Column(nullable = false)
+  private int quantity;
 
-    public OrderItem(Product product, int orderPrice, int quantity) {
-        this.product = product;
-        this.orderPrice = orderPrice;
-        this.quantity = quantity;
-    }
+  public OrderItem(Product product, int orderPrice, int quantity) {
+    this.product = product;
+    this.orderPrice = orderPrice;
+    this.quantity = quantity;
+  }
 
-    void assignOrder(Order order) {
-        this.order = order;
-    }
+  void assignOrder(Order order) {
+    this.order = order;
+  }
 }

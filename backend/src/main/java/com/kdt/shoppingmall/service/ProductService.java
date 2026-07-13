@@ -16,56 +16,67 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
 
-    private final ProductRepository productRepository;
+  private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
+  public ProductService(ProductRepository productRepository) {
+    this.productRepository = productRepository;
+  }
 
-    @Transactional
-    public ProductResponse create(ProductRequest request) {
-        Product product = new Product(
-                request.name(), request.description(), request.price(), request.stockQuantity(), request.imageUrl());
-        addTags(product, request.tags());
-        return ProductResponse.from(productRepository.save(product));
-    }
+  @Transactional
+  public ProductResponse create(ProductRequest request) {
+    Product product =
+        new Product(
+            request.name(),
+            request.description(),
+            request.price(),
+            request.stockQuantity(),
+            request.imageUrl());
+    addTags(product, request.tags());
+    return ProductResponse.from(productRepository.save(product));
+  }
 
-    public List<ProductResponse> findAll() {
-        return productRepository.findAll().stream().map(ProductResponse::from).toList();
-    }
+  public List<ProductResponse> findAll() {
+    return productRepository.findAll().stream().map(ProductResponse::from).toList();
+  }
 
-    public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
-        return productRepository.searchProducts(keyword, tag, pageable).map(ProductResponse::from);
-    }
+  public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
+    return productRepository.searchProducts(keyword, tag, pageable).map(ProductResponse::from);
+  }
 
-    public ProductResponse findById(Long id) {
-        return ProductResponse.from(getProductOrThrow(id));
-    }
+  public ProductResponse findById(Long id) {
+    return ProductResponse.from(getProductOrThrow(id));
+  }
 
-    @Transactional
-    public ProductResponse update(Long id, ProductRequest request) {
-        Product product = getProductOrThrow(id);
-        product.update(request.name(), request.description(), request.price(), request.stockQuantity(), request.imageUrl());
-        product.clearTags();
-        addTags(product, request.tags());
-        return ProductResponse.from(product);
-    }
+  @Transactional
+  public ProductResponse update(Long id, ProductRequest request) {
+    Product product = getProductOrThrow(id);
+    product.update(
+        request.name(),
+        request.description(),
+        request.price(),
+        request.stockQuantity(),
+        request.imageUrl());
+    product.clearTags();
+    addTags(product, request.tags());
+    return ProductResponse.from(product);
+  }
 
-    @Transactional
-    public void delete(Long id) {
-        Product product = getProductOrThrow(id);
-        productRepository.delete(product);
-    }
+  @Transactional
+  public void delete(Long id) {
+    Product product = getProductOrThrow(id);
+    productRepository.delete(product);
+  }
 
-    private Product getProductOrThrow(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. id=" + id));
-    }
+  private Product getProductOrThrow(Long id) {
+    return productRepository
+        .findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. id=" + id));
+  }
 
-    private void addTags(Product product, List<String> tags) {
-        if (tags == null) {
-            return;
-        }
-        tags.forEach(name -> product.addTag(new ProductTag(name)));
+  private void addTags(Product product, List<String> tags) {
+    if (tags == null) {
+      return;
     }
+    tags.forEach(name -> product.addTag(new ProductTag(name)));
+  }
 }
