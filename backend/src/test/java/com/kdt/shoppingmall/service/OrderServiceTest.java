@@ -17,6 +17,8 @@ import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
+import com.kdt.shoppingmall.exception.InvalidOrderStatusException;
+import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.CartItemRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.OrderRepository;
@@ -30,6 +32,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -115,6 +121,48 @@ class OrderServiceTest {
 
     assertThatThrownBy(() -> orderService.getOrder(1L, 1L))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  void getAllOrders_성공() {
+    Order order = new Order(member);
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Order> page = new PageImpl<>(List.of(order));
+    given(orderRepository.findAll(pageable)).willReturn(page);
+
+    Page<OrderResponse> responses = orderService.getAllOrders(pageable);
+
+    assertThat(responses.getTotalElements()).isEqualTo(1);
+  }
+
+  @Test
+  void changeOrderStatus_성공() {
+    Order order = new Order(member);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.changeStatus(OrderStatus.PAID);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    OrderResponse response = orderService.changeOrderStatus(1L, OrderStatus.SHIPPING);
+
+    assertThat(response.status()).isEqualTo(OrderStatus.SHIPPING);
+  }
+
+  @Test
+  void changeOrderStatus_잘못된전이_예외발생() {
+    Order order = new Order(member);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.changeOrderStatus(1L, OrderStatus.DELIVERED))
+        .isInstanceOf(InvalidOrderStatusException.class);
+  }
+
+  @Test
+  void changeOrderStatus_존재하지않는주문_예외발생() {
+    given(orderRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> orderService.changeOrderStatus(99L, OrderStatus.PAID))
+        .isInstanceOf(ResourceNotFoundException.class);
   }
 
   @RepeatedTest(5)

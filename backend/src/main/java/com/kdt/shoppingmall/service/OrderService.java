@@ -19,6 +19,8 @@ import com.kdt.shoppingmall.repository.OrderRepository;
 import com.kdt.shoppingmall.repository.PaymentRepository;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,6 +100,20 @@ public class OrderService {
                 success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
                 order.getTotalPrice()));
     return PaymentResponse.from(payment);
+  }
+
+  public Page<OrderResponse> getAllOrders(Pageable pageable) {
+    return orderRepository.findAll(pageable).map(OrderResponse::from);
+  }
+
+  @Transactional
+  public OrderResponse changeOrderStatus(Long orderId, OrderStatus status) {
+    Order order =
+        orderRepository
+            .findById(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("주문을 찾을 수 없습니다. id=" + orderId));
+    order.changeStatus(status);
+    return OrderResponse.from(order);
   }
 
   private List<CartItem> resolveCartItems(Long memberId, OrderCreateRequest request) {
