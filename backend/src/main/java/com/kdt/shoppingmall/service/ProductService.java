@@ -46,6 +46,10 @@ public class ProductService {
     return productRepository.searchProducts(keyword, tag, pageable).map(this::toResponse);
   }
 
+  public Page<ProductResponse> findBestProducts(Pageable pageable) {
+    return productRepository.findAllOrderByAverageRatingDesc(pageable).map(this::toResponse);
+  }
+
   public ProductResponse findById(Long id) {
     return toResponse(getProductOrThrow(id));
   }

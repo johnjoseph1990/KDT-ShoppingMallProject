@@ -20,4 +20,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
   Page<Product> searchProducts(
       @Param("keyword") String keyword, @Param("tag") String tag, Pageable pageable);
+
+  @Query(
+      value =
+          """
+                SELECT p FROM Product p
+                LEFT JOIN Review r ON r.product = p
+                GROUP BY p
+                ORDER BY COALESCE(AVG(r.rating), 0) DESC
+                """,
+      countQuery = "SELECT COUNT(p) FROM Product p")
+  Page<Product> findAllOrderByAverageRatingDesc(Pageable pageable);
 }

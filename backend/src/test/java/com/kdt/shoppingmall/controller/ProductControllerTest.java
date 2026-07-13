@@ -81,6 +81,17 @@ class ProductControllerTest {
   }
 
   @Test
+  void 베스트상품조회_인증없이_성공() throws Exception {
+    Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+    given(productService.findBestProducts(any(Pageable.class))).willReturn(page);
+
+    mockMvc
+        .perform(get("/api/products/best"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].name").value("상품A"));
+  }
+
+  @Test
   void 상품단건조회_인증없이_성공() throws Exception {
     given(productService.findById(1L)).willReturn(sampleResponse());
 

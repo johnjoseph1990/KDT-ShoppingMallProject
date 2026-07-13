@@ -44,6 +44,11 @@ public class ProductController {
     return productService.search(keyword, tag, pageable);
   }
 
+  @GetMapping("/best")
+  public Page<ProductResponse> getBestProducts(@PageableDefault(size = 5) Pageable pageable) {
+    return productService.findBestProducts(pageable);
+  }
+
   @GetMapping("/{id}")
   public ProductResponse findById(@PathVariable Long id) {
     return productService.findById(id);

@@ -160,6 +160,19 @@ class ProductServiceTest {
   }
 
   @Test
+  void findBestProducts_평점순으로_조회() {
+    Product product = new Product("상품A", "설명", 10000, 100, null);
+    Pageable pageable = PageRequest.of(0, 5);
+    Page<Product> page = new PageImpl<>(List.of(product));
+    given(productRepository.findAllOrderByAverageRatingDesc(pageable)).willReturn(page);
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(4.5);
+
+    Page<ProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent().get(0).averageRating()).isEqualTo(4.5);
+  }
+
+  @Test
   void search_결과없음_빈페이지반환() {
     Pageable pageable = PageRequest.of(0, 10);
     given(productRepository.searchProducts(any(), any(), any(Pageable.class)))
