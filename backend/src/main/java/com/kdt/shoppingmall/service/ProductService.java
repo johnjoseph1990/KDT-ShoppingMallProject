@@ -6,6 +6,7 @@ import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
+import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
   private final ProductRepository productRepository;
+  private final ReviewRepository reviewRepository;
 
-  public ProductService(ProductRepository productRepository) {
+  public ProductService(ProductRepository productRepository, ReviewRepository reviewRepository) {
     this.productRepository = productRepository;
+    this.reviewRepository = reviewRepository;
   }
 
   @Transactional
@@ -32,19 +35,19 @@ public class ProductService {
             request.stockQuantity(),
             request.imageUrl());
     addTags(product, request.tags());
-    return ProductResponse.from(productRepository.save(product));
+    return toResponse(productRepository.save(product));
   }
 
   public List<ProductResponse> findAll() {
-    return productRepository.findAll().stream().map(ProductResponse::from).toList();
+    return productRepository.findAll().stream().map(this::toResponse).toList();
   }
 
   public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
-    return productRepository.searchProducts(keyword, tag, pageable).map(ProductResponse::from);
+    return productRepository.searchProducts(keyword, tag, pageable).map(this::toResponse);
   }
 
   public ProductResponse findById(Long id) {
-    return ProductResponse.from(getProductOrThrow(id));
+    return toResponse(getProductOrThrow(id));
   }
 
   @Transactional
@@ -58,7 +61,7 @@ public class ProductService {
         request.imageUrl());
     product.clearTags();
     addTags(product, request.tags());
-    return ProductResponse.from(product);
+    return toResponse(product);
   }
 
   @Transactional
@@ -71,6 +74,11 @@ public class ProductService {
     return productRepository
         .findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. id=" + id));
+  }
+
+  private ProductResponse toResponse(Product product) {
+    Double averageRating = reviewRepository.findAverageRatingByProductId(product.getId());
+    return ProductResponse.from(product, averageRating);
   }
 
   private void addTags(Product product, List<String> tags) {

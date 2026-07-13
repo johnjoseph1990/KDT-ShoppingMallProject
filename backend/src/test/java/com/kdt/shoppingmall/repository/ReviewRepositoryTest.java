@@ -57,4 +57,26 @@ class ReviewRepositoryTest {
     assertThat(reviewRepository.existsByMemberIdAndProductId(member.getId(), product.getId()))
         .isFalse();
   }
+
+  @Test
+  void findAverageRatingByProductId_리뷰여러개_평균반환() {
+    em.persistAndFlush(new Review(member, product, 5, "최고!"));
+    em.persistAndFlush(
+        new Review(
+            em.persistAndFlush(new Member("other@test.com", "encoded", "다른회원", MemberRole.USER)),
+            product,
+            3,
+            "보통"));
+
+    Double average = reviewRepository.findAverageRatingByProductId(product.getId());
+
+    assertThat(average).isEqualTo(4.0);
+  }
+
+  @Test
+  void findAverageRatingByProductId_리뷰없으면_null반환() {
+    Double average = reviewRepository.findAverageRatingByProductId(product.getId());
+
+    assertThat(average).isNull();
+  }
 }

@@ -42,7 +42,8 @@ class ProductControllerTest {
   @MockitoBean private MemberUserDetailsService memberUserDetailsService;
 
   private ProductResponse sampleResponse() {
-    return new ProductResponse(1L, "상품A", "설명", 10000, 100, null, List.of(), LocalDateTime.now());
+    return new ProductResponse(
+        1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now());
   }
 
   @Test
@@ -133,7 +134,8 @@ class ProductControllerTest {
   void 상품수정_ADMIN_200() throws Exception {
     ProductRequest request = new ProductRequest("수정상품", "수정설명", 9000, 50, null, null);
     ProductResponse updated =
-        new ProductResponse(1L, "수정상품", "수정설명", 9000, 50, null, List.of(), LocalDateTime.now());
+        new ProductResponse(
+            1L, "수정상품", "수정설명", 9000, 50, null, List.of(), 0.0, LocalDateTime.now());
     given(productService.update(eq(1L), any())).willReturn(updated);
 
     mockMvc

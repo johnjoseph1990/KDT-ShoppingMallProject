@@ -12,6 +12,7 @@ import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
+import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,8 @@ import org.springframework.data.domain.Pageable;
 class ProductServiceTest {
 
   @Mock private ProductRepository productRepository;
+
+  @Mock private ReviewRepository reviewRepository;
 
   @InjectMocks private ProductService productService;
 
@@ -66,6 +69,28 @@ class ProductServiceTest {
     ProductResponse response = productService.findById(1L);
 
     assertThat(response.name()).isEqualTo("상품A");
+  }
+
+  @Test
+  void findById_리뷰있으면_평균별점반환() {
+    Product product = new Product("상품A", "설명", 10000, 100, null);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(4.5);
+
+    ProductResponse response = productService.findById(1L);
+
+    assertThat(response.averageRating()).isEqualTo(4.5);
+  }
+
+  @Test
+  void findById_리뷰없으면_평균별점0점() {
+    Product product = new Product("상품A", "설명", 10000, 100, null);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(null);
+
+    ProductResponse response = productService.findById(1L);
+
+    assertThat(response.averageRating()).isEqualTo(0.0);
   }
 
   @Test
