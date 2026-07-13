@@ -14,9 +14,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -104,5 +110,40 @@ class ProductServiceTest {
 
         assertThatThrownBy(() -> productService.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void search_키워드없이_전체조회() {
+        Product product = new Product("상품A", "설명", 10000, 100, null);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> page = new PageImpl<>(List.of(product));
+        given(productRepository.searchProducts(isNull(), isNull(), any(Pageable.class))).willReturn(page);
+
+        Page<ProductResponse> result = productService.search(null, null, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).name()).isEqualTo("상품A");
+    }
+
+    @Test
+    void search_키워드로_검색() {
+        Product product = new Product("나이키 운동화", "설명", 89000, 50, null);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> page = new PageImpl<>(List.of(product));
+        given(productRepository.searchProducts(any(), isNull(), any(Pageable.class))).willReturn(page);
+
+        Page<ProductResponse> result = productService.search("나이키", null, pageable);
+
+        assertThat(result.getContent().get(0).name()).isEqualTo("나이키 운동화");
+    }
+
+    @Test
+    void search_결과없음_빈페이지반환() {
+        Pageable pageable = PageRequest.of(0, 10);
+        given(productRepository.searchProducts(any(), any(), any(Pageable.class))).willReturn(Page.empty());
+
+        Page<ProductResponse> result = productService.search("없는상품", null, pageable);
+
+        assertThat(result.isEmpty()).isTrue();
     }
 }

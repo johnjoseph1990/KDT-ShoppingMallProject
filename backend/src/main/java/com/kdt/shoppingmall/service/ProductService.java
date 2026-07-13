@@ -7,6 +7,8 @@ import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,10 @@ public class ProductService {
 
     public List<ProductResponse> findAll() {
         return productRepository.findAll().stream().map(ProductResponse::from).toList();
+    }
+
+    public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
+        return productRepository.searchProducts(keyword, tag, pageable).map(ProductResponse::from);
     }
 
     public ProductResponse findById(Long id) {

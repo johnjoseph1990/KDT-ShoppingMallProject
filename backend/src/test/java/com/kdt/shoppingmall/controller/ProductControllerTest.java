@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,8 +25,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -49,11 +52,33 @@ class ProductControllerTest {
 
     @Test
     void 상품목록조회_인증없이_성공() throws Exception {
-        given(productService.findAll()).willReturn(List.of(sampleResponse()));
+        Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+        given(productService.search(isNull(), isNull(), any(Pageable.class))).willReturn(page);
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("상품A"));
+                .andExpect(jsonPath("$.content[0].name").value("상품A"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void 상품목록조회_키워드검색() throws Exception {
+        Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+        given(productService.search(eq("상품"), isNull(), any(Pageable.class))).willReturn(page);
+
+        mockMvc.perform(get("/api/products").param("keyword", "상품"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("상품A"));
+    }
+
+    @Test
+    void 상품목록조회_태그필터() throws Exception {
+        Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+        given(productService.search(isNull(), eq("신발"), any(Pageable.class))).willReturn(page);
+
+        mockMvc.perform(get("/api/products").param("tag", "신발"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("상품A"));
     }
 
     @Test
