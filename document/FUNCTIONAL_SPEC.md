@@ -42,7 +42,7 @@
 | O-1 | 장바구니 담기/삭제/수량변경 | 회원 전용 | P0 |
 | O-2 | 주문 생성 | 장바구니(또는 바로구매) → 주문 + 주문상세 생성, 당시 가격 스냅샷 | P0 |
 | O-3 | 모의 결제 | 결제 요청 → 성공/실패 판정 → payment 기록 + 주문 상태 변경 | P1 |
-| O-4 | 주문 상태 흐름 | ORDERED → PAID → SHIPPING → DELIVERED (+ CANCELED) | P1 |
+| O-4 | 주문 상태 흐름 | ORDERED → PAID → SHIPPING → DELIVERED, CANCELED는 ORDERED·PAID에서만 가능(배송 시작 후 취소 불가) | P1 |
 | O-5 | 재고 차감 + 동시성 | 주문 시 재고 차감, 낙관적 락(@Version)으로 초과 판매 방지 | P1 |
 | O-6 | 내 주문 내역 조회 | 회원 본인 주문 목록/상세 | P0 |
 
