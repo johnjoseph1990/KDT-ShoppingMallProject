@@ -7,8 +7,8 @@ public enum OrderStatus {
         return switch (this) {
             case ORDERED -> target == PAID || target == CANCELED;
             case PAID -> target == SHIPPING || target == CANCELED;
-            case SHIPPING -> target == DELIVERED || target == CANCELED;
-            case DELIVERED, CANCELED -> false;
+            case SHIPPING -> target == DELIVERED;
+            default -> false;
         };
     }
 }

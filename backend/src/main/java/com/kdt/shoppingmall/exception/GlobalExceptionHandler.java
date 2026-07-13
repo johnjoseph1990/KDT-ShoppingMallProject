@@ -42,6 +42,11 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "다른 주문과 재고 처리가 충돌했습니다. 다시 시도해주세요."));
     }
 
+    @ExceptionHandler(DuplicateReviewException.class)
+    public ResponseEntity<Map<String, String>> handleDuplicateReview(DuplicateReviewException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
