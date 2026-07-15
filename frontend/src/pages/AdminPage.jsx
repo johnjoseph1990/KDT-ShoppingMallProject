@@ -46,13 +46,15 @@ function ProductManager() {
   const [products, setProducts] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null) // null이면 신규 등록 모드
+  const [page, setPage] = useState(0)
 
   useEffect(() => {
     loadProducts()
-  }, [])
+  }, [page])
 
   const loadProducts = () => {
-    getProducts().then((res) => setProducts(res.data))
+    // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
+    getProducts({ page }).then((res) => setProducts(res.data.content))
   }
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
@@ -206,6 +208,24 @@ function ProductManager() {
           ))}
         </tbody>
       </table>
+      {/* 페이지네이션 */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+        <button
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          disabled={page === 0}
+          style={styles.pageBtn}
+        >
+          이전
+        </button>
+        <span>페이지 {page + 1}</span>
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={products.length === 0}
+          style={styles.pageBtn}
+        >
+          다음
+        </button>
+      </div>
     </>
   )
 }
@@ -220,7 +240,8 @@ function OrderManager() {
   }, [page])
 
   const loadOrders = () => {
-    getAdminOrders(page).then((res) => setOrders(res.data))
+    // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
+    getAdminOrders(page).then((res) => setOrders(res.data.content))
   }
 
   const handleStatusChange = async (orderId, newStatus) => {

@@ -13,23 +13,26 @@ export default function ProductListPage() {
   const [bestProducts, setBestProducts] = useState([])
   const [keyword, setKeyword] = useState('')
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(0)
 
   // 베스트 상품(별점 기준 상위 5개)은 한 번만 로드
+  // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
   useEffect(() => {
     getBestProducts()
-      .then((res) => setBestProducts(res.data))
+      .then((res) => setBestProducts(res.data.content))
       .catch(() => {})
   }, [])
 
-  // 검색어가 바뀔 때마다 상품 목록 다시 로드
+  // 검색어 또는 페이지가 바뀔 때마다 상품 목록 다시 로드
   useEffect(() => {
-    getProducts(search ? { keyword: search } : {})
-      .then((res) => setProducts(res.data))
+    getProducts({ ...(search ? { keyword: search } : {}), page })
+      .then((res) => setProducts(res.data.content))
       .catch(() => {})
-  }, [search])
+  }, [search, page])
 
   const handleSearch = (e) => {
     e.preventDefault()
+    setPage(0) // 새 검색은 항상 1페이지부터
     setSearch(keyword)
   }
 
@@ -70,6 +73,24 @@ export default function ProductListPage() {
             ))}
           </div>
         )}
+        {/* 페이지네이션 */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            style={styles.searchBtn}
+          >
+            이전
+          </button>
+          <span>페이지 {page + 1}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={products.length === 0}
+            style={styles.searchBtn}
+          >
+            다음
+          </button>
+        </div>
       </section>
     </div>
   )
