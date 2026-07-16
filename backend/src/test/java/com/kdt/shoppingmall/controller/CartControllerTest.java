@@ -3,6 +3,7 @@ package com.kdt.shoppingmall.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -141,7 +142,7 @@ class CartControllerTest {
   @Test
   @WithMockMemberPrincipal
   void 장바구니삭제_없는항목_404() throws Exception {
-    org.mockito.BDDMockito.willThrow(new ResourceNotFoundException("장바구니 항목을 찾을 수 없습니다. id=99"))
+    willThrow(new ResourceNotFoundException("장바구니 항목을 찾을 수 없습니다. id=99"))
         .given(cartService)
         .removeItem(eq(1L), eq(99L));
 
