@@ -8,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -73,9 +72,6 @@ public class SecurityConfig {
                 // 회원가입/로그인은 로그인 전에 호출해야 하니 인증 없이 허용
                 auth.requestMatchers("/api/auth/signup", "/api/auth/login")
                     .permitAll()
-                    // H2 콘솔(DB 확인용 웹 UI)도 개발 편의를 위해 인증 없이 허용
-                    .requestMatchers("/h2-console/**")
-                    .permitAll()
                     // 상품 목록/상세 조회(GET)는 로그인 안 해도 볼 수 있어야 하는 화면이라 허용
                     .requestMatchers(HttpMethod.GET, "/api/products/**")
                     .permitAll()
@@ -97,10 +93,7 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     // 위 규칙에 안 걸린 나머지 모든 요청은 "로그인만 하면" 접근 가능
                     .anyRequest()
-                    .authenticated())
-        // H2 콘솔이 화면을 iframe으로 그리는데, 스프링 시큐리티가 기본적으로 모든 iframe
-        // 삽입을 막아버려서(clickjacking 방지) 같은 출처(sameOrigin)일 때만 허용하도록 예외 처리
-        .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
+                    .authenticated());
     // build()를 호출해야 지금까지 이어붙인 설정들이 실제 SecurityFilterChain 객체로 완성된다.
     return http.build();
   }
