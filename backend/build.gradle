@@ -25,12 +25,15 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.h2database:h2'
+	// 운영/개발: PostgreSQL 드라이버
+	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// 테스트 전용: H2 인메모리 DB (@DataJpaTest 슬라이스 테스트용)
+	testRuntimeOnly 'com.h2database:h2'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 

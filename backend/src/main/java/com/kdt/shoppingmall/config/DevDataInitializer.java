@@ -2,7 +2,11 @@ package com.kdt.shoppingmall.config;
 
 import com.kdt.shoppingmall.domain.member.Member;
 import com.kdt.shoppingmall.domain.member.MemberRole;
+import com.kdt.shoppingmall.domain.product.Product;
+import com.kdt.shoppingmall.domain.product.ProductTag;
 import com.kdt.shoppingmall.repository.MemberRepository;
+import com.kdt.shoppingmall.repository.ProductRepository;
+import java.util.List;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +16,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DevDataInitializer {
 
+  // 히어로 이미지를 모든 상품에 공유 (실제 서비스에서는 상품별 이미지로 교체)
+  private static final String IMG = "/uploads/assets-1784160881665.png";
+
   @Bean
   public ApplicationRunner seedAdmin(
       MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
@@ -20,6 +27,86 @@ public class DevDataInitializer {
         memberRepository.save(
             new Member(
                 "admin@shop.com", passwordEncoder.encode("admin1234"), "관리자", MemberRole.ADMIN));
+      }
+    };
+  }
+
+  @Bean
+  public ApplicationRunner seedProducts(ProductRepository productRepository) {
+    return (ApplicationArguments args) -> {
+      // 이미 상품이 있으면 중복 삽입 방지
+      if (productRepository.count() > 0) return;
+
+      // 상품명, 설명, 가격, 재고, 이미지, 태그 순서로 정의
+      List<Object[]> data =
+          List.of(
+              new Object[] {
+                "충남 금산 당근",
+                "삼십 년째 같은 밭에서 직접 만든 퇴비로 기른 당근. 주문 후 수확합니다.",
+                8_500,
+                50,
+                IMG,
+                List.of("채소")
+              },
+              new Object[] {
+                "논산 설향 딸기",
+                "새벽 네 시에 완전히 익은 것만 골라 딴 딸기. 향이 진하고 당도가 높습니다.",
+                18_000,
+                30,
+                IMG,
+                List.of("과일")
+              },
+              new Object[] {
+                "서천 바닷바람 쌈채소",
+                "바닷바람이 닿는 노지에서 천천히 자란 잎채소. 조직이 단단해 쉽게 무르지 않습니다.",
+                6_500,
+                40,
+                IMG,
+                List.of("채소")
+              },
+              new Object[] {
+                "금산 뿌리채소 꾸러미",
+                "당근, 우엉, 연근을 계절에 맞게 구성한 꾸러미. 매주 화요일 수확 후 발송합니다.",
+                24_000,
+                20,
+                IMG,
+                List.of("꾸러미")
+              },
+              new Object[] {
+                "충남 가을 배", "과즙이 풍부하고 아삭한 충남산 신고배. 박스 단위 판매합니다.", 35_000, 15, IMG, List.of("과일")
+              },
+              new Object[] {
+                "논산 딸기 수제잼",
+                "첨가물 없이 딸기와 설탕만으로 만든 수제 잼. 냉장 보관 6개월.",
+                12_000,
+                25,
+                IMG,
+                List.of("베이커리")
+              },
+              new Object[] {
+                "서천 햇감자", "바닷바람을 맞고 자란 햇감자. 분이 많고 포슬포슬해서 쪄 먹기 좋습니다.", 9_000, 35, IMG, List.of("채소")
+              },
+              new Object[] {
+                "금산 인삼 정기배송",
+                "4년근 금산 인삼을 매달 한 박스씩 보내드립니다. 첫 달 10% 할인.",
+                45_000,
+                10,
+                IMG,
+                List.of("꾸러미")
+              });
+
+      for (Object[] row : data) {
+        Product product =
+            new Product(
+                (String) row[0], (String) row[1], (int) row[2], (int) row[3], (String) row[4]);
+
+        @SuppressWarnings("unchecked")
+        List<String> tagNames = (List<String>) row[5];
+        for (String tagName : tagNames) {
+          product.addTag(new ProductTag(tagName));
+        }
+
+        productRepository.save(product);
       }
     };
   }

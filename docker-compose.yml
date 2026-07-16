@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16
+    container_name: mins-db
+    environment:
+      POSTGRES_DB: shoppingmall
+      POSTGRES_USER: mins
+      POSTGRES_PASSWORD: mins1234
+    ports:
+      # 호스트 5433 → 컨테이너 5432 (다른 프로젝트가 5432를 사용 중)
+      - "5433:5432"
+    volumes:
+      # 컨테이너를 내려도 데이터가 유지됨 (docker compose down -v 로 초기화)
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mins -d shoppingmall"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
