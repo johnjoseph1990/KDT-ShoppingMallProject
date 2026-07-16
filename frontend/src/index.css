@@ -60,6 +60,8 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  /* Vapor UI 권장 설정: 모달/팝오버 같은 오버레이가 항상 페이지 위에 뜨도록 새 stacking context 생성 */
+  isolation: isolate;
 }
 
 /* 관리자 테이블 공통 스타일 */

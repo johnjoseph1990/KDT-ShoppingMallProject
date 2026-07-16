@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button, IconButton } from '@vapor-ui/core'
 import { getCart, updateCartItem, removeCartItem } from '../api/cart'
 import { createOrder } from '../api/orders'
 
@@ -59,33 +60,42 @@ export default function CartPage() {
                 <p style={{ margin: '0.2rem 0', color: '#555' }}>{item.price.toLocaleString()}원</p>
               </div>
               <div style={styles.qtyRow}>
-                <button
+                <IconButton
                   onClick={() => handleQtyChange(item.id, item.quantity - 1)}
-                  style={styles.qtyBtn}
+                  variant="outline"
+                  size="sm"
+                  aria-label="수량 감소"
                 >
                   -
-                </button>
+                </IconButton>
                 <span style={{ padding: '0 0.5rem' }}>{item.quantity}</span>
-                <button
+                <IconButton
                   onClick={() => handleQtyChange(item.id, item.quantity + 1)}
-                  style={styles.qtyBtn}
+                  variant="outline"
+                  size="sm"
+                  aria-label="수량 증가"
                 >
                   +
-                </button>
+                </IconButton>
               </div>
               <span style={styles.subtotal}>{(item.price * item.quantity).toLocaleString()}원</span>
-              <button onClick={() => handleRemove(item.id)} style={styles.removeBtn}>
+              <IconButton
+                onClick={() => handleRemove(item.id)}
+                variant="ghost"
+                colorPalette="danger"
+                aria-label="삭제"
+              >
                 ✕
-              </button>
+              </IconButton>
             </div>
           ))}
 
           <div style={styles.total}>
             <strong>합계: {totalPrice.toLocaleString()}원</strong>
           </div>
-          <button onClick={handleOrder} style={styles.orderBtn}>
+          <Button onClick={handleOrder} colorPalette="primary" style={{ width: '100%' }}>
             주문하기
-          </button>
+          </Button>
         </>
       )}
     </div>
@@ -101,31 +111,6 @@ const styles = {
     borderBottom: '1px solid #eee',
   },
   qtyRow: { display: 'flex', alignItems: 'center' },
-  qtyBtn: {
-    width: '28px',
-    height: '28px',
-    border: '1px solid #ccc',
-    background: '#f5f5f5',
-    cursor: 'pointer',
-    borderRadius: '4px',
-  },
   subtotal: { minWidth: '80px', textAlign: 'right', fontWeight: 'bold' },
-  removeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#e63946',
-    cursor: 'pointer',
-    fontSize: '1.1rem',
-  },
   total: { textAlign: 'right', padding: '1rem 0', fontSize: '1.1rem' },
-  orderBtn: {
-    width: '100%',
-    padding: '0.8rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
 }

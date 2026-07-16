@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { Button } from '@vapor-ui/core'
 import { useAuth } from '../context/AuthContext'
 import { logout as logoutApi } from '../api/auth'
 
@@ -25,9 +26,10 @@ export default function Navbar() {
             <Link to="/cart">장바구니</Link>
             <Link to="/orders">주문내역</Link>
             {user.role === 'ADMIN' && <Link to="/admin">관리자</Link>}
-            <button onClick={handleLogout} style={styles.btn}>
+            {/* colorPalette="contrast": 어두운 네비바 배경 위에서도 잘 보이는 색 팔레트 */}
+            <Button onClick={handleLogout} variant="outline" colorPalette="contrast" size="sm">
               로그아웃
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -52,12 +54,4 @@ const styles = {
   brand: { color: '#fff', textDecoration: 'none', fontWeight: 'bold', fontSize: '1.2rem' },
   links: { display: 'flex', gap: '1rem', alignItems: 'center' },
   greeting: { color: '#aaa', fontSize: '0.9rem' },
-  btn: {
-    background: 'none',
-    border: '1px solid #fff',
-    color: '#fff',
-    cursor: 'pointer',
-    padding: '0.25rem 0.75rem',
-    borderRadius: '4px',
-  },
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Badge } from '@vapor-ui/core'
 import { getOrders } from '../api/orders'
 
 // 주문 상태를 한글로 변환
@@ -9,6 +10,15 @@ const STATUS_LABEL = {
   SHIPPING: '배송중',
   DELIVERED: '배송완료',
   CANCELED: '취소됨',
+}
+
+// 주문 상태별 Badge 색상 (Vapor의 colorPalette 팔레트 중에서 상태 의미에 맞게 선택)
+const STATUS_COLOR = {
+  ORDERED: 'warning',
+  PAID: 'success',
+  SHIPPING: 'primary',
+  DELIVERED: 'hint',
+  CANCELED: 'danger',
 }
 
 export default function OrderListPage() {
@@ -29,9 +39,9 @@ export default function OrderListPage() {
             <div style={styles.card}>
               <div style={styles.row}>
                 <strong>주문 #{order.id}</strong>
-                <span style={statusStyle(order.status)}>
+                <Badge colorPalette={STATUS_COLOR[order.status] ?? 'hint'}>
                   {STATUS_LABEL[order.status] ?? order.status}
-                </span>
+                </Badge>
               </div>
               <p style={styles.price}>{order.totalPrice.toLocaleString()}원</p>
               <p style={styles.date}>{new Date(order.createdAt).toLocaleString()}</p>
@@ -41,18 +51,6 @@ export default function OrderListPage() {
       )}
     </div>
   )
-}
-
-// 상태에 따라 색상 다르게 표시
-function statusStyle(status) {
-  const colors = {
-    ORDERED: '#f4a261',
-    PAID: '#2a9d8f',
-    SHIPPING: '#457b9d',
-    DELIVERED: '#1d3557',
-    CANCELED: '#e63946',
-  }
-  return { color: colors[status] ?? '#333', fontWeight: 'bold' }
 }
 
 const styles = {

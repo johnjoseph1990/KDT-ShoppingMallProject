@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+// Vapor UI 컴포넌트: Button(버튼), TextInput(입력창). 인라인 style 대신 props(size/colorPalette/variant)로 모양을 정함
+import { Button, TextInput } from '@vapor-ui/core'
 import { getProducts, getBestProducts } from '../api/products'
 
 // ★ 별점을 숫자로 받아 별 문자로 변환
@@ -54,15 +56,16 @@ export default function ProductListPage() {
       <section style={styles.section}>
         <h2>전체 상품</h2>
         <form onSubmit={handleSearch} style={styles.searchForm}>
-          <input
+          {/* onChange 대신 onValueChange: Vapor TextInput은 문자열 값을 바로 넘겨줌 */}
+          <TextInput
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onValueChange={setKeyword}
             placeholder="상품명 검색"
-            style={styles.searchInput}
+            style={{ flex: 1 }}
           />
-          <button type="submit" style={styles.searchBtn}>
+          <Button type="submit" colorPalette="primary">
             검색
-          </button>
+          </Button>
         </form>
         {products.length === 0 ? (
           <p>상품이 없습니다.</p>
@@ -74,22 +77,22 @@ export default function ProductListPage() {
           </div>
         )}
         {/* 페이지네이션 */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-          <button
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
+          <Button
+            variant="outline"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            style={styles.searchBtn}
           >
             이전
-          </button>
+          </Button>
           <span>페이지 {page + 1}</span>
-          <button
+          <Button
+            variant="outline"
             onClick={() => setPage((p) => p + 1)}
             disabled={products.length === 0}
-            style={styles.searchBtn}
           >
             다음
-          </button>
+          </Button>
         </div>
       </section>
     </div>
@@ -139,19 +142,4 @@ const styles = {
   cardPrice: { margin: '0 0 0.25rem', fontWeight: 'bold', color: '#1a1a2e' },
   cardRating: { margin: '0 0 0.25rem', color: '#f4a261', fontSize: '0.85rem' },
   searchForm: { display: 'flex', gap: '0.5rem', marginBottom: '1rem' },
-  searchInput: {
-    flex: 1,
-    padding: '0.5rem',
-    fontSize: '1rem',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-  },
-  searchBtn: {
-    padding: '0.5rem 1rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
 }

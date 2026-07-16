@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Button, Textarea } from '@vapor-ui/core'
 import { getProduct } from '../api/products'
 import { addToCart } from '../api/cart'
 import { getReviews, createReview, deleteReview } from '../api/reviews'
@@ -91,6 +92,7 @@ export default function ProductDetailPage() {
 
           {/* 수량 선택 + 장바구니 */}
           <div style={styles.cartRow}>
+            {/* Vapor TextInput은 type="number"를 지원하지 않아 이 필드는 그대로 native input 유지 */}
             <input
               type="number"
               min={1}
@@ -100,13 +102,13 @@ export default function ProductDetailPage() {
               style={styles.qtyInput}
               disabled={product.stockQuantity === 0}
             />
-            <button
+            <Button
               onClick={handleAddToCart}
-              style={styles.cartBtn}
+              colorPalette="primary"
               disabled={product.stockQuantity === 0}
             >
               장바구니 담기
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -128,9 +130,14 @@ export default function ProductDetailPage() {
                 <span style={styles.reviewDate}>{new Date(r.createdAt).toLocaleDateString()}</span>
                 {/* 본인 리뷰만 삭제 버튼 표시 */}
                 {user && user.id === r.memberId && (
-                  <button onClick={() => handleDeleteReview(r.id)} style={styles.deleteBtn}>
+                  <Button
+                    onClick={() => handleDeleteReview(r.id)}
+                    variant="ghost"
+                    colorPalette="danger"
+                    size="sm"
+                  >
                     삭제
-                  </button>
+                  </Button>
                 )}
               </div>
               <p style={{ margin: '0.25rem 0 0' }}>{r.content}</p>
@@ -155,17 +162,16 @@ export default function ProductDetailPage() {
                 ))}
               </select>
             </label>
-            <textarea
+            <Textarea
               value={reviewForm.content}
-              onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
+              onValueChange={(value) => setReviewForm({ ...reviewForm, content: value })}
               placeholder="리뷰 내용을 입력하세요"
               rows={3}
-              style={styles.textarea}
               required
             />
-            <button type="submit" style={styles.cartBtn}>
+            <Button type="submit" colorPalette="primary">
               리뷰 등록
-            </button>
+            </Button>
           </form>
         )}
       </section>
@@ -186,14 +192,6 @@ const styles = {
     borderRadius: '4px',
     border: '1px solid #ccc',
   },
-  cartBtn: {
-    padding: '0.6rem 1.2rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
   reviewSection: { borderTop: '1px solid #eee', paddingTop: '1rem' },
   reviewCard: {
     border: '1px solid #eee',
@@ -203,18 +201,5 @@ const styles = {
   },
   reviewHeader: { display: 'flex', gap: '0.5rem', alignItems: 'center' },
   reviewDate: { color: '#999', fontSize: '0.8rem', marginLeft: 'auto' },
-  deleteBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#e63946',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-  },
   reviewForm: { display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' },
-  textarea: {
-    padding: '0.5rem',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    resize: 'vertical',
-  },
 }

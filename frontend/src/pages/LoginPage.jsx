@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Button, TextInput } from '@vapor-ui/core'
 import { login as loginApi } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 
@@ -9,7 +10,8 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  // Vapor TextInput은 값 자체를 넘겨주므로, 필드명을 지정해 form 객체의 해당 키만 갱신
+  const handleChange = (field) => (value) => setForm({ ...form, [field]: value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -27,28 +29,24 @@ export default function LoginPage() {
     <div style={styles.container}>
       <h2>로그인</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          name="email"
+        <TextInput
           type="email"
           placeholder="이메일"
           value={form.email}
-          onChange={handleChange}
-          style={styles.input}
+          onValueChange={handleChange('email')}
           required
         />
-        <input
-          name="password"
+        <TextInput
           type="password"
           placeholder="비밀번호"
           value={form.password}
-          onChange={handleChange}
-          style={styles.input}
+          onValueChange={handleChange('password')}
           required
         />
         {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" style={styles.btn}>
+        <Button type="submit" colorPalette="primary">
           로그인
-        </button>
+        </Button>
       </form>
       <p>
         계정이 없으신가요? <Link to="/signup">회원가입</Link>
@@ -60,15 +58,5 @@ export default function LoginPage() {
 const styles = {
   container: { maxWidth: '400px', margin: '4rem auto', textAlign: 'center' },
   form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  input: { padding: '0.6rem', fontSize: '1rem', borderRadius: '4px', border: '1px solid #ccc' },
-  btn: {
-    padding: '0.7rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
   error: { color: 'red', margin: 0 },
 }

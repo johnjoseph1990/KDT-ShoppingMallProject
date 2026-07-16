@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Button, TextInput } from '@vapor-ui/core'
 import { signup } from '../api/auth'
 
 export default function SignupPage() {
@@ -7,7 +8,7 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleChange = (field) => (value) => setForm({ ...form, [field]: value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,36 +26,31 @@ export default function SignupPage() {
     <div style={styles.container}>
       <h2>회원가입</h2>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          name="name"
+        <TextInput
           placeholder="이름"
           value={form.name}
-          onChange={handleChange}
-          style={styles.input}
+          onValueChange={handleChange('name')}
           required
         />
-        <input
-          name="email"
+        <TextInput
           type="email"
           placeholder="이메일"
           value={form.email}
-          onChange={handleChange}
-          style={styles.input}
+          onValueChange={handleChange('email')}
           required
         />
-        <input
-          name="password"
+        <TextInput
           type="password"
-          placeholder="비밀번호 (6자 이상)"
+          placeholder="비밀번호 (8자 이상)"
           value={form.password}
-          onChange={handleChange}
-          style={styles.input}
+          onValueChange={handleChange('password')}
           required
+          minLength={8}
         />
         {error && <p style={styles.error}>{error}</p>}
-        <button type="submit" style={styles.btn}>
+        <Button type="submit" colorPalette="primary">
           가입하기
-        </button>
+        </Button>
       </form>
       <p>
         이미 계정이 있으신가요? <Link to="/login">로그인</Link>
@@ -66,15 +62,5 @@ export default function SignupPage() {
 const styles = {
   container: { maxWidth: '400px', margin: '4rem auto', textAlign: 'center' },
   form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  input: { padding: '0.6rem', fontSize: '1rem', borderRadius: '4px', border: '1px solid #ccc' },
-  btn: {
-    padding: '0.7rem',
-    background: '#1a1a2e',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-  },
   error: { color: 'red', margin: 0 },
 }
