@@ -94,7 +94,7 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     // 관리자 전용 API 전체도 동일하게 ADMIN 권한 필요
                     .requestMatchers("/api/admin/**")
-                    .hasRole("ADMIN")
+                    .hasRole("ADMIN")1
                     // 위 규칙에 안 걸린 나머지 모든 요청은 "로그인만 하면" 접근 가능
                     .anyRequest()
                     .authenticated())
