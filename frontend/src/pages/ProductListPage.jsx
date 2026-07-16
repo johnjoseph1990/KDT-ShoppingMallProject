@@ -1,145 +1,247 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-// Vapor UI 컴포넌트: Button(버튼), TextInput(입력창). 인라인 style 대신 props(size/colorPalette/variant)로 모양을 정함
-import { Button, TextInput } from '@vapor-ui/core'
-import { getProducts, getBestProducts } from '../api/products'
+import { useNavigate } from 'react-router-dom'
+import { getProducts } from '../api/products'
+import { addToCart } from '../api/cart'
+import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
-// ★ 별점을 숫자로 받아 별 문자로 변환
-function StarRating({ rating }) {
-  const filled = Math.round(rating)
-  return <span>{Array.from({ length: 5 }, (_, i) => (i < filled ? '★' : '☆')).join('')}</span>
-}
+const fmt = (n) => n.toLocaleString('ko-KR') + '원'
+
+/* 카테고리 필터 → 키워드 검색으로 매핑 */
+const CATS = [
+  { key: 'all', label: '전체', keyword: '' },
+  { key: 'veg', label: '채소·과일', keyword: '채소' },
+  { key: 'bake', label: '베이커리·간식', keyword: '베이커리' },
+  { key: 'box', label: '꾸러미·정기배송', keyword: '꾸러미' },
+]
 
 export default function ProductListPage() {
   const [products, setProducts] = useState([])
-  const [bestProducts, setBestProducts] = useState([])
-  const [keyword, setKeyword] = useState('')
-  const [search, setSearch] = useState('')
+  const [cat, setCat] = useState('all')
   const [page, setPage] = useState(0)
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { refreshCart, showToast } = useCart()
 
-  // 베스트 상품(별점 기준 상위 5개)은 한 번만 로드
-  // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
   useEffect(() => {
-    getBestProducts()
-      .then((res) => setBestProducts(res.data.content))
+    const keyword = CATS.find((c) => c.key === cat)?.keyword || ''
+    getProducts({ ...(keyword ? { keyword } : {}), page })
+      .then((res) => setProducts(res.data.content || []))
       .catch(() => {})
-  }, [])
+  }, [cat, page])
 
-  // 검색어 또는 페이지가 바뀔 때마다 상품 목록 다시 로드
-  useEffect(() => {
-    getProducts({ ...(search ? { keyword: search } : {}), page })
-      .then((res) => setProducts(res.data.content))
-      .catch(() => {})
-  }, [search, page])
+  const handleCatChange = (key) => {
+    setCat(key)
+    setPage(0)
+  }
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    setPage(0) // 새 검색은 항상 1페이지부터
-    setSearch(keyword)
+  const handleAddToCart = async (e, product) => {
+    e.stopPropagation()
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    try {
+      await addToCart({ productId: product.id, quantity: 1 })
+      refreshCart()
+      showToast(product.name)
+    } catch {}
   }
 
   return (
-    <div>
-      {/* 베스트 상품 섹션 */}
-      {bestProducts.length > 0 && (
-        <section style={styles.section}>
-          <h2>🏆 베스트 상품</h2>
-          <div style={styles.grid}>
-            {bestProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
+    <main
+      style={{
+        animation: 'fadeUp .4s ease both',
+        padding: 'clamp(32px,5vw,64px) clamp(20px,5vw,72px)',
+        flex: 1,
+      }}
+    >
+      <h1
+        style={{
+          margin: '0 0 8px',
+          fontFamily: "'Noto Serif KR', serif",
+          fontWeight: 300,
+          fontSize: 32,
+        }}
+      >
+        쇼핑
+      </h1>
+      <p style={{ margin: '0 0 36px', fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+        {products.length}개의 상품 · 매주 화·금 수확분 기준
+      </p>
+
+      {/* 카테고리 필터 버튼 */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 36, flexWrap: 'wrap' }}>
+        {CATS.map((c) => (
+          <CatBtn key={c.key} active={cat === c.key} onClick={() => handleCatChange(c.key)}>
+            {c.label}
+          </CatBtn>
+        ))}
+      </div>
+
+      {/* 3열 상품 그리드 */}
+      {products.length === 0 ? (
+        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>상품이 없습니다.</p>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3,1fr)',
+            gap: 1,
+            background: '#dddaca',
+            border: '1px solid #dddaca',
+          }}
+        >
+          {products.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onOpen={() => navigate(`/products/${p.id}`)}
+              onAdd={(e) => handleAddToCart(e, p)}
+            />
+          ))}
+        </div>
       )}
 
-      {/* 전체 상품 + 검색 */}
-      <section style={styles.section}>
-        <h2>전체 상품</h2>
-        <form onSubmit={handleSearch} style={styles.searchForm}>
-          {/* onChange 대신 onValueChange: Vapor TextInput은 문자열 값을 바로 넘겨줌 */}
-          <TextInput
-            value={keyword}
-            onValueChange={setKeyword}
-            placeholder="상품명 검색"
-            style={{ flex: 1 }}
+      {/* 페이지네이션 */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          marginTop: 40,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <PageBtn onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+          ← 이전
+        </PageBtn>
+        <span style={{ fontSize: 13, color: '#6d6c61', fontWeight: 300 }}>페이지 {page + 1}</span>
+        <PageBtn onClick={() => setPage((p) => p + 1)} disabled={products.length < 10}>
+          다음 →
+        </PageBtn>
+      </div>
+    </main>
+  )
+}
+
+function CatBtn({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        cursor: 'pointer',
+        border: `1px solid ${active ? '#333330' : '#dddaca'}`,
+        background: active ? '#333330' : 'transparent',
+        color: active ? '#fffef2' : '#333330',
+        padding: '9px 18px',
+        fontSize: 13,
+        letterSpacing: '0.03em',
+        fontWeight: 300,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ProductCard({ product, onOpen, onAdd }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      style={{
+        background: hovered ? '#f6f4e6' : '#fffef2',
+        padding: 28,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* 상품 이미지 */}
+      <div
+        onClick={onOpen}
+        style={{
+          cursor: 'pointer',
+          aspectRatio: '4/5',
+          background: '#edeadb',
+          overflow: 'hidden',
+        }}
+      >
+        {product.imageUrl && (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-          <Button type="submit" colorPalette="primary">
-            검색
-          </Button>
-        </form>
-        {products.length === 0 ? (
-          <p>상품이 없습니다.</p>
-        ) : (
-          <div style={styles.grid}>
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
         )}
-        {/* 페이지네이션 */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-          >
-            이전
-          </Button>
-          <span>페이지 {page + 1}</span>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={products.length === 0}
-          >
-            다음
-          </Button>
-        </div>
-      </section>
+      </div>
+
+      {/* 상품 정보 */}
+      <div
+        onClick={onOpen}
+        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}
+      >
+        <h3
+          style={{
+            margin: 0,
+            fontFamily: "'Noto Serif KR', serif",
+            fontWeight: 400,
+            fontSize: 17,
+          }}
+        >
+          {product.name}
+        </h3>
+        <p style={{ margin: 0, fontSize: 13, color: '#6d6c61', fontWeight: 300, lineHeight: 1.7 }}>
+          {product.description?.slice(0, 40)}
+        </p>
+        <p style={{ margin: '6px 0 0', fontSize: 14 }}>{fmt(product.price)}</p>
+      </div>
+
+      {/* 장바구니 버튼 */}
+      <button
+        onClick={onAdd}
+        style={{
+          cursor: 'pointer',
+          border: '1px solid #333330',
+          background: 'transparent',
+          color: '#333330',
+          padding: '12px',
+          fontSize: 13,
+          letterSpacing: '0.04em',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#333330'
+          e.currentTarget.style.color = '#fffef2'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.color = '#333330'
+        }}
+      >
+        장바구니에 담기
+      </button>
     </div>
   )
 }
 
-// 상품 카드 컴포넌트: 목록에서 반복 사용
-function ProductCard({ product }) {
+function PageBtn({ onClick, disabled, children }) {
   return (
-    <Link to={`/products/${product.id}`} style={styles.cardLink}>
-      <div style={styles.card}>
-        {product.imageUrl && (
-          <img src={product.imageUrl} alt={product.name} style={styles.cardImg} />
-        )}
-        <h3 style={styles.cardTitle}>{product.name}</h3>
-        <p style={styles.cardPrice}>{product.price.toLocaleString()}원</p>
-        {product.averageRating > 0 && (
-          <p style={styles.cardRating}>
-            <StarRating rating={product.averageRating} /> ({product.averageRating.toFixed(1)})
-          </p>
-        )}
-        <p style={{ color: product.stockQuantity > 0 ? '#2a9d8f' : '#e63946', margin: 0 }}>
-          {product.stockQuantity > 0 ? `재고 ${product.stockQuantity}개` : '품절'}
-        </p>
-      </div>
-    </Link>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        cursor: disabled ? 'default' : 'pointer',
+        border: '1px solid #dddaca',
+        background: 'transparent',
+        color: '#333330',
+        padding: '8px 16px',
+        fontSize: 13,
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {children}
+    </button>
   )
-}
-
-const styles = {
-  section: { marginBottom: '2rem' },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-    gap: '1rem',
-  },
-  cardLink: { textDecoration: 'none', color: 'inherit' },
-  card: {
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    padding: '1rem',
-    transition: 'box-shadow 0.2s',
-    cursor: 'pointer',
-  },
-  cardImg: { width: '100%', height: '140px', objectFit: 'cover', borderRadius: '4px' },
-  cardTitle: { margin: '0.5rem 0 0.25rem', fontSize: '0.95rem' },
-  cardPrice: { margin: '0 0 0.25rem', fontWeight: 'bold', color: '#1a1a2e' },
-  cardRating: { margin: '0 0 0.25rem', color: '#f4a261', fontSize: '0.85rem' },
-  searchForm: { display: 'flex', gap: '0.5rem', marginBottom: '1rem' },
 }

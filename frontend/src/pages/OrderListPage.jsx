@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Badge } from '@vapor-ui/core'
+import { useNavigate } from 'react-router-dom'
 import { getOrders } from '../api/orders'
 
-// 주문 상태를 한글로 변환
+const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 const STATUS_LABEL = {
   ORDERED: '주문완료',
   PAID: '결제완료',
@@ -12,57 +11,105 @@ const STATUS_LABEL = {
   CANCELED: '취소됨',
 }
 
-// 주문 상태별 Badge 색상 (Vapor의 colorPalette 팔레트 중에서 상태 의미에 맞게 선택)
-const STATUS_COLOR = {
-  ORDERED: 'warning',
-  PAID: 'success',
-  SHIPPING: 'primary',
-  DELIVERED: 'hint',
-  CANCELED: 'danger',
-}
-
 export default function OrderListPage() {
   const [orders, setOrders] = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
-    getOrders().then((res) => setOrders(res.data))
+    getOrders()
+      .then((res) => setOrders(res.data))
+      .catch(() => {})
   }, [])
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <h2>주문 내역</h2>
-      {orders.length === 0 ? (
-        <p>주문 내역이 없습니다.</p>
-      ) : (
-        orders.map((order) => (
-          <Link to={`/orders/${order.id}`} key={order.id} style={styles.cardLink}>
-            <div style={styles.card}>
-              <div style={styles.row}>
-                <strong>주문 #{order.id}</strong>
-                <Badge colorPalette={STATUS_COLOR[order.status] ?? 'hint'}>
-                  {STATUS_LABEL[order.status] ?? order.status}
-                </Badge>
-              </div>
-              <p style={styles.price}>{order.totalPrice.toLocaleString()}원</p>
-              <p style={styles.date}>{new Date(order.createdAt).toLocaleString()}</p>
-            </div>
-          </Link>
-        ))
-      )}
-    </div>
-  )
-}
+    <main
+      style={{
+        animation: 'fadeUp .4s ease both',
+        flex: 1,
+        padding: 'clamp(32px,5vw,64px) clamp(20px,5vw,72px)',
+      }}
+    >
+      <h1
+        style={{
+          margin: '0 0 8px',
+          fontFamily: "'Noto Serif KR', serif",
+          fontWeight: 300,
+          fontSize: 32,
+        }}
+      >
+        주문 내역
+      </h1>
+      <p style={{ margin: '0 0 40px', fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+        {orders.length}건의 주문
+      </p>
 
-const styles = {
-  cardLink: { textDecoration: 'none', color: 'inherit' },
-  card: {
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    padding: '1rem',
-    marginBottom: '0.75rem',
-    transition: 'box-shadow 0.2s',
-  },
-  row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  price: { margin: '0.25rem 0', fontWeight: 'bold', fontSize: '1.05rem' },
-  date: { margin: 0, color: '#999', fontSize: '0.85rem' },
+      {orders.length === 0 ? (
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}
+        >
+          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>주문 내역이 없습니다.</p>
+          <span
+            onClick={() => navigate('/shop')}
+            style={{
+              cursor: 'pointer',
+              fontSize: 13,
+              borderBottom: '1px solid #333330',
+              paddingBottom: 1,
+            }}
+          >
+            쇼핑하러 가기
+          </span>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            borderTop: '1px solid #dddaca',
+            maxWidth: 640,
+          }}
+        >
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              onClick={() => navigate(`/orders/${order.id}`)}
+              style={{
+                cursor: 'pointer',
+                padding: '24px 0',
+                borderBottom: '1px solid #dddaca',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#f6f4e6')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '')}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    fontFamily: "'Noto Serif KR', serif",
+                  }}
+                >
+                  주문 #{order.id}
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                  {new Date(order.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}
+              >
+                <p style={{ margin: 0, fontSize: 14 }}>{fmt(order.totalPrice)}</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#75775e', fontWeight: 300 }}>
+                  {STATUS_LABEL[order.status] ?? order.status}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </main>
+  )
 }

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#FFFEF2;color:#333330;font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#333330;text-decoration:none}
+a:hover{color:#75775E}
+input,textarea,button{font-family:'Noto Sans KR',sans-serif}
+*{box-sizing:border-box}
+::selection{background:#75775E;color:#FFFEF2}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#FFFEF2;display:flex;flex-direction:column">
+
+  <sc-if value="{{ showBanner }}" hint-placeholder-val="{{ true }}">
+    <div style="background:#333326;color:#E5E3D3;text-align:center;padding:11px 20px;font-size:13px;letter-spacing:0.04em;font-weight:300">대전·충남 농가에서 매주 화요일과 금요일에 수확한 것들이 도착합니다 — 4만 원 이상 무료 배송</div>
+  </sc-if>
+
+  <header style="position:sticky;top:0;z-index:50;background:#FFFEF2;border-bottom:1px solid #DDDACA;padding:0 clamp(20px,5vw,72px);display:flex;align-items:center;justify-content:space-between;height:72px">
+    <a onClick="{{ goHome }}" style="cursor:pointer;font-family:'Noto Serif KR',serif;font-size:20px;letter-spacing:0.02em;font-weight:500">MINS <span style="font-weight:300;font-style:italic">Farmers Market</span></a>
+    <nav style="display:flex;gap:34px;font-size:14px;font-weight:300;letter-spacing:0.03em;align-items:center">
+      <a onClick="{{ goShop }}" style="cursor:pointer" style-hover="color:#75775E">쇼핑</a>
+      <a onClick="{{ goStory }}" style="cursor:pointer" style-hover="color:#75775E">농부 이야기</a>
+      <a onClick="{{ goAbout }}" style="cursor:pointer" style-hover="color:#75775E">브랜드</a>
+      <a onClick="{{ openCart }}" style="cursor:pointer;border:1px solid #333330;padding:7px 16px;border-radius:0" style-hover="background:#333330;color:#FFFEF2">장바구니 ({{ cartCount }})</a>
+    </nav>
+  </header>
+
+  <!-- ═══ HOME ═══ -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <main style="animation:fadeUp .5s ease both">
+      <section style="position:relative;min-height:88vh;border-bottom:1px solid #DDDACA;overflow:hidden;background:#2A2A20">
+        <sc-if value="{{ hasHeroVideo }}" hint-placeholder-val="{{ false }}">
+          <video ref="{{ videoRef }}" poster="uploads/assets-1784160881665.png" autoplay loop muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>
+        </sc-if>
+        <img src="uploads/assets-1784160881665.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:{{ heroImgDisplay }}">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(30,30,22,0.15),rgba(30,30,22,0.5))"></div>
+        <div style="position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:center;padding:clamp(32px,6vw,96px);gap:28px;max-width:640px">
+          <p style="margin:0;font-size:13px;letter-spacing:0.14em;color:#D9D6BC;font-weight:400">제철 · 대전충남 · 소농직거래</p>
+          <h1 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;color:#FFFEF2;font-size:clamp(30px,3.8vw,50px);line-height:1.45;letter-spacing:-0.01em">땅이 허락한 만큼만,<br>계절이 내어준 순서대로.</h1>
+          <p style="margin:0;font-size:15px;line-height:1.9;color:#E5E3D3;font-weight:300;max-width:44ch">민스 파머스 마켓은 대전과 충남의 스물세 곳 소농과 함께합니다. 수확한 지 하루가 지나지 않은 채소와 과일, 그날 구운 빵을 문 앞까지 전합니다.</p>
+          <a onClick="{{ goShop }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid #FFFEF2;color:#FFFEF2;padding:16px 22px;max-width:340px;font-size:14px;letter-spacing:0.04em" style-hover="background:#FFFEF2;color:#333330">이번 주 수확물 보기 <span>→</span></a>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:16px;padding:16px clamp(20px,5vw,40px);background:linear-gradient(0deg,rgba(20,20,14,0.55),transparent)">
+          <button onClick="{{ toggleVideoPlay }}" style="cursor:pointer;border:1px solid rgba(255,254,242,0.6);background:transparent;color:#FFFEF2;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px" style-hover="background:rgba(255,254,242,0.15)">{{ playIcon }}</button>
+          <button onClick="{{ toggleVideoMute }}" style="cursor:pointer;border:1px solid rgba(255,254,242,0.6);background:transparent;color:#FFFEF2;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px" style-hover="background:rgba(255,254,242,0.15)">{{ muteIcon }}</button>
+          <div style="flex:1;height:2px;background:rgba(255,254,242,0.3);border-radius:2px;overflow:hidden">
+            <div style="height:100%;background:#FFFEF2;width:{{ videoProgress }}%"></div>
+          </div>
+          <span style="font-size:12px;color:#E5E3D3;letter-spacing:0.04em;font-weight:300">AD</span>
+          <button onClick="{{ toggleVideoFullscreen }}" style="cursor:pointer;border:1px solid rgba(255,254,242,0.6);background:transparent;color:#FFFEF2;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px" style-hover="background:rgba(255,254,242,0.15)">⛶</button>
+        </div>
+      </section>
+
+      <section style="padding:clamp(40px,6vw,88px) clamp(20px,5vw,72px)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:40px">
+          <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:26px">이번 주의 수확</h2>
+          <a onClick="{{ goShop }}" style="cursor:pointer;font-size:13px;letter-spacing:0.05em;border-bottom:1px solid #333330;padding-bottom:2px">전체 보기</a>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#DDDACA;border:1px solid #DDDACA">
+          <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
+            <div onClick="{{ p.open }}" style="background:#FFFEF2;cursor:pointer;padding:28px;display:flex;flex-direction:column;gap:16px" style-hover="background:#F6F4E6">
+              <div style="aspect-ratio:4/5;background:#EDEADB;overflow:hidden">
+                <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ p.imgId }}" placeholder="{{ p.imgLabel }}" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <h3 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:400;font-size:16px">{{ p.name }}</h3>
+                <p style="margin:0;font-size:13px;color:#6D6C61;font-weight:300">{{ p.tag }}</p>
+                <p style="margin:6px 0 0;font-size:14px">{{ p.priceFmt }}</p>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background:#333326;color:#E5E3D3;padding:clamp(48px,8vw,110px) clamp(20px,5vw,72px);display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,5vw,80px);align-items:center">
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <p style="margin:0;font-size:13px;letter-spacing:0.14em;color:#A9A98F">꾸러미 정기배송</p>
+          <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(26px,2.6vw,36px);line-height:1.5">장 볼 필요 없이,<br>계절이 알아서 식탁을 차립니다.</h2>
+          <p style="margin:0;font-size:15px;line-height:1.9;font-weight:300;color:#C9C7B2;max-width:46ch">매주 그 시기에 가장 좋은 것들로 꾸린 제철 꾸러미. 어떤 채소가 올지 모르는 설렘과, 무엇이 와도 좋다는 믿음을 함께 담았습니다.</p>
+          <a onClick="{{ goBox }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid #E5E3D3;color:#E5E3D3;padding:16px 22px;max-width:340px;font-size:14px" style-hover="background:#E5E3D3;color:#333326">꾸러미 살펴보기 <span>→</span></a>
+        </div>
+        <div style="aspect-ratio:5/4;background:#3F3F30;overflow:hidden">
+          <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="img-box-hero" placeholder="꾸러미 상자 사진" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+        </div>
+      </section>
+
+      <section style="padding:clamp(48px,7vw,100px) clamp(20px,5vw,72px);border-bottom:1px solid #DDDACA">
+        <div style="max-width:680px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:24px;align-items:center">
+          <p style="margin:0;font-size:13px;letter-spacing:0.14em;color:#75775E">생산자</p>
+          <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(24px,2.4vw,32px);line-height:1.6">“농사는 서두른다고 되는 일이 아니에요.<br>기다리는 게 일의 절반입니다.”</h2>
+          <p style="margin:0;font-size:14px;color:#6D6C61;font-weight:300">금산 · 흙내음농원 · 이정순 농부</p>
+          <a onClick="{{ goStory }}" style="cursor:pointer;font-size:13px;letter-spacing:0.05em;border-bottom:1px solid #333330;padding-bottom:2px">스물세 농가의 이야기 읽기</a>
+        </div>
+      </section>
+    </main>
+  </sc-if>
+
+  <!-- ═══ SHOP ═══ -->
+  <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;padding:clamp(32px,5vw,64px) clamp(20px,5vw,72px);flex:1">
+      <h1 style="margin:0 0 8px;font-family:'Noto Serif KR',serif;font-weight:300;font-size:32px">쇼핑</h1>
+      <p style="margin:0 0 36px;font-size:14px;color:#6D6C61;font-weight:300">{{ shopCount }}개의 상품 · 매주 화·금 수확분 기준</p>
+      <div style="display:flex;gap:10px;margin-bottom:36px;flex-wrap:wrap">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+          <button onClick="{{ c.pick }}" style="cursor:pointer;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};padding:9px 18px;font-size:13px;letter-spacing:0.03em;font-weight:300">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#DDDACA;border:1px solid #DDDACA">
+        <sc-for list="{{ shopList }}" as="p" hint-placeholder-count="6">
+          <div style="background:#FFFEF2;padding:28px;display:flex;flex-direction:column;gap:16px" style-hover="background:#F6F4E6">
+            <div onClick="{{ p.open }}" style="cursor:pointer;aspect-ratio:4/5;background:#EDEADB;overflow:hidden">
+              <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ p.imgId }}" placeholder="{{ p.imgLabel }}" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+            </div>
+            <div onClick="{{ p.open }}" style="cursor:pointer;display:flex;flex-direction:column;gap:6px;flex:1">
+              <h3 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:400;font-size:17px">{{ p.name }}</h3>
+              <p style="margin:0;font-size:13px;color:#6D6C61;font-weight:300;line-height:1.7">{{ p.tag }}</p>
+              <p style="margin:6px 0 0;font-size:14px">{{ p.priceFmt }}</p>
+            </div>
+            <button onClick="{{ p.add }}" style="cursor:pointer;border:1px solid #333330;background:transparent;color:#333330;padding:12px;font-size:13px;letter-spacing:0.04em" style-hover="background:#333330;color:#FFFEF2">장바구니에 담기</button>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ═══ DETAIL ═══ -->
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr;border-bottom:1px solid #DDDACA;min-height:76vh">
+        <div style="background:#EDEADB;position:sticky;top:72px;height:calc(100vh - 72px);overflow:hidden">
+          <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ sel.imgId }}" placeholder="{{ sel.imgLabel }}" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+        </div>
+        <div style="padding:clamp(32px,5vw,72px);display:flex;flex-direction:column;gap:28px">
+          <a onClick="{{ goShop }}" style="cursor:pointer;font-size:13px;color:#6D6C61">← 쇼핑으로 돌아가기</a>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:12px;letter-spacing:0.14em;color:#75775E">{{ sel.catLabel }} · {{ sel.origin }}</p>
+            <h1 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(26px,2.6vw,36px);line-height:1.4">{{ sel.name }}</h1>
+            <p style="margin:0;font-size:15px;color:#6D6C61;font-weight:300;line-height:1.9">{{ sel.desc }}</p>
+          </div>
+          <div style="display:flex;flex-direction:column;border-top:1px solid #DDDACA">
+            <div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #DDDACA;font-size:14px"><span style="color:#6D6C61;font-weight:300">재배 방식</span><span>{{ sel.method }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #DDDACA;font-size:14px"><span style="color:#6D6C61;font-weight:300">수확 시기</span><span>{{ sel.harvest }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #DDDACA;font-size:14px"><span style="color:#6D6C61;font-weight:300">보관</span><span>{{ sel.keep }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid #DDDACA;font-size:14px"><span style="color:#6D6C61;font-weight:300">생산자</span><span>{{ sel.farmer }}</span></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:stretch">
+            <div style="display:flex;border:1px solid #333330">
+              <button onClick="{{ decQty }}" style="cursor:pointer;border:none;background:transparent;width:44px;font-size:16px">−</button>
+              <span style="display:flex;align-items:center;justify-content:center;width:40px;font-size:14px">{{ qty }}</span>
+              <button onClick="{{ incQty }}" style="cursor:pointer;border:none;background:transparent;width:44px;font-size:16px">+</button>
+            </div>
+            <button onClick="{{ selAdd }}" style="cursor:pointer;flex:1;border:1px solid #333330;background:#333330;color:#FFFEF2;padding:16px 22px;font-size:14px;letter-spacing:0.04em;display:flex;justify-content:space-between" style-hover="background:#75775E;border-color:#75775E"><span>장바구니에 담기</span><span>{{ sel.priceFmt }}</span></button>
+          </div>
+          <p style="margin:0;font-size:13px;color:#6D6C61;font-weight:300;line-height:1.8;border-top:1px solid #DDDACA;padding-top:20px">{{ sel.note }}</p>
+        </div>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ═══ STORY ═══ -->
+  <sc-if value="{{ isStory }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1">
+      <section style="padding:clamp(48px,7vw,96px) clamp(20px,5vw,72px);border-bottom:1px solid #DDDACA;max-width:820px">
+        <p style="margin:0 0 16px;font-size:13px;letter-spacing:0.14em;color:#75775E">생산자</p>
+        <h1 style="margin:0 0 24px;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(28px,3vw,40px);line-height:1.5">얼굴을 아는 사람의 농사</h1>
+        <p style="margin:0;font-size:15px;line-height:2;color:#6D6C61;font-weight:300">민스 파머스 마켓의 모든 상품에는 기른 사람의 이름이 적혀 있습니다. 우리는 대전과 충남의 스물세 농가를 계절마다 직접 찾아가고, 밭의 상태와 농부의 원칙을 눈으로 확인한 뒤에야 함께합니다.</p>
+      </section>
+      <sc-for list="{{ farmers }}" as="f" hint-placeholder-count="3">
+        <section style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #DDDACA">
+          <div style="aspect-ratio:4/3;background:#EDEADB;overflow:hidden">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ f.imgId }}" placeholder="{{ f.imgLabel }}" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+          </div>
+          <div style="padding:clamp(32px,5vw,72px);display:flex;flex-direction:column;justify-content:center;gap:18px">
+            <p style="margin:0;font-size:12px;letter-spacing:0.14em;color:#75775E">{{ f.region }}</p>
+            <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:400;font-size:24px">{{ f.farm }} · {{ f.name }}</h2>
+            <p style="margin:0;font-family:'Noto Serif KR',serif;font-style:italic;font-weight:300;font-size:17px;line-height:1.8;color:#4A4A3A">“{{ f.quote }}”</p>
+            <p style="margin:0;font-size:14px;line-height:1.9;color:#6D6C61;font-weight:300">{{ f.story }}</p>
+            <a onClick="{{ f.open }}" style="cursor:pointer;align-self:flex-start;font-size:13px;letter-spacing:0.05em;border-bottom:1px solid #333330;padding-bottom:2px">이야기 더 보기 →</a>
+          </div>
+        </section>
+      </sc-for>
+    </main>
+  </sc-if>
+
+  <!-- ═══ FARMER DETAIL ═══ -->
+  <sc-if value="{{ isFarmerDetail }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1">
+      <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #DDDACA;min-height:76vh">
+        <div style="background:#EDEADB;position:sticky;top:72px;height:calc(100vh - 72px);overflow:hidden">
+          <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ selFarmer.imgId }}" placeholder="{{ selFarmer.imgLabel }}" hint-size="100%,100%" style="width:100%;height:100%;display:block"></x-import>
+        </div>
+        <div style="padding:clamp(32px,5vw,72px);display:flex;flex-direction:column;gap:22px">
+          <a onClick="{{ goStory }}" style="cursor:pointer;font-size:13px;color:#6D6C61">← 농부 이야기로 돌아가기</a>
+          <p style="margin:0;font-size:12px;letter-spacing:0.14em;color:#75775E">{{ selFarmer.region }}</p>
+          <h1 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(26px,2.6vw,34px)">{{ selFarmer.farm }} · {{ selFarmer.name }}</h1>
+          <p style="margin:0;font-family:'Noto Serif KR',serif;font-style:italic;font-weight:300;font-size:18px;line-height:1.8;color:#4A4A3A">“{{ selFarmer.quote }}”</p>
+          <p style="margin:0;font-size:15px;line-height:2;color:#6D6C61;font-weight:300">{{ selFarmer.story }}</p>
+          <p style="margin:0;font-size:15px;line-height:2;color:#6D6C61;font-weight:300">{{ selFarmer.detail }}</p>
+          <a onClick="{{ goShop }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid #333330;padding:16px 22px;max-width:340px;font-size:14px;margin-top:8px" style-hover="background:#333330;color:#FFFEF2">이 농가의 상품 보기 <span>→</span></a>
+        </div>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ═══ ABOUT ═══ -->
+  <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1">
+      <section style="padding:clamp(56px,9vw,120px) clamp(20px,5vw,72px);border-bottom:1px solid #DDDACA;text-align:center">
+        <h1 style="margin:0 auto;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(28px,3.2vw,44px);line-height:1.6;max-width:22ch">가까운 땅에서 온 것이<br>가장 멀리까지 우리를 돌봅니다.</h1>
+      </section>
+      <section style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #DDDACA">
+        <div style="padding:clamp(32px,4vw,56px);border-right:1px solid #DDDACA;display:flex;flex-direction:column;gap:14px">
+          <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:30px;font-weight:300">50<span style="font-size:16px">km</span></p>
+          <p style="margin:0;font-size:14px;line-height:1.9;color:#6D6C61;font-weight:300">모든 상품은 물류센터 기준 50km 이내의 밭에서 옵니다. 이동 거리가 짧을수록 맛은 온전하고, 탄소는 적게 남습니다.</p>
+        </div>
+        <div style="padding:clamp(32px,4vw,56px);border-right:1px solid #DDDACA;display:flex;flex-direction:column;gap:14px">
+          <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:30px;font-weight:300">24<span style="font-size:16px">시간</span></p>
+          <p style="margin:0;font-size:14px;line-height:1.9;color:#6D6C61;font-weight:300">수확에서 문 앞까지 하루를 넘기지 않습니다. 냉장 창고 대신 시간표를 촘촘하게 짜는 쪽을 택했습니다.</p>
+        </div>
+        <div style="padding:clamp(32px,4vw,56px);display:flex;flex-direction:column;gap:14px">
+          <p style="margin:0;font-family:'Noto Serif KR',serif;font-size:30px;font-weight:300">23<span style="font-size:16px">농가</span></p>
+          <p style="margin:0;font-size:14px;line-height:1.9;color:#6D6C61;font-weight:300">규모보다 원칙을 보고 함께할 농가를 정합니다. 스물세 곳 모두 이름과 얼굴을 걸고 농사를 짓습니다.</p>
+        </div>
+      </section>
+      <section style="padding:clamp(48px,7vw,96px) clamp(20px,5vw,72px);max-width:760px;display:flex;flex-direction:column;gap:22px">
+        <p style="margin:0;font-size:13px;letter-spacing:0.14em;color:#75775E">우리의 약속</p>
+        <p style="margin:0;font-size:15px;line-height:2.1;color:#4A4A3A;font-weight:300">민스 파머스 마켓은 2019년 대전의 작은 직거래 장터에서 시작했습니다. 좋은 먹거리는 광고가 아니라 관계에서 온다고 믿습니다. 우리는 농부에게 제값을 치르고, 흠집 난 과일을 버리지 않으며, 계절에 없는 것을 팔지 않습니다. 느리지만 정직한 이 방식이, 당신의 식탁과 이 지역의 땅을 함께 건강하게 만든다고 생각합니다.</p>
+        <a onClick="{{ goShop }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;border:1px solid #333330;padding:16px 22px;max-width:340px;font-size:14px" style-hover="background:#333330;color:#FFFEF2">이번 주 수확물 보기 <span>→</span></a>
+      </section>
+    </main>
+  </sc-if>
+
+  <!-- ═══ CHECKOUT ═══ -->
+  <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1;display:grid;grid-template-columns:1.2fr 1fr;border-bottom:1px solid #DDDACA">
+      <div style="padding:clamp(32px,5vw,72px);display:flex;flex-direction:column;gap:32px;border-right:1px solid #DDDACA">
+        <h1 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:30px">주문하기</h1>
+        <div style="display:flex;flex-direction:column;gap:20px;max-width:480px">
+          <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#6D6C61">받는 분
+            <input placeholder="이름" style="border:1px solid #DDDACA;background:transparent;padding:14px;font-size:14px;outline-color:#75775E"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#6D6C61">연락처
+            <input placeholder="010-0000-0000" style="border:1px solid #DDDACA;background:transparent;padding:14px;font-size:14px;outline-color:#75775E"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#6D6C61">배송 주소
+            <input placeholder="주소" style="border:1px solid #DDDACA;background:transparent;padding:14px;font-size:14px;outline-color:#75775E"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#6D6C61">배송 메모
+            <textarea placeholder="부재 시 문 앞에 놓아주세요" rows="3" style="border:1px solid #DDDACA;background:transparent;padding:14px;font-size:14px;outline-color:#75775E;resize:vertical"></textarea>
+          </label>
+        </div>
+      </div>
+      <div style="padding:clamp(32px,5vw,72px);background:#F6F4E6;display:flex;flex-direction:column;gap:24px">
+        <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:400;font-size:20px">주문 내역</h2>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="2">
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #DDDACA;font-size:14px;gap:12px">
+              <span style="font-weight:300">{{ it.name }} × {{ it.qty }}</span><span>{{ it.lineFmt }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:#6D6C61"><span>배송비</span><span>{{ shipFmt }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-family:'Noto Serif KR',serif"><span>합계</span><span>{{ grandFmt }}</span></div>
+        <button onClick="{{ placeOrder }}" style="cursor:pointer;border:1px solid #333330;background:#333330;color:#FFFEF2;padding:16px 22px;font-size:14px;letter-spacing:0.04em" style-hover="background:#75775E;border-color:#75775E">{{ grandFmt }} 결제하기</button>
+        <a onClick="{{ goShop }}" style="cursor:pointer;font-size:13px;color:#6D6C61;text-align:center">계속 쇼핑하기</a>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ═══ DONE ═══ -->
+  <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+    <main style="animation:fadeUp .4s ease both;flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(48px,8vw,110px) 20px">
+      <div style="text-align:center;display:flex;flex-direction:column;gap:22px;align-items:center;max-width:520px">
+        <p style="margin:0;font-size:13px;letter-spacing:0.14em;color:#75775E">주문 완료</p>
+        <h1 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(26px,2.8vw,36px);line-height:1.6">고맙습니다.<br>밭에서 준비를 시작합니다.</h1>
+        <p style="margin:0;font-size:14px;line-height:1.9;color:#6D6C61;font-weight:300">가장 가까운 수확일에 맞춰 담아 보내드립니다. 발송이 시작되면 문자로 알려드릴게요.</p>
+        <a onClick="{{ goHome }}" style="cursor:pointer;font-size:13px;letter-spacing:0.05em;border-bottom:1px solid #333330;padding-bottom:2px">처음으로 돌아가기</a>
+      </div>
+    </main>
+  </sc-if>
+
+  <footer style="background:#333326;color:#C9C7B2;padding:clamp(40px,6vw,72px) clamp(20px,5vw,72px);margin-top:auto">
+    <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:clamp(28px,5vw,72px)">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <p style="margin:0;font-size:14px;color:#E5E3D3;font-weight:400">계절 소식 받기</p>
+        <p style="margin:0;font-size:13px;font-weight:300;line-height:1.8">매주 한 통, 밭의 소식과 이번 주 수확물을 알려드립니다.</p>
+        <div style="display:flex;border-bottom:1px solid #6D6C61;max-width:360px">
+          <input placeholder="이메일 주소" style="flex:1;border:none;background:transparent;color:#E5E3D3;padding:12px 0;font-size:14px;outline:none"></input>
+          <button style="cursor:pointer;border:none;background:transparent;color:#E5E3D3;font-size:14px">→</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;font-weight:300">
+        <p style="margin:0 0 6px;color:#E5E3D3;font-weight:400">둘러보기</p>
+        <a onClick="{{ goShop }}" style="cursor:pointer;color:#C9C7B2" style-hover="color:#FFFEF2">쇼핑</a>
+        <a onClick="{{ goStory }}" style="cursor:pointer;color:#C9C7B2" style-hover="color:#FFFEF2">생산자</a>
+        <a onClick="{{ goAbout }}" style="cursor:pointer;color:#C9C7B2" style-hover="color:#FFFEF2">브랜드</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:13px;font-weight:300">
+        <p style="margin:0 0 6px;color:#E5E3D3;font-weight:400">안내</p>
+        <p style="margin:0">화·금 수확 및 발송</p>
+        <p style="margin:0">4만 원 이상 무료 배송</p>
+        <p style="margin:0">대전 유성구 어은로 52</p>
+      </div>
+    </div>
+    <p style="margin:48px 0 0;font-size:12px;color:#8A8973;font-weight:300">© 2026 MINS Farmers Market — 대전충남 로컬푸드 직거래</p>
+  </footer>
+
+  <!-- ═══ CART DRAWER ═══ -->
+  <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeCart }}" style="position:fixed;inset:0;background:rgba(40,40,30,0.4);z-index:90"></div>
+    <aside style="position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);background:#FFFEF2;z-index:100;display:flex;flex-direction:column;border-left:1px solid #DDDACA;animation:fadeUp .25s ease both">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:22px 28px;border-bottom:1px solid #DDDACA">
+        <h2 style="margin:0;font-family:'Noto Serif KR',serif;font-weight:400;font-size:18px">장바구니 ({{ cartCount }})</h2>
+        <button onClick="{{ closeCart }}" style="cursor:pointer;border:none;background:transparent;font-size:20px;color:#6D6C61">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:8px 28px">
+        <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:14px;color:#6D6C61;font-weight:300;line-height:1.9;padding:24px 0">아직 비어 있습니다.<br>이번 주 수확물을 둘러보세요.</p>
+        </sc-if>
+        <sc-for list="{{ cartItems }}" as="it" hint-placeholder-count="2">
+          <div style="display:flex;gap:16px;padding:20px 0;border-bottom:1px solid #DDDACA">
+            <div style="width:64px;height:80px;background:#EDEADB;flex-shrink:0;overflow:hidden">
+              <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ it.imgId }}" placeholder=" " hint-size="64px,80px" style="width:100%;height:100%;display:block"></x-import>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;gap:10px">
+                <p style="margin:0;font-size:14px;font-family:'Noto Serif KR',serif">{{ it.name }}</p>
+                <button onClick="{{ it.remove }}" style="cursor:pointer;border:none;background:transparent;color:#6D6C61;font-size:13px">삭제</button>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="display:flex;border:1px solid #DDDACA">
+                  <button onClick="{{ it.dec }}" style="cursor:pointer;border:none;background:transparent;width:30px;padding:5px 0">−</button>
+                  <span style="display:flex;align-items:center;justify-content:center;width:26px;font-size:13px">{{ it.qty }}</span>
+                  <button onClick="{{ it.inc }}" style="cursor:pointer;border:none;background:transparent;width:30px;padding:5px 0">+</button>
+                </div>
+                <span style="font-size:14px">{{ it.lineFmt }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:22px 28px;border-top:1px solid #DDDACA;display:flex;flex-direction:column;gap:14px">
+        <p style="margin:0;font-size:13px;color:#75775E;font-weight:300">{{ shipMsg }}</p>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-family:'Noto Serif KR',serif"><span>소계</span><span>{{ cartTotalFmt }}</span></div>
+        <button onClick="{{ goCheckout }}" disabled="{{ cartEmpty }}" style="cursor:pointer;border:1px solid #333330;background:#333330;color:#FFFEF2;padding:16px;font-size:14px;letter-spacing:0.04em" style-hover="background:#75775E;border-color:#75775E">주문하기</button>
+      </div>
+    </aside>
+  </sc-if>
+
+  <!-- toast -->
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#333326;color:#E5E3D3;padding:13px 26px;font-size:13px;letter-spacing:0.03em;z-index:120;animation:fadeUp .3s ease both">{{ toastMsg }} — 장바구니에 담았습니다</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showBanner&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;헤더&quot;}, &quot;freeShipThreshold&quot;: {&quot;editor&quot;: &quot;int&quot;, &quot;default&quot;: 40000, &quot;min&quot;: 0, &quot;max&quot;: 100000, &quot;step&quot;: 5000, &quot;unit&quot;: &quot;원&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;배송&quot;}, &quot;heroVideoSrc&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;히어로 영상&quot;}}">
+class Component extends DCLogic {
+  state = { page: 'home', cat: 'all', selId: null, cart: [], cartOpen: false, qty: 1, toast: null, vPlaying: true, vMuted: true, vProgress: 0 };
+  videoRef = React.createRef();
+
+  componentDidMount() {
+    this._vTick = setInterval(() => {
+      const v = this.videoRef.current;
+      if (v && v.duration) this.setState({ vProgress: (v.currentTime / v.duration) * 100 });
+      if (v && this.props.heroVideoSrc && v.getAttribute('src') !== this.props.heroVideoSrc) {
+        v.setAttribute('src', this.props.heroVideoSrc);
+        v.play().catch(() => {});
+      }
+    }, 250);
+  }
+  componentWillUnmount() { clearInterval(this._vTick); clearTimeout(this._tt); }
+
+  toggleVideoPlay = () => {
+    const v = this.videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play(); this.setState({ vPlaying: true }); } else { v.pause(); this.setState({ vPlaying: false }); }
+  };
+  toggleVideoMute = () => {
+    const v = this.videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    this.setState({ vMuted: v.muted });
+  };
+  toggleVideoFullscreen = () => {
+    const v = this.videoRef.current;
+    if (!v) return;
+    if (v.requestFullscreen) v.requestFullscreen();
+  };
+
+  products = [
+    { id: 'carrot', name: '금산 흙당근 1kg', tag: '씻지 않아 오래 가는, 단단하고 달큰한 당근', price: 4800, cat: 'veg', origin: '충남 금산', farmer: '흙내음농원 이정순', method: '무농약 노지 재배', harvest: '주문 후 당일 수확', keep: '흙째 신문지에 싸서 냉장', desc: '흙을 털지 않고 보내드립니다. 흙이 당근의 수분을 지켜, 냉장고에서 삼 주를 견딥니다. 껍질째 구우면 단맛이 가장 짙어집니다.', note: '세척하지 않은 상태로 배송됩니다. 흠집이 있는 개체가 섞일 수 있으나 맛에는 차이가 없습니다.' },
+    { id: 'strawberry', name: '논산 설향 딸기 500g', tag: '아침에 딴 것만 담는, 완숙 수확 딸기', price: 9500, cat: 'veg', origin: '충남 논산', farmer: '별빛농장 김현우', method: '무농약 시설 재배', harvest: '발송일 아침 수확', keep: '냉장 보관, 3일 이내 섭취', desc: '유통을 위해 덜 익혀 따지 않습니다. 밭에서 완전히 붉어진 것만 아침에 골라 담아 그날 보냅니다. 향이 상자를 열기 전에 먼저 도착합니다.', note: '완숙 수확 특성상 무름에 약합니다. 받으신 날 드시는 것을 권합니다.' },
+    { id: 'tomato', name: '부여 방울토마토 750g', tag: '껍질이 얇고 과즙이 많은 대추형 방울토마토', price: 7200, cat: 'veg', origin: '충남 부여', farmer: '늘봄농원 박성재', method: '유기농 인증 시설 재배', harvest: '주 2회 수확', keep: '실온 보관 후 냉장', desc: '물을 아껴 기른 토마토는 맛이 진합니다. 늘봄농원은 수확량 대신 당도를 택했습니다. 꼭지째 실온에 하루 두면 향이 한 번 더 올라옵니다.', note: '꼭지가 마른 개체는 숙성이 더 진행된 것으로, 먼저 드시면 좋습니다.' },
+    { id: 'greens', name: '서천 모둠 쌈채소 400g', tag: '그날 아침 밭에서 자른 여섯 가지 잎채소', price: 5400, cat: 'veg', origin: '충남 서천', farmer: '바다들녘 정미영', method: '무농약 노지 재배', harvest: '발송일 아침 수확', keep: '젖은 키친타월과 함께 냉장', desc: '상추, 겨자잎, 쌈케일, 로메인, 치커리, 그리고 그 주에 가장 좋은 잎 하나. 계절에 따라 구성이 조금씩 바뀝니다.', note: '잎채소 특성상 계절별 구성이 달라집니다. 상세 구성은 동봉된 카드에 적어드립니다.' },
+    { id: 'apple', name: '예산 부사 사과 1.5kg', tag: '서리를 두 번 맞고 딴, 늦수확 사과', price: 12000, cat: 'veg', origin: '충남 예산', farmer: '산아래과수원 최동혁', method: '저농약 GAP 인증', harvest: '11월 늦수확분 저온 보관', keep: '냉장 보관', desc: '서리를 맞은 사과는 스스로 당을 끌어올립니다. 산아래과수원은 남들보다 이 주 늦게 땁니다. 그 이 주가 이 사과의 맛입니다.', note: '외관 등급이 아닌 맛 기준으로 선별합니다. 크기가 고르지 않을 수 있습니다.' },
+    { id: 'campagne', name: '통밀 캄파뉴', tag: '충남산 통밀과 자가 배양 발효종으로 구운 빵', price: 6500, cat: 'bake', origin: '대전 유성', farmer: '민스 베이커리', method: '국산 통밀 · 천연 발효', harvest: '발송일 새벽 제빵', keep: '실온 2일, 이후 냉동', desc: '설탕과 버터 없이 밀가루, 물, 소금, 시간으로만 굽습니다. 충남 밀의 구수함이 그대로 남아, 씹을수록 단맛이 올라옵니다.', note: '보존제가 없어 여름철에는 도착 즉시 소분 냉동을 권합니다.' },
+    { id: 'scone', name: '쌀누룩 스콘 4입', tag: '논산 쌀누룩으로 부드럽게 발효한 스콘', price: 8000, cat: 'bake', origin: '대전 유성', farmer: '민스 베이커리', method: '국산 쌀누룩 발효', harvest: '발송일 새벽 제빵', keep: '실온 2일, 이후 냉동', desc: '버터를 줄이는 대신 쌀누룩의 힘을 빌렸습니다. 겉은 바삭하고 속은 촉촉하며, 은은한 발효 향이 뒤에 남습니다.', note: '플레인 2개, 계절 과일 2개 구성입니다.' },
+    { id: 'nurungji', name: '유기농 현미 누룽지 300g', tag: '가마솥에 눌러 만든, 구수한 비상식량', price: 5500, cat: 'bake', origin: '충남 홍성', farmer: '들녘정미소 오태준', method: '유기농 현미 100%', harvest: '도정 후 일주일 내 가공', keep: '실온 밀봉 보관', desc: '갓 도정한 현미로만 눌러 굽습니다. 끓이면 죽이 되고, 그냥 먹으면 과자가 됩니다. 늦은 밤을 위한 가장 정직한 한 끼.', note: '유탕 처리하지 않았습니다. 원재료는 유기농 현미와 물이 전부입니다.' },
+    { id: 'box-s', name: '제철 꾸러미 · 소', tag: '1-2인 가구를 위한 그 주의 수확 6-7종', price: 29000, cat: 'box', origin: '대전충남 23농가', farmer: '민스 파머스 마켓', method: '주간 수확분 큐레이션', harvest: '매주 화요일 구성 확정', keep: '품목별 안내 카드 동봉', desc: '그 주에 가장 좋은 것들로 꾸립니다. 채소 4-5종, 과일 1종, 빵 또는 가공품 1종. 무엇이 올지 모르는 것이 이 상자의 즐거움입니다.', note: '알레르기 품목은 주문 메모에 남겨주시면 구성에서 제외합니다.' },
+    { id: 'box-l', name: '제철 꾸러미 · 대', tag: '3-4인 가구를 위한 그 주의 수확 9-11종', price: 45000, cat: 'box', origin: '대전충남 23농가', farmer: '민스 파머스 마켓', method: '주간 수확분 큐레이션', harvest: '매주 화요일 구성 확정', keep: '품목별 안내 카드 동봉', desc: '한 주의 식탁을 책임지는 구성입니다. 채소 6-7종, 과일 2종, 빵과 가공품. 일주일 치 장보기를 이 상자 하나로 대신합니다.', note: '알레르기 품목은 주문 메모에 남겨주시면 구성에서 제외합니다.' },
+    { id: 'subs', name: '꾸러미 4주 정기배송', tag: '매주 금요일, 소 꾸러미가 문 앞에', price: 108000, cat: 'box', origin: '대전충남 23농가', farmer: '민스 파머스 마켓', method: '주간 수확분 큐레이션', harvest: '매주 금요일 발송', keep: '회차별 안내 카드 동봉', desc: '4주 동안 매주 금요일 소 꾸러미를 보내드립니다. 회당 27,000원으로, 계절이 바뀌는 속도를 식탁에서 가장 먼저 느끼게 됩니다.', note: '건너뛰기와 일시정지는 발송 이틀 전까지 가능합니다.' },
+    { id: 'jam', name: '딸기 콩피튀르 220g', tag: '설향 딸기와 유기농 설탕, 두 가지로만', price: 9800, cat: 'bake', origin: '충남 논산', farmer: '별빛농장 김현우', method: '무첨가 저당 잼', harvest: '딸기철 소량 생산', keep: '개봉 후 냉장', desc: '펙틴도 산도조절제도 없이, 딸기와 설탕을 오래 끓여 만듭니다. 당도를 40%까지 낮춰 딸기 맛이 앞에 섭니다.', note: '저당 잼 특성상 개봉 후 3주 이내 섭취를 권합니다.' }
+  ];
+
+  farmers = [
+    { region: '충남 금산', farm: '흙내음농원', name: '이정순', quote: '농사는 서두른다고 되는 일이 아니에요. 기다리는 게 일의 절반입니다.', story: '삼십 년째 같은 밭에서 당근과 뿌리채소를 기릅니다. 화학비료 대신 직접 만든 퇴비를 쓰고, 수확은 언제나 주문이 들어온 다음에 합니다.', detail: '처음 밭을 물려받았을 때는 관행농이었습니다. 십 년쯤 지나 몸이 먼저 신호를 보냈고, 그때부터 흙을 다시 살리는 데 시간을 썼습니다. 지금은 지렁이가 돌아온 밭에서, 당근이 스스로 단맛을 낼 때까지 기다리는 법을 압니다. 자식들에게는 못 물려줘도, 이 흙은 다음 계절에 물려주고 싶습니다.' },
+    { region: '충남 논산', farm: '별빛농장', name: '김현우', quote: '딸기는 새벽에 따야 해요. 해가 뜨면 향이 절반은 날아갑니다.', story: '귀농 팔 년 차. 유통 기한 대신 맛을 기준으로 수확 시기를 정합니다. 덜 익은 딸기는 어떤 값을 쳐줘도 따지 않는 것이 원칙입니다.', detail: '도시에서 회사를 다니다 아버지의 밭을 물려받으며 농사를 시작했습니다. 처음 몇 해는 수확량에 쫓겨 딸기를 일찍 땄고, 그게 늘 마음에 걸렸습니다. 지금은 새벽 네 시에 나가 완전히 익은 것만 고릅니다. 손해를 보는 날도 있지만, 향이 살아있는 딸기를 보내는 쪽을 택했습니다.' },
+    { region: '충남 서천', farm: '바다들녘', name: '정미영', quote: '잎을 보면 알아요. 급하게 키운 잎은 빛깔부터 다릅니다.', story: '바닷바람이 닿는 노지에서 잎채소를 기릅니다. 천천히 자란 잎은 조직이 단단해 쉽게 무르지 않고, 씹는 맛이 살아 있습니다.', detail: '서천 앞바다가 보이는 밭에서 이십 년째 잎채소를 기릅니다. 비료를 많이 쓰면 잎이 크고 빠르게 자라지만, 대신 잎이 얇고 금세 물러집니다. 정미영 농부는 대신 시간을 들입니다. 씨앗을 고르는 일부터 잎을 자르는 각도까지, 모든 과정에 그만의 방식이 있습니다.' }
+  ];
+
+  catDefs = [ { key: 'all', label: '전체' }, { key: 'veg', label: '채소·과일' }, { key: 'bake', label: '베이커리·간식' }, { key: 'box', label: '꾸러미·정기배송' } ];
+  catLabel(k) { return (this.catDefs.find(c => c.key === k) || {}).label || ''; }
+  fmt(n) { return n.toLocaleString('ko-KR') + '원'; }
+
+  go(page) { this.setState({ page, cartOpen: false }); window.scrollTo(0, 0); }
+  addToCart(id, qty) {
+    this.setState(s => {
+      const cart = s.cart.slice();
+      const ex = cart.find(c => c.id === id);
+      if (ex) ex.qty += qty; else cart.push({ id, qty });
+      return { cart };
+    });
+    const p = this.products.find(p => p.id === id);
+    clearTimeout(this._tt);
+    this.setState({ toast: p.name });
+    this._tt = setTimeout(() => this.setState({ toast: null }), 2200);
+  }
+  changeQty(id, d) {
+    this.setState(s => {
+      const cart = s.cart.map(c => c.id === id ? { ...c, qty: c.qty + d } : c).filter(c => c.qty > 0);
+      return { cart };
+    });
+  }
+
+  deco(p) {
+    return { ...p, priceFmt: this.fmt(p.price), catLabel: this.catLabel(p.cat), imgId: 'img-' + p.id, imgLabel: p.name + ' 사진',
+      open: () => this.setState({ page: 'detail', selId: p.id, qty: 1 }, () => window.scrollTo(0, 0)),
+      add: () => this.addToCart(p.id, 1) };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const gridCols = this.props.gridColumns ?? '3';
+    const thr = this.props.freeShipThreshold ?? 40000;
+    const all = this.products.map(p => this.deco(p));
+    const sel = all.find(p => p.id === s.selId) || all[0];
+    const cartItems = s.cart.map(c => {
+      const p = all.find(p => p.id === c.id);
+      return { ...p, qty: c.qty, lineFmt: this.fmt(p.price * c.qty),
+        inc: () => this.changeQty(c.id, 1), dec: () => this.changeQty(c.id, -1), remove: () => this.changeQty(c.id, -c.qty) };
+    });
+    const total = s.cart.reduce((t, c) => t + this.products.find(p => p.id === c.id).price * c.qty, 0);
+    const ship = total === 0 || total >= thr ? 0 : 3500;
+    const cats = this.catDefs.map(c => ({ label: c.label, pick: () => this.setState({ cat: c.key }),
+      bg: s.cat === c.key ? '#333330' : 'transparent', color: s.cat === c.key ? '#FFFEF2' : '#333330', border: s.cat === c.key ? '#333330' : '#DDDACA' }));
+    const shopList = all.filter(p => s.cat === 'all' || p.cat === s.cat);
+    return {
+      showBanner: this.props.showBanner ?? true,
+      videoRef: this.videoRef,
+      heroVideoSrc: this.props.heroVideoSrc || '',
+      hasHeroVideo: !!this.props.heroVideoSrc,
+      heroImgDisplay: this.props.heroVideoSrc ? 'none' : 'block',
+      playIcon: s.vPlaying ? '❙❙' : '▶',
+      muteIcon: s.vMuted ? '🔇' : '🔊',
+      videoProgress: s.vProgress,
+      toggleVideoPlay: this.toggleVideoPlay, toggleVideoMute: this.toggleVideoMute, toggleVideoFullscreen: this.toggleVideoFullscreen,
+      isHome: s.page === 'home', isShop: s.page === 'shop', isDetail: s.page === 'detail',
+      isStory: s.page === 'story', isAbout: s.page === 'about', isCheckout: s.page === 'checkout', isDone: s.page === 'done',
+      goHome: () => this.go('home'), goShop: () => this.go('shop'), goStory: () => this.go('story'),
+      goAbout: () => this.go('about'), goBox: () => { this.setState({ cat: 'box' }); this.go('shop'); },
+      featured: all.slice(0, 4), shopList, shopCount: shopList.length, cats,
+      sel, qty: s.qty, incQty: () => this.setState(x => ({ qty: x.qty + 1 })), decQty: () => this.setState(x => ({ qty: Math.max(1, x.qty - 1) })),
+      selAdd: () => this.addToCart(sel.id, s.qty),
+      farmers: this.farmers.map((f, i) => ({ ...f, imgId: 'img-farmer-' + i, imgLabel: f.name + ' 농부 사진',
+        open: () => this.setState({ page: 'farmerDetail', selFarmerIdx: i }, () => window.scrollTo(0, 0)) })),
+      isFarmerDetail: s.page === 'farmerDetail',
+      selFarmer: (() => { const i = s.selFarmerIdx || 0; const f = this.farmers[i]; return { ...f, imgId: 'img-farmer-' + i, imgLabel: f.name + ' 농부 사진' }; })(),
+      cartOpen: s.cartOpen, openCart: () => this.setState({ cartOpen: true }), closeCart: () => this.setState({ cartOpen: false }),
+      cartItems, cartEmpty: cartItems.length === 0,
+      cartCount: s.cart.reduce((t, c) => t + c.qty, 0),
+      cartTotalFmt: this.fmt(total),
+      shipFmt: ship === 0 ? '무료' : this.fmt(ship),
+      grandFmt: this.fmt(total + ship),
+      shipMsg: total >= thr ? '무료 배송으로 보내드립니다.' : this.fmt(thr - total) + ' 더 담으면 무료 배송입니다.',
+      goCheckout: () => { if (s.cart.length) this.go('checkout'); },
+      placeOrder: () => { this.setState({ cart: [] }); this.go('done'); },
+      toastOn: !!s.toast, toastMsg: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Button, TextInput } from '@vapor-ui/core'
 import { login as loginApi } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 
@@ -10,53 +9,125 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  // Vapor TextInput은 값 자체를 넘겨주므로, 필드명을 지정해 form 객체의 해당 키만 갱신
-  const handleChange = (field) => (value) => setForm({ ...form, [field]: value })
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     try {
       const res = await loginApi(form)
-      login(res.data) // AuthContext에 사용자 정보 저장
+      login(res.data)
       navigate('/')
     } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.')
     }
   }
 
-  return (
-    <div style={styles.container}>
-      <h2>로그인</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <TextInput
-          type="email"
-          placeholder="이메일"
-          value={form.email}
-          onValueChange={handleChange('email')}
-          required
-        />
-        <TextInput
-          type="password"
-          placeholder="비밀번호"
-          value={form.password}
-          onValueChange={handleChange('password')}
-          required
-        />
-        {error && <p style={styles.error}>{error}</p>}
-        <Button type="submit" colorPalette="primary">
-          로그인
-        </Button>
-      </form>
-      <p>
-        계정이 없으신가요? <Link to="/signup">회원가입</Link>
-      </p>
-    </div>
-  )
-}
+  const inputStyle = {
+    border: '1px solid #dddaca',
+    background: 'transparent',
+    padding: '14px',
+    fontSize: 14,
+    outline: 'none',
+    width: '100%',
+    fontFamily: "'Noto Sans KR', sans-serif",
+    fontWeight: 300,
+  }
 
-const styles = {
-  container: { maxWidth: '400px', margin: '4rem auto', textAlign: 'center' },
-  form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  error: { color: 'red', margin: 0 },
+  return (
+    <main
+      style={{
+        animation: 'fadeUp .4s ease both',
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'clamp(48px,8vw,110px) 20px',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 32,
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <p
+            style={{ margin: '0 0 12px', fontSize: 12, letterSpacing: '0.14em', color: '#75775e' }}
+          >
+            계정
+          </p>
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: "'Noto Serif KR', serif",
+              fontWeight: 300,
+              fontSize: 'clamp(28px,3vw,36px)',
+              lineHeight: 1.4,
+            }}
+          >
+            로그인
+          </h1>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <input
+            type="email"
+            placeholder="이메일"
+            required
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            placeholder="비밀번호"
+            required
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            style={inputStyle}
+          />
+          {error && <p style={{ margin: 0, fontSize: 13, color: '#e63946' }}>{error}</p>}
+          <button
+            type="submit"
+            style={{
+              cursor: 'pointer',
+              border: '1px solid #333330',
+              background: '#333330',
+              color: '#fffef2',
+              padding: '16px',
+              fontSize: 14,
+              letterSpacing: '0.04em',
+              marginTop: 8,
+            }}
+          >
+            로그인
+          </button>
+        </form>
+
+        <p
+          style={{
+            margin: 0,
+            textAlign: 'center',
+            fontSize: 13,
+            color: '#6d6c61',
+            fontWeight: 300,
+          }}
+        >
+          계정이 없으신가요?{' '}
+          <Link
+            to="/signup"
+            style={{
+              color: '#333330',
+              borderBottom: '1px solid #333330',
+              paddingBottom: 1,
+            }}
+          >
+            회원가입
+          </Link>
+        </p>
+      </div>
+    </main>
+  )
 }
