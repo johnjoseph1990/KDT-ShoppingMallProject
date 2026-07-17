@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
@@ -10,6 +10,7 @@ export default function CartDrawer() {
   const { user } = useAuth()
   const { cartItems, cartOpen, closeCart, cartCount, cartTotal, changeQty, removeItem } = useCart()
   const navigate = useNavigate()
+  const location = useLocation()
 
   if (!cartOpen) return null
 
@@ -272,7 +273,7 @@ export default function CartDrawer() {
             <button
               onClick={() => {
                 closeCart()
-                navigate('/login')
+                navigate('/login', { state: { from: location } })
               }}
               style={{
                 cursor: 'pointer',

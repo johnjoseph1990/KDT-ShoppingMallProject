@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { getProducts } from '../api/products'
 import { addToCart } from '../api/cart'
 import { useAuth } from '../context/AuthContext'
@@ -20,6 +20,9 @@ export default function ProductListPage() {
   const [cat, setCat] = useState('all')
   const [page, setPage] = useState(0)
   const navigate = useNavigate()
+  // useLocation(): 현재 페이지 경로 정보를 담고 있음. 로그인 후 "원래 있던 페이지"로
+  // 돌아오게 하려면, 로그인으로 넘어가기 전에 이 위치 정보를 함께 들고 가야 한다.
+  const location = useLocation()
   const { user } = useAuth()
   const { refreshCart, showToast } = useCart()
 
@@ -38,7 +41,9 @@ export default function ProductListPage() {
   const handleAddToCart = async (e, product) => {
     e.stopPropagation()
     if (!user) {
-      navigate('/login')
+      alert('로그인 후 담을 수 있어요')
+      // state: { from: location } — 로그인 페이지에 "로그인 성공하면 여기로 돌아와야 해"라고 알려주는 값
+      navigate('/login', { state: { from: location } })
       return
     }
     try {

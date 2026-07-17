@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { login as loginApi } from '../api/auth'
 import { useAuth } from '../context/AuthContext'
 
@@ -8,6 +8,10 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  // 다른 페이지에서 로그인이 필요해 이동해 온 경우, location.state.from에
+  // "돌아갈 위치"가 담겨 있다 (PrivateRoute, 장바구니 담기 등에서 전달).
+  const from = location.state?.from
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -15,7 +19,8 @@ export default function LoginPage() {
     try {
       const res = await loginApi(form)
       login(res.data)
-      navigate('/')
+      // from이 있으면 원래 보던 페이지로, 없으면 홈으로 이동
+      navigate(from || '/', { replace: true })
     } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.')
     }
@@ -69,6 +74,13 @@ export default function LoginPage() {
           >
             로그인
           </h1>
+          {/* from이 있다는 건 클릭이 아니라 보호된 페이지 접근 시도로 인해
+              자동으로 이 페이지에 오게 됐다는 뜻 — 이유를 알려준다 */}
+          {from && (
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#75775e' }}>
+              계속하려면 로그인이 필요합니다.
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

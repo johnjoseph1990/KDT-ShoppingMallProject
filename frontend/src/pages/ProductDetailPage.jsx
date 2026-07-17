@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { getProduct } from '../api/products'
 import { addToCart } from '../api/cart'
 import { getReviews, createReview, deleteReview } from '../api/reviews'
@@ -11,6 +11,7 @@ const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { refreshCart, showToast } = useCart()
 
@@ -32,7 +33,8 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      navigate('/login')
+      alert('로그인 후 담을 수 있어요')
+      navigate('/login', { state: { from: location } })
       return
     }
     try {
