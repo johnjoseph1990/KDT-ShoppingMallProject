@@ -158,8 +158,9 @@ export default function Navbar() {
               안내만 보여준다. */}
           <SearchIconBtn />
 
-          {/* 장바구니 버튼은 장바구니 사이드바를 여는 역할을 한다. */}
-          <OutlineBtn onClick={openCart}>장바구니 ({cartCount})</OutlineBtn>
+          {/* 장바구니 버튼은 장바구니 사이드바를 여는 역할을 한다.
+              카트 아이콘 + 담긴 개수 배지로 표시한다. */}
+          <CartIconBtn count={cartCount} onClick={openCart} />
         </nav>
 
         {/* 모바일에서만 보이는 햄버거 버튼이다. 누르면 메뉴 열기/닫기가 바뀐다. */}
@@ -341,6 +342,71 @@ function OutlineBtn({ onClick, children }) {
       }}
     >
       {children}
+    </button>
+  )
+}
+
+// CartIconBtn은 장바구니를 여는 버튼을 "카트 아이콘 + 개수 배지" 형태로 보여준다.
+// count(담긴 개수)가 1 이상일 때만 아이콘 오른쪽 위에 작은 숫자 배지를 띄운다.
+function CartIconBtn({ count, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      // 아이콘 텍스트가 없으므로 스크린리더용 설명을 넣는다. 개수도 함께 읽어주면 더 친절하다.
+      aria-label={`장바구니, 담긴 상품 ${count}개`}
+      style={{
+        // position: relative — 안쪽 배지(absolute)의 위치 기준점이 된다.
+        position: 'relative',
+        cursor: 'pointer',
+        background: 'transparent',
+        border: 'none',
+        padding: '7px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        color: '#333330',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = '#333330')}
+    >
+      {/* 카트 아이콘: 바퀴 두 개(circle) + 카트 몸통(path) */}
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="9" cy="20" r="1" />
+        <circle cx="18" cy="20" r="1" />
+        <path d="M2 3h3l2.4 12.4a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 7H6" />
+      </svg>
+
+      {/* 개수 배지: 담긴 게 있을 때만 아이콘 오른쪽 위에 작은 원으로 표시 */}
+      {count > 0 && (
+        <span
+          style={{
+            position: 'absolute',
+            top: -2,
+            right: -4,
+            minWidth: 16,
+            height: 16,
+            padding: '0 4px',
+            borderRadius: 8,
+            background: '#333330',
+            color: '#fffef2',
+            fontSize: 10,
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {count}
+        </span>
+      )}
     </button>
   )
 }
