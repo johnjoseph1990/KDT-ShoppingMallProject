@@ -266,11 +266,30 @@ function SearchIconBtn() {
         cursor: 'pointer',
         background: 'transparent',
         border: 'none',
-        fontSize: 16,
         padding: '7px 4px',
+        // display:flex + 정렬로, 안의 svg가 버튼 높이에 딱 맞게 세로 가운데 정렬된다
+        display: 'flex',
+        alignItems: 'center',
+        color: '#333330',
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = '#333330')}
     >
-      🔍
+      {/* 인라인 SVG 돋보기 아이콘. 이모지와 달리 stroke 색/두께를 CSS로 제어할 수 있어
+          사이트의 얇은 획·뉴트럴 톤과 통일된다. stroke="currentColor"로 두면 위 button의
+          color 값을 그대로 따라가므로, hover 시 색이 함께 바뀐다. */}
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <line x1="16" y1="16" x2="21" y2="21" />
+      </svg>
     </button>
   )
 }
