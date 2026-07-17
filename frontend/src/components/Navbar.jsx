@@ -197,9 +197,10 @@ export default function Navbar() {
               fontSize: 15,
             }}
           >
-            {/* 탐색 메뉴 묶음 (데스크톱과 동일하게 먼저 보여준다) */}
+            {/* 탐색 메뉴 묶음 (데스크톱과 동일하게 먼저 보여준다).
+                variant="bar"로 활성 행 왼쪽에 세로 막대를 표시한다. */}
             {primaryLinks.map((l) => (
-              <NavItem key={l.to} to={l.to} onClick={closeMenu}>
+              <NavItem key={l.to} to={l.to} onClick={closeMenu} variant="bar">
                 <div style={{ padding: '12px 0' }}>{l.label}</div>
               </NavItem>
             ))}
@@ -209,7 +210,7 @@ export default function Navbar() {
 
             {/* 계정/구매 메뉴 묶음. 톤을 옅게 둬서 위쪽 탐색 메뉴와 구분되게 한다. */}
             {accountLinks.map((l) => (
-              <NavItem key={l.to} to={l.to} onClick={closeMenu}>
+              <NavItem key={l.to} to={l.to} onClick={closeMenu} variant="bar">
                 <div style={{ padding: '12px 0', fontSize: 13, color: '#6d6c61' }}>{l.label}</div>
               </NavItem>
             ))}
@@ -243,18 +244,29 @@ export default function Navbar() {
 
 // NavItem은 "현재 페이지 표시가 되는 메뉴 링크"를 만드는 작은 컴포넌트다.
 // NavLink에 style을 함수로 넘기면 ({ isActive }) => 스타일 형태로 활성 여부를 받는다.
-// isActive가 true(= 지금 이 메뉴의 페이지에 있음)이면 밑줄을 그어 현재 위치를 표시한다.
+// variant로 활성 표시 모양을 고른다:
+//   'underline' (데스크톱): 가로로 놓인 메뉴라 글자 아래 밑줄이 자연스럽다.
+//   'bar' (모바일): 세로로 쌓인 행 메뉴라 행 왼쪽의 세로 막대가 더 잘 맞는다.
 // onClick을 받을 수 있게 해두면, 모바일처럼 메뉴를 닫아야 할 때 재사용하기 좋다.
-function NavItem({ to, onClick, children }) {
+function NavItem({ to, onClick, variant = 'underline', children }) {
   return (
     <NavLink
       to={to}
       onClick={onClick}
-      style={({ isActive }) => ({
-        // 활성 상태면 밑줄, 아니면 투명한 밑줄(자리는 유지해 글자가 밀리지 않게 함).
-        borderBottom: isActive ? '1px solid #333330' : '1px solid transparent',
-        paddingBottom: 3,
-      })}
+      style={({ isActive }) =>
+        variant === 'bar'
+          ? {
+              // 모바일: 활성 행 왼쪽에 세로 막대. 비활성은 투명 막대로 자리만 유지해 글자가 안 밀림.
+              display: 'block',
+              borderLeft: isActive ? '2px solid #333330' : '2px solid transparent',
+              paddingLeft: 12,
+            }
+          : {
+              // 데스크톱: 활성 항목 글자 아래 밑줄.
+              borderBottom: isActive ? '1px solid #333330' : '1px solid transparent',
+              paddingBottom: 3,
+            }
+      }
       onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
       onMouseLeave={(e) => (e.currentTarget.style.color = '')}
     >
