@@ -66,3 +66,20 @@ h3 {
   flex-direction: column;
   isolation: isolate;
 }
+
+/* 인라인 스타일은 미디어쿼리를 지원하지 않으므로, 모바일 네비게이션
+   전환에는 예외적으로 클래스 기반 CSS를 사용한다 (Navbar.jsx) */
+.navbar-desktop-nav {
+  display: flex;
+}
+.navbar-hamburger-btn {
+  display: none;
+}
+@media (max-width: 768px) {
+  .navbar-desktop-nav {
+    display: none;
+  }
+  .navbar-hamburger-btn {
+    display: flex;
+  }
+}
