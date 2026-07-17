@@ -86,8 +86,10 @@ export default function ProductDetailPage() {
 
   return (
     <main style={{ animation: 'fadeUp .4s ease both', flex: 1 }}>
-      {/* ─── 2단 레이아웃: 왼쪽 스티키 이미지 / 오른쪽 정보 ─── */}
+      {/* ─── 2단 레이아웃: 왼쪽 스티키 이미지 / 오른쪽 정보 ───
+          mobile-1col: 모바일에서는 위아래로 쌓아 좁은 화면에서도 정보/버튼이 안 잘리게 함 */}
       <div
+        className="mobile-1col"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.1fr 1fr',
@@ -95,8 +97,10 @@ export default function ProductDetailPage() {
           minHeight: '76vh',
         }}
       >
-        {/* 왼쪽: 스크롤 시 뷰포트에 고정되는 상품 이미지 */}
+        {/* 왼쪽: 스크롤 시 뷰포트에 고정되는 상품 이미지.
+            hero-sticky-image: 모바일에서는 고정 해제 + 높이 축소 (화면 독차지 방지) */}
         <div
+          className="hero-sticky-image"
           style={{
             background: '#edeadb',
             position: 'sticky',

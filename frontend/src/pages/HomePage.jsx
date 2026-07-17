@@ -156,6 +156,7 @@ export default function HomePage() {
         </div>
 
         <div
+          className="mobile-2col"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4,1fr)',
@@ -183,6 +184,7 @@ export default function HomePage() {
 
       {/* ─── 정기배송 배너 ─── */}
       <section
+        className="mobile-1col"
         style={{
           background: '#333326',
           color: '#e5e3d3',

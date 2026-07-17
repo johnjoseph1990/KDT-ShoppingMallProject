@@ -48,8 +48,9 @@ export default function AboutPage() {
         </h1>
       </section>
 
-      {/* 통계 3열 */}
+      {/* 통계 3열 (모바일에서는 1열로 쌓임) */}
       <section
+        className="mobile-1col"
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',

@@ -46,6 +46,7 @@ export default function StoryPage() {
     return (
       <main style={{ animation: 'fadeUp .4s ease both', flex: 1 }}>
         <div
+          className="mobile-1col"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -55,6 +56,7 @@ export default function StoryPage() {
         >
           {/* 이미지 자리 (실제 사진으로 교체 가능) */}
           <div
+            className="hero-sticky-image"
             style={{
               background: '#edeadb',
               position: 'sticky',
@@ -188,6 +190,7 @@ export default function StoryPage() {
       {FARMERS.map((f, i) => (
         <section
           key={i}
+          className="mobile-1col"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',

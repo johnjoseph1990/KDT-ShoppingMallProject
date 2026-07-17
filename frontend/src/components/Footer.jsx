@@ -14,6 +14,7 @@ export default function Footer() {
       }}
     >
       <div
+        className="mobile-1col"
         style={{
           display: 'grid',
           gridTemplateColumns: '1.4fr 1fr 1fr',

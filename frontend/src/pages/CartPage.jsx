@@ -50,6 +50,7 @@ export default function CartPage() {
     /* form이 양쪽 패널을 감싸 왼쪽 입력값 검증 후 오른쪽 버튼에서 제출 가능 */
     <form
       onSubmit={handleOrder}
+      className="mobile-1col"
       style={{
         animation: 'fadeUp .4s ease both',
         flex: 1,

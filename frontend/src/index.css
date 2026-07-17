@@ -82,4 +82,21 @@ h3 {
   .navbar-hamburger-btn {
     display: flex;
   }
+
+  /* 다단 그리드를 모바일에서 접는 유틸리티 클래스.
+     인라인 style의 gridTemplateColumns를 !important로 덮어쓴다
+     (클래스의 !important는 인라인 스타일보다 우선순위가 높다). */
+  .mobile-1col {
+    grid-template-columns: 1fr !important;
+  }
+  .mobile-2col {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* 상품 상세·농부 이야기의 "화면 전체 높이 스티키 이미지"는 모바일에서
+     세로로 쌓일 때 화면을 다 차지하지 않도록 높이를 줄이고 고정을 해제한다. */
+  .hero-sticky-image {
+    position: static !important;
+    height: 44vh !important;
+  }
 }

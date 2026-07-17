@@ -89,6 +89,7 @@ export default function ProductListPage() {
         <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>상품이 없습니다.</p>
       ) : (
         <div
+          className="mobile-2col"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3,1fr)',
