@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+// Link: 단순 이동용 (브랜드 로고에 사용)
+// NavLink: 현재 URL과 to가 일치하면 활성 상태를 알려주는 Link의 특수 버전 (메뉴 항목에 사용)
+import { useNavigate, Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { logout as logoutApi } from '../api/auth'
@@ -239,18 +241,25 @@ export default function Navbar() {
   )
 }
 
-// NavItem은 "페이지 이동만 하는 메뉴"를 만드는 작은 컴포넌트다.
+// NavItem은 "현재 페이지 표시가 되는 메뉴 링크"를 만드는 작은 컴포넌트다.
+// NavLink에 style을 함수로 넘기면 ({ isActive }) => 스타일 형태로 활성 여부를 받는다.
+// isActive가 true(= 지금 이 메뉴의 페이지에 있음)이면 밑줄을 그어 현재 위치를 표시한다.
 // onClick을 받을 수 있게 해두면, 모바일처럼 메뉴를 닫아야 할 때 재사용하기 좋다.
 function NavItem({ to, onClick, children }) {
   return (
-    <Link
+    <NavLink
       to={to}
       onClick={onClick}
+      style={({ isActive }) => ({
+        // 활성 상태면 밑줄, 아니면 투명한 밑줄(자리는 유지해 글자가 밀리지 않게 함).
+        borderBottom: isActive ? '1px solid #333330' : '1px solid transparent',
+        paddingBottom: 3,
+      })}
       onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
       onMouseLeave={(e) => (e.currentTarget.style.color = '')}
     >
       {children}
-    </Link>
+    </NavLink>
   )
 }
 
