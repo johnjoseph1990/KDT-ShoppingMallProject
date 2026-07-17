@@ -17,6 +17,7 @@ import OrderDetailPage from './pages/OrderDetailPage'
 import AdminPage from './pages/AdminPage'
 import StoryPage from './pages/StoryPage'
 import AboutPage from './pages/AboutPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
   return (
@@ -68,6 +69,8 @@ export default function App() {
                   </PrivateRoute>
                 }
               />
+              {/* path="*": 위 어떤 라우트와도 일치하지 않는 나머지 모든 경로 — 항상 마지막에 둔다 */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </div>
           <Footer />
