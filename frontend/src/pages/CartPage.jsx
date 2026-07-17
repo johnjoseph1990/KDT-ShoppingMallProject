@@ -48,6 +48,7 @@ export default function CartPage() {
 
   return (
     /* form이 양쪽 패널을 감싸 왼쪽 입력값 검증 후 오른쪽 버튼에서 제출 가능 */
+    /* mobile-1col: 배송정보 폼(왼쪽)+주문요약(오른쪽) 2단 → 모바일에서 1단으로 접힘 */
     <form
       onSubmit={handleOrder}
       className="mobile-1col"

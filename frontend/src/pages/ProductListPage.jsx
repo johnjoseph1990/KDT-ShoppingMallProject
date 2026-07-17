@@ -88,6 +88,8 @@ export default function ProductListPage() {
       {products.length === 0 ? (
         <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>상품이 없습니다.</p>
       ) : (
+        // mobile-2col: 데스크톱은 아래 인라인값(3열)을 쓰고,
+        // 768px 이하에서는 index.css의 미디어쿼리가 2열로 덮어쓴다
         <div
           className="mobile-2col"
           style={{

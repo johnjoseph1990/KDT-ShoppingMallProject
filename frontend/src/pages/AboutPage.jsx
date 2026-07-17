@@ -48,7 +48,7 @@ export default function AboutPage() {
         </h1>
       </section>
 
-      {/* 통계 3열 (모바일에서는 1열로 쌓임) */}
+      {/* 통계 3열. mobile-1col: 768px 이하에서 1열로 쌓임 (index.css) */}
       <section
         className="mobile-1col"
         style={{

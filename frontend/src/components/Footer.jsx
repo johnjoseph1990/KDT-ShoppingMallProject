@@ -13,6 +13,7 @@ export default function Footer() {
         marginTop: 'auto',
       }}
     >
+      {/* mobile-1col: 뉴스레터+메뉴 3단 → 모바일에서 1단으로 접힘 (index.css) */}
       <div
         className="mobile-1col"
         style={{

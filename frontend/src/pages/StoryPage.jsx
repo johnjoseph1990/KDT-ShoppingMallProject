@@ -45,6 +45,7 @@ export default function StoryPage() {
     const f = FARMERS[selectedIdx]
     return (
       <main style={{ animation: 'fadeUp .4s ease both', flex: 1 }}>
+        {/* mobile-1col: 이미지+본문 2단 → 모바일 1단. hero-sticky-image는 아래 이미지에 적용 */}
         <div
           className="mobile-1col"
           style={{
@@ -54,7 +55,8 @@ export default function StoryPage() {
             minHeight: '76vh',
           }}
         >
-          {/* 이미지 자리 (실제 사진으로 교체 가능) */}
+          {/* 이미지 자리 (실제 사진으로 교체 가능).
+              hero-sticky-image: 모바일에서 고정 해제 + 높이 축소 (화면 독차지 방지) */}
           <div
             className="hero-sticky-image"
             style={{
@@ -188,6 +190,7 @@ export default function StoryPage() {
       </section>
 
       {FARMERS.map((f, i) => (
+        // mobile-1col: 농부별 이미지+소개 2단 → 모바일에서 1단으로 접힘
         <section
           key={i}
           className="mobile-1col"

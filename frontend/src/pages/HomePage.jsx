@@ -155,6 +155,7 @@ export default function HomePage() {
           </span>
         </div>
 
+        {/* mobile-2col: 데스크톱 4열 → 768px 이하에서 2열로 접힘 (index.css) */}
         <div
           className="mobile-2col"
           style={{
@@ -183,6 +184,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── 정기배송 배너 ─── */}
+      {/* mobile-1col: 정기배송 배너의 좌우 2단 → 모바일에서 위아래 1단으로 접힘 */}
       <section
         className="mobile-1col"
         style={{
