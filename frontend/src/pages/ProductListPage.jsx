@@ -207,17 +207,22 @@ function ProductCard({ product, onOpen, onAdd }) {
         <p style={{ margin: '6px 0 0', fontSize: 14 }}>{fmt(product.price)}</p>
       </div>
 
-      {/* 장바구니 버튼 */}
+      {/* 장바구니 버튼 — 텍스트 대신 카트 아이콘만 표시.
+          텍스트가 없으므로 스크린리더용으로 aria-label을 반드시 붙인다.
+          SVG는 stroke="currentColor"라 버튼 color를 따라가고, hover 시 함께 반전된다. */}
       <button
         onClick={onAdd}
+        aria-label="장바구니에 담기"
         style={{
           cursor: 'pointer',
           border: '1px solid #333330',
           background: 'transparent',
           color: '#333330',
           padding: '12px',
-          fontSize: 13,
-          letterSpacing: '0.04em',
+          // 아이콘을 버튼 가운데로 정렬
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = '#333330'
@@ -228,7 +233,21 @@ function ProductCard({ product, onOpen, onAdd }) {
           e.currentTarget.style.color = '#333330'
         }}
       >
-        장바구니에 담기
+        {/* 카트 아이콘: 바퀴 두 개(circle) + 카트 몸통(path) */}
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="9" cy="20" r="1" />
+          <circle cx="18" cy="20" r="1" />
+          <path d="M2 3h3l2.4 12.4a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 7H6" />
+        </svg>
       </button>
     </div>
   )
