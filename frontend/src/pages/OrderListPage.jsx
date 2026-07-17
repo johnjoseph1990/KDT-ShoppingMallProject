@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { getOrders } from '../api/orders'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
@@ -13,7 +13,6 @@ const STATUS_LABEL = {
 
 export default function OrderListPage() {
   const [orders, setOrders] = useState([])
-  const navigate = useNavigate()
 
   useEffect(() => {
     getOrders()
@@ -48,17 +47,16 @@ export default function OrderListPage() {
           style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}
         >
           <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>주문 내역이 없습니다.</p>
-          <span
-            onClick={() => navigate('/shop')}
+          <Link
+            to="/shop"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               borderBottom: '1px solid #333330',
               paddingBottom: 1,
             }}
           >
             쇼핑하러 가기
-          </span>
+          </Link>
         </div>
       ) : (
         <div
@@ -70,11 +68,10 @@ export default function OrderListPage() {
           }}
         >
           {orders.map((order) => (
-            <div
+            <Link
               key={order.id}
-              onClick={() => navigate(`/orders/${order.id}`)}
+              to={`/orders/${order.id}`}
               style={{
-                cursor: 'pointer',
                 padding: '24px 0',
                 borderBottom: '1px solid #dddaca',
                 display: 'flex',
@@ -106,7 +103,7 @@ export default function OrderListPage() {
                   {STATUS_LABEL[order.status] ?? order.status}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

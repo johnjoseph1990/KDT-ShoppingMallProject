@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { logout as logoutApi } from '../api/auth'
@@ -47,11 +47,11 @@ export default function Navbar() {
           height: 72,
         }}
       >
-        {/* 브랜드 로고 */}
-        <span
-          onClick={() => navigate('/')}
+        {/* 브랜드 로고 — Link를 쓰면 실제 <a> 태그가 되어 우클릭 "새 탭에서 열기", 접근성,
+            SEO가 모두 자연스럽게 동작한다 (span+onClick은 마우스 클릭만 가능) */}
+        <Link
+          to="/"
           style={{
-            cursor: 'pointer',
             fontFamily: "'Noto Serif KR', serif",
             fontSize: 20,
             letterSpacing: '0.02em',
@@ -60,7 +60,7 @@ export default function Navbar() {
           }}
         >
           MINS <em style={{ fontWeight: 300 }}>Farmers Market</em>
-        </span>
+        </Link>
 
         {/* 네비게이션 링크 */}
         <nav
@@ -73,23 +73,21 @@ export default function Navbar() {
             alignItems: 'center',
           }}
         >
-          <NavLink onClick={() => navigate('/shop')}>쇼핑</NavLink>
-          <NavLink onClick={() => navigate('/story')}>농부 이야기</NavLink>
-          <NavLink onClick={() => navigate('/about')}>브랜드</NavLink>
+          <NavItem to="/shop">쇼핑</NavItem>
+          <NavItem to="/story">농부 이야기</NavItem>
+          <NavItem to="/about">브랜드</NavItem>
 
           {user ? (
             <>
-              <NavLink onClick={() => navigate('/orders')}>주문내역</NavLink>
-              {user.role === 'ADMIN' && (
-                <NavLink onClick={() => navigate('/admin')}>관리자</NavLink>
-              )}
+              <NavItem to="/orders">주문내역</NavItem>
+              {user.role === 'ADMIN' && <NavItem to="/admin">관리자</NavItem>}
               <span style={{ fontSize: 13, color: '#6d6c61' }}>{user.name}님</span>
               <OutlineBtn onClick={handleLogout}>로그아웃</OutlineBtn>
             </>
           ) : (
             <>
-              <NavLink onClick={() => navigate('/login')}>로그인</NavLink>
-              <NavLink onClick={() => navigate('/signup')}>회원가입</NavLink>
+              <NavItem to="/login">로그인</NavItem>
+              <NavItem to="/signup">회원가입</NavItem>
             </>
           )}
 
@@ -101,26 +99,35 @@ export default function Navbar() {
   )
 }
 
-function NavLink({ onClick, children }) {
+// 순수 이동만 하는 링크는 <Link>로 만든다 (react-router-dom이 export하는
+// NavLink와 이름이 겹치지 않도록 NavItem으로 명명). onClick은 필수는 아니지만
+// 받을 수 있게 열어둬서, 모바일 메뉴에서 "링크 클릭 시 메뉴 닫기" 같은 용도로 쓸 수 있다.
+function NavItem({ to, onClick, children }) {
   return (
-    <span
+    <Link
+      to={to}
       onClick={onClick}
-      style={{ cursor: 'pointer' }}
       onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
       onMouseLeave={(e) => (e.currentTarget.style.color = '')}
     >
       {children}
-    </span>
+    </Link>
   )
 }
 
+// 로그아웃/장바구니 열기는 단순 이동이 아니라 부수 효과가 있는 동작이므로
+// <a> 대신 진짜 <button>을 쓴다. 브라우저 기본 버튼 스타일(테두리/배경 등)을
+// 리셋해줘야 기존 디자인과 동일하게 보인다.
 function OutlineBtn({ onClick, children }) {
   return (
-    <span
+    <button
       onClick={onClick}
       style={{
         cursor: 'pointer',
         border: '1px solid #333330',
+        background: 'transparent',
+        color: 'inherit',
+        fontFamily: 'inherit',
         padding: '7px 16px',
         fontSize: 13,
         userSelect: 'none',
@@ -130,11 +137,11 @@ function OutlineBtn({ onClick, children }) {
         e.currentTarget.style.color = '#fffef2'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = ''
-        e.currentTarget.style.color = ''
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.color = 'inherit'
       }}
     >
       {children}
-    </span>
+    </button>
   )
 }
