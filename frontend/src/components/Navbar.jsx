@@ -4,41 +4,60 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { logout as logoutApi } from '../api/auth'
 
-/* 모든 페이지 최상단에 고정되는 헤더 네비게이션 */
+// 이 파일은 화면 맨 위에 항상 보이는 메뉴(네비게이션 바)를 만드는 React 컴포넌트다.
+// React에서는 이런 화면 조각을 "컴포넌트"라고 부르고, 함수처럼 작성한다.
 export default function Navbar() {
+  // useAuth()는 로그인한 사용자 정보와 로그아웃 함수를 가져오는 커스텀 훅이다.
+  // 커스텀 훅은 여러 컴포넌트에서 공통으로 쓰는 상태/함수를 쉽게 꺼내 쓰게 해준다.
   const { user, logout } = useAuth()
+  // useCart()는 장바구니 개수와 장바구니를 여는 함수를 가져온다.
   const { cartCount, openCart } = useCart()
+  // useNavigate()는 페이지를 코드로 이동시키는 함수(navigate)를 얻을 때 사용한다.
   const navigate = useNavigate()
-  // 모바일 화면에서 햄버거 버튼을 눌렀을 때 드롭다운 메뉴가 열려있는지 여부
+  // useState는 "화면에서 바뀌는 값"을 저장할 때 사용한다.
+  // 여기서는 모바일 메뉴가 열려 있는지 닫혀 있는지 기억한다.
   const [menuOpen, setMenuOpen] = useState(false)
+  // 메뉴를 닫는 동작을 여러 곳에서 재사용하려고 함수로 분리했다.
   const closeMenu = () => setMenuOpen(false)
 
+  // 로그아웃 버튼을 눌렀을 때 실행되는 함수다.
+  // 1) 서버에 로그아웃 요청
+  // 2) 로컬 로그인 상태 제거
+  // 3) 로그인 페이지로 이동
   const handleLogout = async () => {
     await logoutApi()
     logout()
     navigate('/login')
   }
 
-  // 데스크톱 네비게이션과 모바일 드롭다운이 같은 링크 목록을 공유하도록
-  // 배열로 뽑아둔다 (로그인 상태에 따라 항목이 달라짐)
-  const navLinks = [
+  // "무엇을 둘러볼지"를 결정하는 콘텐츠 탐색 메뉴(primary nav)다.
+  // 로그인 여부와 상관없이 항상 같은 항목을 보여준다.
+  const primaryLinks = [
     { to: '/shop', label: '쇼핑' },
     { to: '/story', label: '농부 이야기' },
     { to: '/about', label: '브랜드' },
-    ...(user
-      ? [
-          { to: '/orders', label: '주문내역' },
-          ...(user.role === 'ADMIN' ? [{ to: '/admin', label: '관리자' }] : []),
-        ]
-      : [
-          { to: '/login', label: '로그인' },
-          { to: '/signup', label: '회원가입' },
-        ]),
   ]
+
+  // "내 계정/구매 흐름"을 담당하는 유틸리티 메뉴(utility nav)다.
+  // primaryLinks와 성격이 다르므로 배열을 따로 두고, 화면에서도 구분선으로 분리해 보여준다.
+  const accountLinks = user
+    ? [
+        // "마이페이지"라고 이름 붙였지만 실제로는 주문 목록(/orders) 페이지로 연결된다.
+        // 주소록 등 별도의 마이페이지 기능은 아직 없고, 지금은 로그인한 사용자의
+        // 진입점 역할만 한다 (추후 마이페이지가 별도로 생기면 그때 라우트를 나눈다).
+        { to: '/orders', label: '마이페이지' },
+        // 관리자만 관리자 페이지를 볼 수 있게 role을 확인한다.
+        ...(user.role === 'ADMIN' ? [{ to: '/admin', label: '관리자' }] : []),
+      ]
+    : [
+        // 로그인하지 않았으면 로그인/회원가입 메뉴를 보여준다.
+        { to: '/login', label: '로그인' },
+        { to: '/signup', label: '회원가입' },
+      ]
 
   return (
     <>
-      {/* 공지 배너 */}
+      {/* 상단 공지 배너: 사이트 전체에서 공통으로 보이는 안내 문구다. */}
       <div
         style={{
           background: '#333326',
@@ -53,7 +72,7 @@ export default function Navbar() {
         대전·충남 농가에서 매주 화요일과 금요일에 수확한 것들이 도착합니다 — 4만 원 이상 무료 배송
       </div>
 
-      {/* 스티키 헤더 */}
+      {/* 헤더는 스크롤해도 화면 상단에 붙어 있도록 sticky로 설정한다. */}
       <header
         style={{
           position: 'sticky',
@@ -68,8 +87,8 @@ export default function Navbar() {
           height: 72,
         }}
       >
-        {/* 브랜드 로고 — Link를 쓰면 실제 <a> 태그가 되어 우클릭 "새 탭에서 열기", 접근성,
-            SEO가 모두 자연스럽게 동작한다 (span+onClick은 마우스 클릭만 가능) */}
+        {/* Link는 react-router-dom이 제공하는 이동용 컴포넌트다.
+            일반 <a>처럼 보이지만, 새로고침 없이 페이지 이동을 처리한다. */}
         <Link
           to="/"
           style={{
@@ -83,31 +102,65 @@ export default function Navbar() {
           MINS <em style={{ fontWeight: 300 }}>Farmers Market</em>
         </Link>
 
-        {/* 데스크톱 네비게이션 — 768px 이하에서는 index.css의 미디어쿼리로 숨겨짐 */}
+        {/* 데스크톱용 메뉴 영역이다. 화면이 작아지면 CSS 미디어쿼리로 숨겨진다.
+            바깥쪽 gap(40)을 안쪽 그룹들의 gap(각 20)보다 크게 둬서, "탐색 메뉴 묶음"과
+            "계정 메뉴 묶음"이 한 덩어리가 아니라 서로 다른 그룹으로 보이게 한다. */}
         <nav
           className="navbar-desktop-nav"
           style={{
-            gap: 34,
+            gap: 28,
             fontSize: 14,
             fontWeight: 300,
             letterSpacing: '0.03em',
             alignItems: 'center',
           }}
         >
-          {navLinks.map((l) => (
-            <NavItem key={l.to} to={l.to}>
-              {l.label}
-            </NavItem>
-          ))}
+          {/* 탐색 메뉴 묶음: 무엇을 둘러볼지 결정하는 콘텐츠 링크들 */}
+          <div style={{ display: 'flex', gap: 34, alignItems: 'center' }}>
+            {primaryLinks.map((l) => (
+              <NavItem key={l.to} to={l.to}>
+                {l.label}
+              </NavItem>
+            ))}
+          </div>
 
-          {user && <span style={{ fontSize: 13, color: '#6d6c61' }}>{user.name}님</span>}
-          {user && <OutlineBtn onClick={handleLogout}>로그아웃</OutlineBtn>}
+          {/* 두 그룹을 나누는 세로 구분선 */}
+          <span aria-hidden="true" style={{ width: 1, height: 18, background: '#dddaca' }} />
 
-          {/* 장바구니 버튼 */}
+          {/* 계정/구매 메뉴 묶음: 로그인·회원가입·주문내역처럼 "내 계정" 성격의 링크들.
+              색을 약간 옅게(#6d6c61) 둬서 탐색 메뉴보다 톤을 한 단계 낮춘다. */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 20,
+              alignItems: 'center',
+              fontSize: 13,
+              color: '#6d6c61',
+            }}
+          >
+            {accountLinks.map((l) => (
+              <NavItem key={l.to} to={l.to}>
+                {l.label}
+              </NavItem>
+            ))}
+
+            {/* 로그인한 경우에만 사용자 이름을 보여준다. */}
+            {user && <span>{user.name}님</span>}
+            {/* 로그인한 경우에만 로그아웃 버튼을 보여준다. */}
+            {user && <OutlineBtn onClick={handleLogout}>로그아웃</OutlineBtn>}
+          </div>
+
+          {/* 검색 아이콘 자리만 미리 배치해둔다. 지금은 상품이 8개뿐이라 검색 기능
+              자체는 우선순위가 낮지만, 나중에 상품이 늘어났을 때 네비게이션 레이아웃을
+              다시 흔들지 않도록 자리를 먼저 잡아둔다. 클릭하면 아직 준비 중이라는
+              안내만 보여준다. */}
+          <SearchIconBtn />
+
+          {/* 장바구니 버튼은 장바구니 사이드바를 여는 역할을 한다. */}
           <OutlineBtn onClick={openCart}>장바구니 ({cartCount})</OutlineBtn>
         </nav>
 
-        {/* 햄버거 버튼 — 768px 이하에서만 보임 (index.css) */}
+        {/* 모바일에서만 보이는 햄버거 버튼이다. 누르면 메뉴 열기/닫기가 바뀐다. */}
         <button
           className="navbar-hamburger-btn"
           onClick={() => setMenuOpen((open) => !open)}
@@ -124,8 +177,8 @@ export default function Navbar() {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        {/* 모바일 드롭다운 메뉴. header가 position:sticky라 absolute 자식의 기준점이 되므로
-            top:100%(헤더 바로 아래)로 두면 스크롤해도 항상 헤더 바로 밑에 붙어있는다. */}
+        {/* 모바일 드롭다운 메뉴다.
+            menuOpen이 true일 때만 화면에 나타난다. */}
         {menuOpen && (
           <div
             style={{
@@ -142,15 +195,33 @@ export default function Navbar() {
               fontSize: 15,
             }}
           >
-            {navLinks.map((l) => (
+            {/* 탐색 메뉴 묶음 (데스크톱과 동일하게 먼저 보여준다) */}
+            {primaryLinks.map((l) => (
               <NavItem key={l.to} to={l.to} onClick={closeMenu}>
                 <div style={{ padding: '12px 0' }}>{l.label}</div>
               </NavItem>
             ))}
 
+            {/* 가로 구분선으로 탐색 메뉴와 계정 메뉴를 분리한다 */}
+            <div style={{ borderTop: '1px solid #dddaca', margin: '4px 0' }} />
+
+            {/* 계정/구매 메뉴 묶음. 톤을 옅게 둬서 위쪽 탐색 메뉴와 구분되게 한다. */}
+            {accountLinks.map((l) => (
+              <NavItem key={l.to} to={l.to} onClick={closeMenu}>
+                <div style={{ padding: '12px 0', fontSize: 13, color: '#6d6c61' }}>{l.label}</div>
+              </NavItem>
+            ))}
+
+            {/* 검색은 아직 준비 중이지만, 자리는 데스크톱과 동일하게 모바일에도 둔다 */}
+            <div style={{ padding: '12px 0' }}>
+              <SearchIconBtn />
+            </div>
+
+            {/* 로그인 상태라면 사용자 이름을 아래쪽에 다시 보여준다. */}
             {user && (
               <div style={{ padding: '12px 0', fontSize: 13, color: '#6d6c61' }}>{user.name}님</div>
             )}
+            {/* 모바일에서 로그아웃하면 메뉴를 먼저 닫고 로그아웃 처리한다. */}
             {user && (
               <OutlineBtn
                 onClick={() => {
@@ -168,9 +239,8 @@ export default function Navbar() {
   )
 }
 
-// 순수 이동만 하는 링크는 <Link>로 만든다 (react-router-dom이 export하는
-// NavLink와 이름이 겹치지 않도록 NavItem으로 명명). onClick은 필수는 아니지만
-// 받을 수 있게 열어둬서, 모바일 메뉴에서 "링크 클릭 시 메뉴 닫기" 같은 용도로 쓸 수 있다.
+// NavItem은 "페이지 이동만 하는 메뉴"를 만드는 작은 컴포넌트다.
+// onClick을 받을 수 있게 해두면, 모바일처럼 메뉴를 닫아야 할 때 재사용하기 좋다.
 function NavItem({ to, onClick, children }) {
   return (
     <Link
@@ -184,9 +254,29 @@ function NavItem({ to, onClick, children }) {
   )
 }
 
-// 로그아웃/장바구니 열기는 단순 이동이 아니라 부수 효과가 있는 동작이므로
-// <a> 대신 진짜 <button>을 쓴다. 브라우저 기본 버튼 스타일(테두리/배경 등)을
-// 리셋해줘야 기존 디자인과 동일하게 보인다.
+// SearchIconBtn은 검색 기능이 아직 없는 상태에서 자리만 미리 잡아두는 버튼이다.
+// 상품이 몇 개 안 될 때는 검색의 가치가 낮지만, 나중에 상품이 늘어나 실제로
+// 검색을 붙일 때 네비게이션 레이아웃을 다시 건드리지 않아도 되게 하기 위함이다.
+function SearchIconBtn() {
+  return (
+    <button
+      onClick={() => alert('검색 기능은 준비 중입니다')}
+      aria-label="검색"
+      style={{
+        cursor: 'pointer',
+        background: 'transparent',
+        border: 'none',
+        fontSize: 16,
+        padding: '7px 4px',
+      }}
+    >
+      🔍
+    </button>
+  )
+}
+
+// OutlineBtn은 링크가 아니라 "동작을 실행하는 버튼"을 만들 때 쓰는 컴포넌트다.
+// 로그아웃, 장바구니 열기처럼 페이지 이동보다 기능 실행이 중요할 때 사용한다.
 function OutlineBtn({ onClick, children }) {
   return (
     <button
