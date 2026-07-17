@@ -163,22 +163,28 @@ export default function Navbar() {
           <CartIconBtn count={cartCount} onClick={openCart} />
         </nav>
 
-        {/* 모바일에서만 보이는 햄버거 버튼이다. 누르면 메뉴 열기/닫기가 바뀐다. */}
-        <button
-          className="navbar-hamburger-btn"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-label="메뉴 열기"
-          style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 22,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          {menuOpen ? '✕' : '☰'}
-        </button>
+        {/* 모바일 전용 우측 액션 묶음: 장바구니 아이콘 + 햄버거 버튼.
+            데스크톱 네비게이션 안에 있는 장바구니는 모바일에서 숨겨지므로,
+            모바일에서도 장바구니를 열 수 있게 헤더 바에 아이콘을 하나 둔다.
+            이 묶음 전체를 navbar-mobile-actions로 데스크톱에서는 숨긴다. */}
+        <div className="navbar-mobile-actions" style={{ alignItems: 'center', gap: 4 }}>
+          <CartIconBtn count={cartCount} onClick={openCart} />
+          <button
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label="메뉴 열기"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+        </div>
 
         {/* 모바일 드롭다운 메뉴다.
             menuOpen이 true일 때만 화면에 나타난다. */}

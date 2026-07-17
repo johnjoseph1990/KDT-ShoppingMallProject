@@ -72,14 +72,15 @@ h3 {
 .navbar-desktop-nav {
   display: flex;
 }
-.navbar-hamburger-btn {
+/* 모바일 전용 우측 액션(장바구니+햄버거) 묶음. 데스크톱에서는 숨긴다. */
+.navbar-mobile-actions {
   display: none;
 }
 @media (max-width: 768px) {
   .navbar-desktop-nav {
     display: none;
   }
-  .navbar-hamburger-btn {
+  .navbar-mobile-actions {
     display: flex;
   }
 
