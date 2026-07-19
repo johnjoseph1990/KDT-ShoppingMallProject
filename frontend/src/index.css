@@ -1,103 +1,172 @@
+/* ========================================
+   📌 CSS 전역 리셋 (모든 요소에 동일하게 적용)
+   ======================================== */
+
+/* 모든 HTML 요소(*, 가상 요소 ::before/::after 포함)에 border-box 적용
+   → box-sizing: border-box가 뭐냐면, padding과 border를 width에 포함시킨다는 뜻
+   → 예: width: 100px, padding: 10px → 실제 크기는 100px (padding이 안에 포함됨)
+   → (border-box 없으면 padding이 추가되어서 100px + 20px = 120px가 된다) */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* ========================================
+   🎨 HTML, BODY 기본 스타일 (전체 페이지 배경, 폰트)
+   ======================================== */
+
 html,
 body {
-  margin: 0;
-  padding: 0;
-  background: #fffef2;
-  color: #333330;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 15px;
-  font-weight: 300;
-  line-height: 1.7;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  margin: 0;  /* HTML 기본 margin 제거 (8px) */
+  padding: 0; /* HTML 기본 padding 제거 */
+  background: #fffef2;  /* 배경색: 아주 연한 베이지 (흰색에 가까움) */
+  color: #333330;  /* 텍스트 기본색: 거의 검은색에 가까운 갈색 */
+  font-family: 'Noto Sans KR', sans-serif;  /* 한글 폰트 설정 (Noto Sans KR 없으면 sans-serif로 대체) */
+  font-size: 15px;  /* 기본 폰트 크기 */
+  font-weight: 300;  /* 폰트 굵기: 300 = 얇은 글씨 (normal은 400) */
+  line-height: 1.7;  /* 줄 간격: 1.7배 (텍스트 가독성 증가) */
+  /* 아래 두 줄: 브라우저별 폰트 렌더링을 부드럽게 만듦 (Mac/Windows 호환) */
+  -webkit-font-smoothing: antialiased;  /* Safari 등 webkit 브라우저 */
+  -moz-osx-font-smoothing: grayscale;  /* Firefox Mac */
 }
 
+/* ========================================
+   🔗 링크(a) 스타일
+   ======================================== */
+
 a {
-  color: #333330;
-  text-decoration: none;
+  color: #333330;  /* 링크색: 기본색과 동일 (밑줄 없음) */
+  text-decoration: none;  /* 링크 밑줄 제거 */
 }
 a:hover {
-  color: #75775e;
+  color: #75775e;  /* 마우스 올렸을 때: 올리브색으로 변경 */
 }
+
+/* ========================================
+   📝 폼 요소들 (버튼, 입력창, 텍스트박스 등)
+   ======================================== */
 
 button,
 input,
 textarea,
 select {
+  /* 폼 요소도 전역 font-family를 상속하도록 강제
+     (기본값으로 시스템 폰트를 쓰기 때문에 명시적으로 설정 필요) */
   font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* ========================================
+   ✨ 마우스로 텍스트를 드래그해서 선택했을 때의 스타일
+   ======================================== */
+
 ::selection {
-  background: #75775e;
-  color: #fffef2;
+  background: #75775e;  /* 선택된 텍스트 배경: 올리브색 */
+  color: #fffef2;  /* 선택된 텍스트 글씨색: 밝은 베이지 */
 }
 
+/* ========================================
+   📄 문단(p) 및 제목(h1, h2, h3) 기본 마진 제거
+   ======================================== */
+
 p {
-  margin: 0;
+  margin: 0;  /* 문단의 기본 margin(16px) 제거 (디자인 일관성 위해) */
 }
 
 h1,
 h2,
 h3 {
-  margin: 0;
+  margin: 0;  /* 제목의 기본 margin 제거 */
 }
 
+/* ========================================
+   🎬 애니메이션 정의 (@keyframes)
+   ======================================== */
+
+/* fadeUp 애니메이션: 요소가 투명하면서 위에서 나타나는 효과
+   사용처: 페이지 로드 시 요소들이 부드럽게 위에서 떨어져 내려오며 나타나는 효과
+   호출: CSS에서 animation: fadeUp 0.5s ease-out; 처럼 사용 */
 @keyframes fadeUp {
   from {
-    opacity: 0;
-    transform: translateY(12px);
+    opacity: 0;  /* 시작: 투명 (안 보임) */
+    transform: translateY(12px);  /* 시작: Y축으로 12px 아래에 위치 */
   }
   to {
-    opacity: 1;
-    transform: none;
+    opacity: 1;  /* 끝: 불투명 (완전히 보임) */
+    transform: none;  /* 끝: 원래 위치로 복원 */
   }
 }
 
+/* ========================================
+   🌳 React 진입점 (#root)
+   ======================================== */
+
+/* #root는 index.html의 <div id="root"></div>를 가리킴
+   React가 이 곳에 모든 컴포넌트를 렌더링한다 */
 #root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  isolation: isolate;
+  width: 100%;  /* 화면 전체 너비 */
+  min-height: 100vh;  /* 최소 높이: 뷰포트 높이(화면 높이) — 페이지가 짧아도 화면 꽉 채움 */
+  display: flex;  /* Flexbox 활성화 (1차원 레이아웃) */
+  flex-direction: column;  /* 세로 방향 정렬 (위→아래) */
+  isolation: isolate;  /* z-index 새로운 쌓임 문맥(stacking context) 생성 (모달 등이 뒤로 안 들어가게 함) */
 }
 
-/* 인라인 스타일은 미디어쿼리를 지원하지 않으므로, 모바일 네비게이션
-   전환에는 예외적으로 클래스 기반 CSS를 사용한다 (Navbar.jsx) */
+/* ========================================
+   📱 반응형 디자인 (미디어 쿼리)
+   ======================================== */
+
+/* 기본: 데스크톱(PC) 화면 — 가로로 긴 네비게이션 보임 */
 .navbar-desktop-nav {
-  display: flex;
+  display: flex;  /* 네비게이션 버튼들이 가로 일렬로 배치 */
 }
-/* 모바일 전용 우측 액션(장바구니+햄버거) 묶음. 데스크톱에서는 숨긴다. */
+
+/* 모바일 전용 우측 액션(장바구니+햄버거 메뉴) 묶음
+   기본적으로 숨김. 모바일에서만 나타남 */
 .navbar-mobile-actions {
-  display: none;
+  display: none;  /* 기본: 안 보임 */
 }
+
+/* @media 쿼리: 화면이 768px 이하일 때 (태블릿, 모바일)
+   ① 가로로 긴 데스크톱 네비게이션 숨김
+   ② 모바일용 햄버거 메뉴 보임
+   ③ 그리드 레이아웃을 모바일에 맞게 재조정
+*/
 @media (max-width: 768px) {
   .navbar-desktop-nav {
-    display: none;
+    display: none;  /* 데스크톱 네비 숨김 */
   }
   .navbar-mobile-actions {
-    display: flex;
+    display: flex;  /* 모바일 액션(햄버거) 보임 */
   }
 
-  /* 다단 그리드를 모바일에서 접는 유틸리티 클래스.
-     인라인 style의 gridTemplateColumns를 !important로 덮어쓴다
-     (클래스의 !important는 인라인 스타일보다 우선순위가 높다). */
+  /* ====== 그리드 레이아웃 모바일 대응 ====== */
+  
+  /* 모바일: 1열 그리드 (상품 목록을 세로로 1개씩)
+     !important: 인라인 style의 gridTemplateColumns를 강제로 덮어씀
+     (클래스의 !important가 인라인 스타일보다 우선순위 높음) */
   .mobile-1col {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr !important;  /* 1fr = 사용 가능한 전체 너비를 1로 분할 = 100% */
   }
+  
+  /* 모바일: 2열 그리드 (상품 목록을 세로로 2개씩)
+     각 항목이 화면의 절반 너비씩 차지 */
   .mobile-2col {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr !important;  /* 2개씩 50%씩 */
   }
 
-  /* 상품 상세·농부 이야기의 "화면 전체 높이 스티키 이미지"는 모바일에서
-     세로로 쌓일 때 화면을 다 차지하지 않도록 높이를 줄이고 고정을 해제한다. */
+  /* ====== 이미지 스티키 위치 조정 ====== */
+  
+  /* 상품 상세·농부 이야기의 "화면 전체 높이 스티키 이미지" 모바일 대응
+     (스티키: 스크롤해도 특정 위치에 고정되는 효과)
+     
+     문제: 데스크톱에서는 position: sticky/fixed로 우측에 고정되지만,
+           모바일에서는 화면 공간이 좁아서 이미지가 너무 커진다
+     
+     해결: ① position을 static(고정 해제)으로 바꿈
+           ② 높이를 줄임 (44vh = 뷰포트 높이의 44%)
+  */
   .hero-sticky-image {
-    position: static !important;
-    height: 44vh !important;
+    position: static !important;  /* 고정 위치 해제 → 정상 흐름대로 스크롤됨 */
+    height: 44vh !important;  /* 높이: 뷰포트의 44% 정도로 축소 */
   }
 }
