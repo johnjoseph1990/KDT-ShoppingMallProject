@@ -9,6 +9,7 @@ import com.kdt.shoppingmall.repository.ProductRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,23 @@ public class ProductService {
 
   public ProductResponse findById(Long id) {
     return toResponse(getProductOrThrow(id));
+  }
+
+  public List<ProductResponse> getRecommendations(Long productId) {
+    Product product = getProductOrThrow(productId);
+    List<String> tagNames = product.getTags().stream().map(ProductTag::getName).toList();
+
+    // 태그가 하나도 없는 상품이면 추천할 근거가 없으니 빈 리스트 반환
+    if (tagNames.isEmpty()) {
+      return List.of();
+    }
+
+    // 같은 태그를 가진 다른 상품을 최대 4개까지 조회해서 응답 형태로 변환
+    return productRepository
+        .findByTagNamesExcludingProduct(tagNames, productId, PageRequest.of(0, 4))
+        .stream()
+        .map(this::toResponse)
+        .toList();
   }
 
   @Transactional

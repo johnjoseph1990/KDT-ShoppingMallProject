@@ -1,6 +1,7 @@
 package com.kdt.shoppingmall.repository;
 
 import com.kdt.shoppingmall.domain.product.Product;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 """,
       countQuery = "SELECT COUNT(p) FROM Product p")
   Page<Product> findAllOrderByAverageRatingDesc(Pageable pageable);
+
+  // 같은 태그(tagNames)를 하나라도 가진 다른 상품(excludeId 제외)을 찾는다.
+  // DISTINCT: 한 상품이 tagNames 중 여러 개를 동시에 가지고 있어도 한 번만 나오게 함.
+  @Query(
+      """
+            SELECT DISTINCT p FROM Product p
+            JOIN p.tags t
+            WHERE t.name IN :tagNames AND p.id <> :excludeId
+            """)
+  List<Product> findByTagNamesExcludingProduct(
+      @Param("tagNames") List<String> tagNames,
+      @Param("excludeId") Long excludeId,
+      Pageable pageable);
 }

@@ -130,7 +130,19 @@ class OrderServiceTest {
     Page<Order> page = new PageImpl<>(List.of(order));
     given(orderRepository.findAll(pageable)).willReturn(page);
 
-    Page<OrderResponse> responses = orderService.getAllOrders(pageable);
+    Page<OrderResponse> responses = orderService.getAllOrders(null, pageable);
+
+    assertThat(responses.getTotalElements()).isEqualTo(1);
+  }
+
+  @Test
+  void getAllOrders_상태필터_성공() {
+    Order order = new Order(member);
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Order> page = new PageImpl<>(List.of(order));
+    given(orderRepository.findByStatus(OrderStatus.PAID, pageable)).willReturn(page);
+
+    Page<OrderResponse> responses = orderService.getAllOrders(OrderStatus.PAID, pageable);
 
     assertThat(responses.getTotalElements()).isEqualTo(1);
   }

@@ -102,8 +102,13 @@ public class OrderService {
     return PaymentResponse.from(payment);
   }
 
-  public Page<OrderResponse> getAllOrders(Pageable pageable) {
-    return orderRepository.findAll(pageable).map(OrderResponse::from);
+  // status가 없으면(null) 전체 조회, 있으면 상태별 필터링해서 조회한다.
+  public Page<OrderResponse> getAllOrders(OrderStatus status, Pageable pageable) {
+    Page<Order> orders =
+        status == null
+            ? orderRepository.findAll(pageable)
+            : orderRepository.findByStatus(status, pageable);
+    return orders.map(OrderResponse::from);
   }
 
   @Transactional

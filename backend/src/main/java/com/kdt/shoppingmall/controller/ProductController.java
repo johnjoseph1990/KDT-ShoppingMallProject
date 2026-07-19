@@ -4,6 +4,7 @@ import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.service.ProductService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -52,6 +53,12 @@ public class ProductController {
   @GetMapping("/{id}")
   public ProductResponse findById(@PathVariable Long id) {
     return productService.findById(id);
+  }
+
+  // R-6: 같은 태그를 가진 다른 상품 추천 (상품 상세 페이지에서 호출)
+  @GetMapping("/{id}/recommendations")
+  public List<ProductResponse> getRecommendations(@PathVariable Long id) {
+    return productService.getRecommendations(id);
   }
 
   @PutMapping("/{id}")

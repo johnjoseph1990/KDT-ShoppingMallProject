@@ -49,12 +49,24 @@ class AdminOrderControllerTest {
   @WithMockUser(roles = "ADMIN")
   void 전체주문조회_ADMIN_200() throws Exception {
     Page<OrderResponse> page = new PageImpl<>(List.of(sampleResponse(OrderStatus.ORDERED)));
-    given(orderService.getAllOrders(any(Pageable.class))).willReturn(page);
+    given(orderService.getAllOrders(eq(null), any(Pageable.class))).willReturn(page);
 
     mockMvc
         .perform(get("/api/admin/orders"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].status").value("ORDERED"));
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void 전체주문조회_상태필터_200() throws Exception {
+    Page<OrderResponse> page = new PageImpl<>(List.of(sampleResponse(OrderStatus.PAID)));
+    given(orderService.getAllOrders(eq(OrderStatus.PAID), any(Pageable.class))).willReturn(page);
+
+    mockMvc
+        .perform(get("/api/admin/orders").param("status", "PAID"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].status").value("PAID"));
   }
 
   @Test
