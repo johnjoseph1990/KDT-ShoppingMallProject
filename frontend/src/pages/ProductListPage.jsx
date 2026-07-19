@@ -7,12 +7,15 @@ import { useCart } from '../context/CartContext'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 
-/* 카테고리 필터 → 키워드 검색으로 매핑 */
+/* 카테고리 필터 → 상품 태그(product_tag)로 매핑.
+   name/description 부분일치인 keyword 검색이 아니라, 정확히 일치하는
+   tag로 필터링해야 "상품명에 우연히 단어가 들어간 것"이 안 섞인다. */
 const CATS = [
-  { key: 'all', label: '전체', keyword: '' },
-  { key: 'veg', label: '채소·과일', keyword: '채소' },
-  { key: 'bake', label: '베이커리·간식', keyword: '베이커리' },
-  { key: 'box', label: '꾸러미·정기배송', keyword: '꾸러미' },
+  { key: 'all', label: '전체', tag: '' },
+  { key: 'veg', label: '채소', tag: '채소' },
+  { key: 'fruit', label: '과일', tag: '과일' },
+  { key: 'bake', label: '베이커리·간식', tag: '베이커리' },
+  { key: 'box', label: '꾸러미·정기배송', tag: '꾸러미' },
 ]
 
 export default function ProductListPage() {
@@ -27,8 +30,8 @@ export default function ProductListPage() {
   const { refreshCart, showToast } = useCart()
 
   useEffect(() => {
-    const keyword = CATS.find((c) => c.key === cat)?.keyword || ''
-    getProducts({ ...(keyword ? { keyword } : {}), page })
+    const tag = CATS.find((c) => c.key === cat)?.tag || ''
+    getProducts({ ...(tag ? { tag } : {}), page })
       .then((res) => setProducts(res.data.content || []))
       .catch(() => {})
   }, [cat, page])
