@@ -31,6 +31,40 @@ public class DevDataInitializer {
     };
   }
 
+  // 일반 회원(USER) 계정을 미리 만들어 두는 시드 로직.
+  // seedAdmin 과 동일하게 MemberRepository, PasswordEncoder 를 스프링이 주입(DI)해준다.
+  @Bean
+  public ApplicationRunner seedMembers(
+      MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+    return (ApplicationArguments args) -> {
+      // { 이메일(로그인 아이디), 비밀번호(평문), 이름 } 순서로 정의.
+      // 첫 번째가 로그인 확인용 테스트 계정이고, 나머지 10개가 일반 회원이다.
+      List<String[]> members =
+          List.of(
+              new String[] {"test@shop.com", "test1234", "테스트회원"},
+              new String[] {"user01@shop.com", "user1234", "김민준"},
+              new String[] {"user02@shop.com", "user1234", "이서연"},
+              new String[] {"user03@shop.com", "user1234", "박도윤"},
+              new String[] {"user04@shop.com", "user1234", "최지우"},
+              new String[] {"user05@shop.com", "user1234", "정하은"},
+              new String[] {"user06@shop.com", "user1234", "강시우"},
+              new String[] {"user07@shop.com", "user1234", "조유나"},
+              new String[] {"user08@shop.com", "user1234", "윤예준"},
+              new String[] {"user09@shop.com", "user1234", "임수아"},
+              new String[] {"user10@shop.com", "user1234", "한지호"});
+
+      for (String[] m : members) {
+        // 이미 존재하는 이메일이면 이번 반복은 건너뛴다 (seedAdmin과 동일한 패턴).
+        // continue는 for문의 나머지 부분을 실행하지 않고 바로 다음 회원으로 넘어가게 한다.
+        if (memberRepository.existsByEmail(m[0])) continue;
+
+        // 비밀번호는 평문이 아니라 BCrypt 로 암호화(encode)해서 저장한다.
+        memberRepository.save(
+            new Member(m[0], passwordEncoder.encode(m[1]), m[2], MemberRole.USER));
+      }
+    };
+  }
+
   @Bean
   public ApplicationRunner seedProducts(ProductRepository productRepository) {
     return (ApplicationArguments args) -> {
