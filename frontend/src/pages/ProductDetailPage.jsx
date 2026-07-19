@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { getProduct } from '../api/products'
+import { getProduct, getRecommendations } from '../api/products'
 import { addToCart } from '../api/cart'
 import { getReviews, createReview, deleteReview } from '../api/reviews'
 import { useAuth } from '../context/AuthContext'
@@ -17,11 +17,17 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState(null)
   const [reviews, setReviews] = useState([])
+  // 같은 태그를 가진 다른 상품 추천 목록 (R-6)
+  const [recommendations, setRecommendations] = useState([])
   const [quantity, setQuantity] = useState(1)
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' })
 
   useEffect(() => {
     getProduct(id).then((res) => setProduct(res.data))
+    // 추천 상품 조회 (태그가 없는 상품이면 빈 배열이 돌아옴)
+    getRecommendations(id)
+      .then((res) => setRecommendations(res.data))
+      .catch(() => {})
     loadReviews()
   }, [id])
 
@@ -232,6 +238,63 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── 같은 태그 추천 상품 섹션 (R-6) ─── */}
+      {recommendations.length > 0 && (
+        <section
+          style={{
+            padding: 'clamp(40px,5vw,72px) clamp(20px,5vw,72px) 0',
+          }}
+        >
+          <h2
+            style={{
+              margin: '0 0 24px',
+              fontFamily: "'Noto Serif KR', serif",
+              fontWeight: 300,
+              fontSize: 24,
+            }}
+          >
+            이런 상품은 어떠세요?
+          </h2>
+          <div
+            className="mobile-2col"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4,1fr)',
+              gap: 1,
+              background: '#dddaca',
+              border: '1px solid #dddaca',
+            }}
+          >
+            {recommendations.map((r) => (
+              <div
+                key={r.id}
+                onClick={() => navigate(`/products/${r.id}`)}
+                style={{ background: '#fffef2', padding: 20, cursor: 'pointer' }}
+              >
+                <div
+                  style={{
+                    aspectRatio: '4/5',
+                    background: '#edeadb',
+                    overflow: 'hidden',
+                    marginBottom: 12,
+                  }}
+                >
+                  {r.imageUrl && (
+                    <img
+                      src={r.imageUrl}
+                      alt={r.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  )}
+                </div>
+                <p style={{ margin: '0 0 4px', fontSize: 14 }}>{r.name}</p>
+                <p style={{ margin: 0, fontSize: 13, color: '#6d6c61' }}>{fmt(r.price)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ─── 리뷰 섹션 ─── */}
       <section style={{ padding: 'clamp(40px,5vw,72px) clamp(20px,5vw,72px)' }}>
