@@ -59,11 +59,15 @@ git push origin master
 # 1. 클론
 git clone https://github.com/johnjoseph1990/KDT-ShoppingMallProject.git
 
-# 2. 백엔드 실행 (Java 17 필요)
+# 2. DB 실행 (Docker 필요) — application.properties 기본값이 PostgreSQL(localhost:5433)이므로
+#    이 컨테이너 없이 바로 bootRun 하면 연결 실패로 뜨지 않는다
+docker compose up -d
+
+# 3. 백엔드 실행 (Java 17 필요)
 cd backend
 ./gradlew bootRun
 
-# 3. 프론트엔드 실행
+# 4. 프론트엔드 실행
 cd frontend
 npm install
 npm run dev
@@ -161,7 +165,7 @@ docs: 문서
 
 ## 민감 정보 주의
 
-`application.properties`에 실제 DB 비밀번호나 JWT 시크릿 키가 들어갈 경우 `.gitignore`에 추가하거나 환경변수로 분리할 것. 현재는 H2 인메모리 DB 사용 중이라 문제없음.
+PostgreSQL 전환 이후 `application.properties`의 `spring.datasource.password` 기본값(`mins1234`)은 로컬 개발용 Docker 컨테이너(`docker-compose.yml`) 비밀번호로, 환경변수 `SPRING_DATASOURCE_PASSWORD`로 오버라이드 가능한 구조라 저장소에 커밋해도 문제없음. 단, 운영(prod) 배포 시에는 반드시 환경변수로 실제 비밀번호를 주입하고, 기본값을 그대로 쓰지 말 것.
 
 ## Skill routing
 
