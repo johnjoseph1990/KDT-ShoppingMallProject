@@ -128,7 +128,7 @@ public class DevDataInitializer {
                 "바닷바람을 맞고 자란 햇감자. 분이 많고 포슬포슬해서 쪄 먹기 좋습니다.",
                 9_000,
                 35,
-                "https://images.unsplash.com/photo-1573196444577-af471298e034?w=800&q=80&auto=format&fit=crop",
+                "/uploads/seocheon-potato.jpg",
                 List.of("채소")
               },
               new Object[] {
