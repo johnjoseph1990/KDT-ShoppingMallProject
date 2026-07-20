@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+// 개발 환경에서만 사용할 초기 데이터 주입 설정 클래스다.
+// 애플리케이션이 시작될 때 관리자/회원/상품 데이터를 미리 넣어, 화면과 로그인 기능을 바로 확인할 수 있게 한다.
+// 이미 데이터가 있으면 다시 넣지 않도록 막아서 중복 저장을 방지한다.
 @Configuration
 public class DevDataInitializer {
 
@@ -117,7 +120,7 @@ public class DevDataInitializer {
                 "첨가물 없이 딸기와 설탕만으로 만든 수제 잼. 냉장 보관 6개월.",
                 12_000,
                 25,
-                "https://images.unsplash.com/photo-1468577760773-139c2f1c335f?w=800&q=80&auto=format&fit=crop",
+                "/uploads/nonsan-strawberry-jam.jpg",
                 List.of("베이커리")
               },
               new Object[] {
