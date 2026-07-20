@@ -47,7 +47,7 @@ export default function HomePage() {
         }}
       >
         <img
-          src="/uploads/assets-1784160881665.png"
+          src="/uploads/hero-local-vegetables.jpg"
           alt=""
           style={{
             position: 'absolute',
@@ -55,13 +55,16 @@ export default function HomePage() {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
+            objectPosition: '70% 50%',
           }}
         />
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(180deg,rgba(30,30,22,0.15),rgba(30,30,22,0.5))',
+            background:
+              'linear-gradient(90deg,rgba(30,30,22,0.6) 0%,rgba(30,30,22,0.15) 55%,transparent 100%),' +
+              'linear-gradient(180deg,rgba(30,30,22,0.15),rgba(30,30,22,0.7))',
           }}
         />
         <div
@@ -96,6 +99,7 @@ export default function HomePage() {
               fontSize: 'clamp(30px,3.8vw,50px)',
               lineHeight: 1.45,
               letterSpacing: '-0.01em',
+              textShadow: '0 1px 8px rgba(0,0,0,0.4)',
             }}
           >
             땅이 허락한 만큼만,
