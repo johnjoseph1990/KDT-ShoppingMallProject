@@ -18,17 +18,18 @@
 
 html,
 body {
-  margin: 0;  /* HTML 기본 margin 제거 (8px) */
+  margin: 0; /* HTML 기본 margin 제거 (8px) */
   padding: 0; /* HTML 기본 padding 제거 */
-  background: #fffef2;  /* 배경색: 아주 연한 베이지 (흰색에 가까움) */
-  color: #333330;  /* 텍스트 기본색: 거의 검은색에 가까운 갈색 */
-  font-family: 'Noto Sans KR', sans-serif;  /* 한글 폰트 설정 (Noto Sans KR 없으면 sans-serif로 대체) */
-  font-size: 15px;  /* 기본 폰트 크기 */
-  font-weight: 300;  /* 폰트 굵기: 300 = 얇은 글씨 (normal은 400) */
-  line-height: 1.7;  /* 줄 간격: 1.7배 (텍스트 가독성 증가) */
+  background: #fffef2; /* 배경색: 아주 연한 베이지 (흰색에 가까움) */
+  color: #333330; /* 텍스트 기본색: 거의 검은색에 가까운 갈색 */
+  font-family:
+    'Noto Sans KR', sans-serif; /* 한글 폰트 설정 (Noto Sans KR 없으면 sans-serif로 대체) */
+  font-size: 15px; /* 기본 폰트 크기 */
+  font-weight: 300; /* 폰트 굵기: 300 = 얇은 글씨 (normal은 400) */
+  line-height: 1.7; /* 줄 간격: 1.7배 (텍스트 가독성 증가) */
   /* 아래 두 줄: 브라우저별 폰트 렌더링을 부드럽게 만듦 (Mac/Windows 호환) */
-  -webkit-font-smoothing: antialiased;  /* Safari 등 webkit 브라우저 */
-  -moz-osx-font-smoothing: grayscale;  /* Firefox Mac */
+  -webkit-font-smoothing: antialiased; /* Safari 등 webkit 브라우저 */
+  -moz-osx-font-smoothing: grayscale; /* Firefox Mac */
 }
 
 /* ========================================
@@ -36,11 +37,11 @@ body {
    ======================================== */
 
 a {
-  color: #333330;  /* 링크색: 기본색과 동일 (밑줄 없음) */
-  text-decoration: none;  /* 링크 밑줄 제거 */
+  color: #333330; /* 링크색: 기본색과 동일 (밑줄 없음) */
+  text-decoration: none; /* 링크 밑줄 제거 */
 }
 a:hover {
-  color: #75775e;  /* 마우스 올렸을 때: 올리브색으로 변경 */
+  color: #75775e; /* 마우스 올렸을 때: 올리브색으로 변경 */
 }
 
 /* ========================================
@@ -61,8 +62,8 @@ select {
    ======================================== */
 
 ::selection {
-  background: #75775e;  /* 선택된 텍스트 배경: 올리브색 */
-  color: #fffef2;  /* 선택된 텍스트 글씨색: 밝은 베이지 */
+  background: #75775e; /* 선택된 텍스트 배경: 올리브색 */
+  color: #fffef2; /* 선택된 텍스트 글씨색: 밝은 베이지 */
 }
 
 /* ========================================
@@ -70,13 +71,13 @@ select {
    ======================================== */
 
 p {
-  margin: 0;  /* 문단의 기본 margin(16px) 제거 (디자인 일관성 위해) */
+  margin: 0; /* 문단의 기본 margin(16px) 제거 (디자인 일관성 위해) */
 }
 
 h1,
 h2,
 h3 {
-  margin: 0;  /* 제목의 기본 margin 제거 */
+  margin: 0; /* 제목의 기본 margin 제거 */
 }
 
 /* ========================================
@@ -88,12 +89,12 @@ h3 {
    호출: CSS에서 animation: fadeUp 0.5s ease-out; 처럼 사용 */
 @keyframes fadeUp {
   from {
-    opacity: 0;  /* 시작: 투명 (안 보임) */
-    transform: translateY(12px);  /* 시작: Y축으로 12px 아래에 위치 */
+    opacity: 0; /* 시작: 투명 (안 보임) */
+    transform: translateY(12px); /* 시작: Y축으로 12px 아래에 위치 */
   }
   to {
-    opacity: 1;  /* 끝: 불투명 (완전히 보임) */
-    transform: none;  /* 끝: 원래 위치로 복원 */
+    opacity: 1; /* 끝: 불투명 (완전히 보임) */
+    transform: none; /* 끝: 원래 위치로 복원 */
   }
 }
 
@@ -104,11 +105,11 @@ h3 {
 /* #root는 index.html의 <div id="root"></div>를 가리킴
    React가 이 곳에 모든 컴포넌트를 렌더링한다 */
 #root {
-  width: 100%;  /* 화면 전체 너비 */
-  min-height: 100vh;  /* 최소 높이: 뷰포트 높이(화면 높이) — 페이지가 짧아도 화면 꽉 채움 */
-  display: flex;  /* Flexbox 활성화 (1차원 레이아웃) */
-  flex-direction: column;  /* 세로 방향 정렬 (위→아래) */
-  isolation: isolate;  /* z-index 새로운 쌓임 문맥(stacking context) 생성 (모달 등이 뒤로 안 들어가게 함) */
+  width: 100%; /* 화면 전체 너비 */
+  min-height: 100vh; /* 최소 높이: 뷰포트 높이(화면 높이) — 페이지가 짧아도 화면 꽉 채움 */
+  display: flex; /* Flexbox 활성화 (1차원 레이아웃) */
+  flex-direction: column; /* 세로 방향 정렬 (위→아래) */
+  isolation: isolate; /* z-index 새로운 쌓임 문맥(stacking context) 생성 (모달 등이 뒤로 안 들어가게 함) */
 }
 
 /* ========================================
@@ -117,13 +118,13 @@ h3 {
 
 /* 기본: 데스크톱(PC) 화면 — 가로로 긴 네비게이션 보임 */
 .navbar-desktop-nav {
-  display: flex;  /* 네비게이션 버튼들이 가로 일렬로 배치 */
+  display: flex; /* 네비게이션 버튼들이 가로 일렬로 배치 */
 }
 
 /* 모바일 전용 우측 액션(장바구니+햄버거 메뉴) 묶음
    기본적으로 숨김. 모바일에서만 나타남 */
 .navbar-mobile-actions {
-  display: none;  /* 기본: 안 보임 */
+  display: none; /* 기본: 안 보임 */
 }
 
 /* @media 쿼리: 화면이 768px 이하일 때 (태블릿, 모바일)
@@ -133,29 +134,29 @@ h3 {
 */
 @media (max-width: 768px) {
   .navbar-desktop-nav {
-    display: none;  /* 데스크톱 네비 숨김 */
+    display: none; /* 데스크톱 네비 숨김 */
   }
   .navbar-mobile-actions {
-    display: flex;  /* 모바일 액션(햄버거) 보임 */
+    display: flex; /* 모바일 액션(햄버거) 보임 */
   }
 
   /* ====== 그리드 레이아웃 모바일 대응 ====== */
-  
+
   /* 모바일: 1열 그리드 (상품 목록을 세로로 1개씩)
      !important: 인라인 style의 gridTemplateColumns를 강제로 덮어씀
      (클래스의 !important가 인라인 스타일보다 우선순위 높음) */
   .mobile-1col {
-    grid-template-columns: 1fr !important;  /* 1fr = 사용 가능한 전체 너비를 1로 분할 = 100% */
+    grid-template-columns: 1fr !important; /* 1fr = 사용 가능한 전체 너비를 1로 분할 = 100% */
   }
-  
+
   /* 모바일: 2열 그리드 (상품 목록을 세로로 2개씩)
      각 항목이 화면의 절반 너비씩 차지 */
   .mobile-2col {
-    grid-template-columns: 1fr 1fr !important;  /* 2개씩 50%씩 */
+    grid-template-columns: 1fr 1fr !important; /* 2개씩 50%씩 */
   }
 
   /* ====== 이미지 스티키 위치 조정 ====== */
-  
+
   /* 상품 상세·농부 이야기의 "화면 전체 높이 스티키 이미지" 모바일 대응
      (스티키: 스크롤해도 특정 위치에 고정되는 효과)
      
@@ -166,7 +167,7 @@ h3 {
            ② 높이를 줄임 (44vh = 뷰포트 높이의 44%)
   */
   .hero-sticky-image {
-    position: static !important;  /* 고정 위치 해제 → 정상 흐름대로 스크롤됨 */
-    height: 44vh !important;  /* 높이: 뷰포트의 44% 정도로 축소 */
+    position: static !important; /* 고정 위치 해제 → 정상 흐름대로 스크롤됨 */
+    height: 44vh !important; /* 높이: 뷰포트의 44% 정도로 축소 */
   }
 }

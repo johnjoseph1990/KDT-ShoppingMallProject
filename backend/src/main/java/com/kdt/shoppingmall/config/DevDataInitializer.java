@@ -16,9 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DevDataInitializer {
 
-  // 히어로 이미지를 모든 상품에 공유 (실제 서비스에서는 상품별 이미지로 교체)
-  private static final String IMG = "/uploads/assets-1784160881665.png";
-
   @Bean
   public ApplicationRunner seedAdmin(
       MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
@@ -72,6 +69,7 @@ public class DevDataInitializer {
       if (productRepository.count() > 0) return;
 
       // 상품명, 설명, 가격, 재고, 이미지, 태그 순서로 정의
+      // 이미지는 Unsplash 무료 라이선스 사진(실제 농가 사진 아님, 상품 구분용 임시 대체)
       List<Object[]> data =
           List.of(
               new Object[] {
@@ -79,7 +77,7 @@ public class DevDataInitializer {
                 "삼십 년째 같은 밭에서 직접 만든 퇴비로 기른 당근. 주문 후 수확합니다.",
                 8_500,
                 50,
-                IMG,
+                "https://images.unsplash.com/photo-1605712776391-47f283ad1423?w=800&q=80&auto=format&fit=crop",
                 List.of("채소")
               },
               new Object[] {
@@ -87,7 +85,7 @@ public class DevDataInitializer {
                 "새벽 네 시에 완전히 익은 것만 골라 딴 딸기. 향이 진하고 당도가 높습니다.",
                 18_000,
                 30,
-                IMG,
+                "https://images.unsplash.com/photo-1560691023-ca1f295a5173?w=800&q=80&auto=format&fit=crop",
                 List.of("과일")
               },
               new Object[] {
@@ -95,7 +93,7 @@ public class DevDataInitializer {
                 "바닷바람이 닿는 노지에서 천천히 자란 잎채소. 조직이 단단해 쉽게 무르지 않습니다.",
                 6_500,
                 40,
-                IMG,
+                "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&q=80&auto=format&fit=crop",
                 List.of("채소")
               },
               new Object[] {
@@ -103,29 +101,39 @@ public class DevDataInitializer {
                 "당근, 우엉, 연근을 계절에 맞게 구성한 꾸러미. 매주 화요일 수확 후 발송합니다.",
                 24_000,
                 20,
-                IMG,
+                "https://images.unsplash.com/photo-1518843875459-f738682238a6?w=800&q=80&auto=format&fit=crop",
                 List.of("꾸러미")
               },
               new Object[] {
-                "충남 가을 배", "과즙이 풍부하고 아삭한 충남산 신고배. 박스 단위 판매합니다.", 35_000, 15, IMG, List.of("과일")
+                "충남 가을 배",
+                "과즙이 풍부하고 아삭한 충남산 신고배. 박스 단위 판매합니다.",
+                35_000,
+                15,
+                "https://images.unsplash.com/photo-1543363136-314062964bef?w=800&q=80&auto=format&fit=crop",
+                List.of("과일")
               },
               new Object[] {
                 "논산 딸기 수제잼",
                 "첨가물 없이 딸기와 설탕만으로 만든 수제 잼. 냉장 보관 6개월.",
                 12_000,
                 25,
-                IMG,
+                "https://images.unsplash.com/photo-1468577760773-139c2f1c335f?w=800&q=80&auto=format&fit=crop",
                 List.of("베이커리")
               },
               new Object[] {
-                "서천 햇감자", "바닷바람을 맞고 자란 햇감자. 분이 많고 포슬포슬해서 쪄 먹기 좋습니다.", 9_000, 35, IMG, List.of("채소")
+                "서천 햇감자",
+                "바닷바람을 맞고 자란 햇감자. 분이 많고 포슬포슬해서 쪄 먹기 좋습니다.",
+                9_000,
+                35,
+                "https://images.unsplash.com/photo-1573196444577-af471298e034?w=800&q=80&auto=format&fit=crop",
+                List.of("채소")
               },
               new Object[] {
                 "금산 인삼 정기배송",
                 "4년근 금산 인삼을 매달 한 박스씩 보내드립니다. 첫 달 10% 할인.",
                 45_000,
                 10,
-                IMG,
+                "https://images.unsplash.com/photo-1695798790639-c3c4294373ab?w=800&q=80&auto=format&fit=crop",
                 List.of("꾸러미")
               });
 

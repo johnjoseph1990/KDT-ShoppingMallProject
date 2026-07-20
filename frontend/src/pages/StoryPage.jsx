@@ -7,6 +7,9 @@ const FARMERS = [
     region: '충남 금산',
     farm: '흙내음농원',
     name: '이정순',
+    // 농부 사진 URL. Unsplash 무료 라이선스 사진(실제 이정순 농부 사진 아님, 임시 대체용)
+    imageUrl:
+      'https://images.unsplash.com/photo-1729009511263-329748943004?w=800&q=80&auto=format&fit=crop',
     quote: '농사는 서두른다고 되는 일이 아니에요. 기다리는 게 일의 절반입니다.',
     story:
       '삼십 년째 같은 밭에서 당근과 뿌리채소를 기릅니다. 화학비료 대신 직접 만든 퇴비를 쓰고, 수확은 언제나 주문이 들어온 다음에 합니다.',
@@ -17,6 +20,8 @@ const FARMERS = [
     region: '충남 논산',
     farm: '별빛농장',
     name: '김현우',
+    imageUrl:
+      'https://images.unsplash.com/photo-1610240853036-26da9fed46a5?w=800&q=80&auto=format&fit=crop',
     quote: '딸기는 새벽에 따야 해요. 해가 뜨면 향이 절반은 날아갑니다.',
     story:
       '귀농 팔 년 차. 유통 기한 대신 맛을 기준으로 수확 시기를 정합니다. 덜 익은 딸기는 어떤 값을 쳐줘도 따지 않는 것이 원칙입니다.',
@@ -27,6 +32,7 @@ const FARMERS = [
     region: '충남 서천',
     farm: '바다들녘',
     name: '정미영',
+    imageUrl: 'https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?w=800&q=80&auto=format&fit=crop',
     quote: '잎을 보면 알아요. 급하게 키운 잎은 빛깔부터 다릅니다.',
     story:
       '바닷바람이 닿는 노지에서 잎채소를 기릅니다. 천천히 자란 잎은 조직이 단단해 쉽게 무르지 않고, 씹는 맛이 살아 있습니다.',
@@ -55,7 +61,8 @@ export default function StoryPage() {
             minHeight: '76vh',
           }}
         >
-          {/* 이미지 자리 (실제 사진으로 교체 가능).
+          {/* 이미지 자리. background(#edeadb)는 사진이 없을 때 대신 채워지는 색이고,
+              imageUrl이 있으면 그 위에 실제 사진이 덮어씌워진다 (상품 이미지와 동일한 패턴).
               hero-sticky-image: 모바일에서 고정 해제 + 높이 축소 (화면 독차지 방지) */}
           <div
             className="hero-sticky-image"
@@ -64,8 +71,17 @@ export default function StoryPage() {
               position: 'sticky',
               top: 72,
               height: 'calc(100vh - 72px)',
+              overflow: 'hidden',
             }}
-          />
+          >
+            {f.imageUrl && (
+              <img
+                src={f.imageUrl}
+                alt={`${f.farm} ${f.name}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
+          </div>
           <div
             style={{
               padding: 'clamp(32px,5vw,72px)',
@@ -200,8 +216,16 @@ export default function StoryPage() {
             borderBottom: '1px solid #dddaca',
           }}
         >
-          {/* 이미지 자리 */}
-          <div style={{ aspectRatio: '4/3', background: '#edeadb' }} />
+          {/* 이미지 자리 (사진 없으면 배경색만, 있으면 img가 덮음) */}
+          <div style={{ aspectRatio: '4/3', background: '#edeadb', overflow: 'hidden' }}>
+            {f.imageUrl && (
+              <img
+                src={f.imageUrl}
+                alt={`${f.farm} ${f.name}`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            )}
+          </div>
 
           <div
             style={{
