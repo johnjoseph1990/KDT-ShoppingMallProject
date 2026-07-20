@@ -64,7 +64,7 @@ class CartControllerTest {
   }
 
   @Test
-  void 장바구니추가_미인증_403() throws Exception {
+  void 장바구니추가_미인증_401() throws Exception {
     CartItemRequest request = new CartItemRequest(10L, 2);
 
     mockMvc
@@ -72,7 +72,8 @@ class CartControllerTest {
             post("/api/cart")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

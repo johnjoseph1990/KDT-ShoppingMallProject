@@ -4,6 +4,7 @@ import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 // @Configuration: "이 클래스 안에 있는 @Bean 메서드들이 반환하는 객체를 스프링 컨테이너가
 // 관리해달라"는 표시. 스프링은 앱이 뜰 때 이 클래스를 읽어서 passwordEncoder(),
@@ -65,6 +67,13 @@ public class SecurityConfig {
         // 악용해 사용자 몰래 요청을 보내는 공격이다. 원래 세션 기반 인증에서는 CSRF 토큰
         // 검증을 켜두는 게 정석이지만, 지금은 REST 클라이언트 테스트 편의를 위해 꺼둔 상태.
         .csrf(csrf -> csrf.disable())
+        // exceptionHandling: 인증/인가 실패 시 어떤 응답을 내려줄지 설정하는 부분.
+        // authenticationEntryPoint는 "인증 자체가 안 된(로그인 안 했거나 정보가 틀린)" 경우
+        // 호출되는데, 기본값은 403(Forbidden)이라 "인증 실패"와 "권한 부족"이 구분되지 않는다.
+        // HttpStatusEntryPoint로 401(Unauthorized)을 명시해 HTTP 의미에 맞게 고친다.
+        .exceptionHandling(
+            exception ->
+                exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         // authorizeHttpRequests: URL 패턴별로 "누가 접근 가능한지" 규칙을 순서대로 등록한다.
         // 스프링 시큐리티는 위에서부터 매칭되는 첫 규칙을 적용하므로 순서가 중요하다.
         .authorizeHttpRequests(

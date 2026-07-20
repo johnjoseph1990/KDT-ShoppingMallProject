@@ -68,7 +68,7 @@ class ReviewControllerTest {
   }
 
   @Test
-  void 리뷰작성_미인증_403() throws Exception {
+  void 리뷰작성_미인증_401() throws Exception {
     ReviewRequest request = new ReviewRequest(5, "정말 좋아요!");
 
     mockMvc
@@ -76,7 +76,8 @@ class ReviewControllerTest {
             post("/api/products/1/reviews")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

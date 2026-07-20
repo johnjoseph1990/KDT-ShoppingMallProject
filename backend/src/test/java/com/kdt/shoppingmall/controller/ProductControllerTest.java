@@ -129,7 +129,7 @@ class ProductControllerTest {
   }
 
   @Test
-  void 상품등록_미인증_403() throws Exception {
+  void 상품등록_미인증_401() throws Exception {
     ProductRequest request = new ProductRequest("상품A", "설명", 10000, 100, null, null);
 
     mockMvc
@@ -137,7 +137,8 @@ class ProductControllerTest {
             post("/api/products")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

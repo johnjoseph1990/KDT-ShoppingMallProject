@@ -70,8 +70,9 @@ class AdminOrderControllerTest {
   }
 
   @Test
-  void 전체주문조회_미인증_403() throws Exception {
-    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isForbidden());
+  void 전체주문조회_미인증_401() throws Exception {
+    // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -91,7 +92,7 @@ class AdminOrderControllerTest {
   }
 
   @Test
-  void 주문상태변경_미인증_403() throws Exception {
+  void 주문상태변경_미인증_401() throws Exception {
     OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderStatus.SHIPPING);
 
     mockMvc
@@ -99,7 +100,8 @@ class AdminOrderControllerTest {
             patch("/api/admin/orders/1/status")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

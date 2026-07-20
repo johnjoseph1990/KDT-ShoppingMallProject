@@ -65,7 +65,7 @@ class OrderControllerTest {
   }
 
   @Test
-  void 주문생성_미인증_403() throws Exception {
+  void 주문생성_미인증_401() throws Exception {
     OrderCreateRequest request = new OrderCreateRequest(List.of(1L, 2L));
 
     mockMvc
@@ -73,7 +73,8 @@ class OrderControllerTest {
             post("/api/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isForbidden());
+        // 로그인 자체를 안 한 경우라 401(Unauthorized). 403은 "로그인은 했는데 권한 부족"일 때만 쓴다.
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
