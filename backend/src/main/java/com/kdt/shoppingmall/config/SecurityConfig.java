@@ -73,7 +73,8 @@ public class SecurityConfig {
         // HttpStatusEntryPoint로 401(Unauthorized)을 명시해 HTTP 의미에 맞게 고친다.
         .exceptionHandling(
             exception ->
-                exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                exception.authenticationEntryPoint(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         // authorizeHttpRequests: URL 패턴별로 "누가 접근 가능한지" 규칙을 순서대로 등록한다.
         // 스프링 시큐리티는 위에서부터 매칭되는 첫 규칙을 적용하므로 순서가 중요하다.
         .authorizeHttpRequests(
