@@ -134,6 +134,35 @@ export default function OrderDetailPage() {
           주문일시: {new Date(order.createdAt).toLocaleString()}
         </p>
 
+        {/* 배송지 정보 — order에 deliveryAddress가 있을 때만 표시 */}
+        {order.deliveryAddress && (
+          <div
+            style={{
+              background: '#f6f4e6',
+              padding: '16px 20px',
+              marginBottom: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 300,
+              lineHeight: 1.8,
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 400 }}>배송지</p>
+            <p style={{ margin: 0 }}>
+              {order.deliveryName} · {order.deliveryPhone}
+            </p>
+            <p style={{ margin: 0 }}>
+              ({order.deliveryZipCode}) {order.deliveryAddress}{' '}
+              {order.deliveryAddressDetail}
+            </p>
+            {order.deliveryNote && (
+              <p style={{ margin: 0, color: '#6d6c61' }}>메모: {order.deliveryNote}</p>
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #dddaca' }}>
           {order.items?.map((item, i) => (
             <div

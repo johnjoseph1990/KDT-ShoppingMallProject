@@ -59,7 +59,16 @@ public class OrderService {
       throw new EmptyCartException("주문할 장바구니 항목이 없습니다.");
     }
 
-    Order order = new Order(member);
+    // 주문 시점의 배송지를 Order에 함께 저장 (이후 주소 변경과 무관하게 원본 보존)
+    Order order =
+        new Order(
+            member,
+            request != null ? request.deliveryName() : null,
+            request != null ? request.deliveryPhone() : null,
+            request != null ? request.deliveryZipCode() : null,
+            request != null ? request.deliveryAddress() : null,
+            request != null ? request.deliveryAddressDetail() : null,
+            request != null ? request.deliveryNote() : null);
     for (CartItem cartItem : cartItems) {
       Product product = cartItem.getProduct();
       product.decreaseStock(cartItem.getQuantity());

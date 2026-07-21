@@ -45,13 +45,27 @@ class OrderControllerTest {
   @MockitoBean private MemberUserDetailsService memberUserDetailsService;
 
   private OrderResponse sampleResponse() {
-    return new OrderResponse(1L, OrderStatus.ORDERED, 20000, LocalDateTime.now(), List.of());
+    // 배송지 필드는 컨트롤러 테스트에서 검증 대상이 아니므로 null로 채운다
+    return new OrderResponse(
+        1L,
+        OrderStatus.ORDERED,
+        20000,
+        LocalDateTime.now(),
+        List.of(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   @Test
   @WithMockMemberPrincipal
   void 주문생성_인증후_201() throws Exception {
-    OrderCreateRequest request = new OrderCreateRequest(List.of(1L, 2L));
+    OrderCreateRequest request =
+        new OrderCreateRequest(
+            List.of(1L, 2L), "홍길동", "010-1234-5678", "12345", "서울시 강남구 테헤란로 1", "101호", null);
     given(orderService.createOrder(eq(1L), any())).willReturn(sampleResponse());
 
     mockMvc
@@ -66,7 +80,8 @@ class OrderControllerTest {
 
   @Test
   void 주문생성_미인증_401() throws Exception {
-    OrderCreateRequest request = new OrderCreateRequest(List.of(1L, 2L));
+    OrderCreateRequest request =
+        new OrderCreateRequest(List.of(1L, 2L), null, null, null, null, null, null);
 
     mockMvc
         .perform(
@@ -81,7 +96,8 @@ class OrderControllerTest {
   @WithMockMemberPrincipal
   void 주문생성_빈장바구니_400() throws Exception {
     // 빈 리스트를 담은 요청 바디 (장바구니에 담을 상품이 없는 상황을 흉내)
-    OrderCreateRequest request = new OrderCreateRequest(List.of());
+    OrderCreateRequest request =
+        new OrderCreateRequest(List.of(), null, null, null, null, null, null);
     // orderService.createOrder(...)가 호출되면 EmptyCartException을 던지도록 가짜 동작 설정
     given(orderService.createOrder(eq(1L), any()))
         .willThrow(new EmptyCartException("주문할 장바구니 항목이 없습니다."));

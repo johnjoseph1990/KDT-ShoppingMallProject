@@ -49,9 +49,42 @@ public class Order {
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> orderItems = new ArrayList<>();
 
+  // 배송지 정보 — 주문 시점의 주소를 저장해 이후 회원이 주소를 바꿔도 변하지 않게 한다.
+  @Column private String deliveryName;
+
+  @Column private String deliveryPhone;
+
+  @Column private String deliveryZipCode;
+
+  @Column private String deliveryAddress;
+
+  @Column private String deliveryAddressDetail;
+
+  @Column private String deliveryNote;
+
+  // 테스트 등 배송지 없이 Order를 만들어야 할 때 사용하는 생성자
   public Order(Member member) {
     this.member = member;
     this.status = OrderStatus.ORDERED;
+  }
+
+  // 실제 주문 생성 시 배송지 정보를 함께 저장하는 생성자
+  public Order(
+      Member member,
+      String deliveryName,
+      String deliveryPhone,
+      String deliveryZipCode,
+      String deliveryAddress,
+      String deliveryAddressDetail,
+      String deliveryNote) {
+    this.member = member;
+    this.status = OrderStatus.ORDERED;
+    this.deliveryName = deliveryName;
+    this.deliveryPhone = deliveryPhone;
+    this.deliveryZipCode = deliveryZipCode;
+    this.deliveryAddress = deliveryAddress;
+    this.deliveryAddressDetail = deliveryAddressDetail;
+    this.deliveryNote = deliveryNote;
   }
 
   @PrePersist

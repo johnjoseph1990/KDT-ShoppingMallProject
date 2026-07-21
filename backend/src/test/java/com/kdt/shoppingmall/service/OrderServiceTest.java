@@ -74,7 +74,10 @@ class OrderServiceTest {
     given(cartItemRepository.findByMemberId(1L)).willReturn(List.of(cartItem));
     given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
 
-    OrderResponse response = orderService.createOrder(1L, new OrderCreateRequest(null));
+    // 배송지 없이(null) 생성해도 주문 자체는 성공해야 한다
+    OrderResponse response =
+        orderService.createOrder(
+            1L, new OrderCreateRequest(null, null, null, null, null, null, null));
 
     assertThat(response).isNotNull();
     assertThat(product.getStockQuantity()).isEqualTo(98);
@@ -85,7 +88,10 @@ class OrderServiceTest {
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(cartItemRepository.findByMemberId(1L)).willReturn(List.of());
 
-    assertThatThrownBy(() -> orderService.createOrder(1L, new OrderCreateRequest(null)))
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    1L, new OrderCreateRequest(null, null, null, null, null, null, null)))
         .isInstanceOf(EmptyCartException.class);
   }
 

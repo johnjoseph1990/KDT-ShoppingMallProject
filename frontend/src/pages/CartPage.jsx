@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/orders'
 import { useCart } from '../context/CartContext'
@@ -10,7 +10,14 @@ const FREE_SHIP = 40000
 export default function CartPage() {
   const navigate = useNavigate()
   const { cartItems, cartTotal, refreshCart } = useCart()
-  const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    zipCode: '',       // 우편번호 — 주소 검색 API가 자동으로 채워준다
+    address: '',       // 도로명/지번 주소 — 주소 검색 API가 자동으로 채워준다
+    addressDetail: '', // 상세 주소 (동·호수 등) — 직접 입력
+    note: '',
+  })
   const [loading, setLoading] = useState(false)
 
   const ship = cartTotal === 0 || cartTotal >= FREE_SHIP ? 0 : 3500
@@ -18,14 +25,55 @@ export default function CartPage() {
 
   const setField = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
+  // Daum 우편번호 서비스 스크립트를 컴포넌트 마운트 시 동적으로 로드한다.
+  // index.html 대신 여기서 로드하면 CartPage를 방문할 때만 스크립트를 내려받는다.
+  useEffect(() => {
+    if (window.daum?.Postcode) return // 이미 로드돼 있으면 건너뜀
+    const script = document.createElement('script')
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    document.head.appendChild(script)
+    return () => {
+      // 컴포넌트 언마운트 시 스크립트 제거 (중복 로드 방지)
+      document.head.removeChild(script)
+    }
+  }, [])
+
+  // Daum 우편번호 팝업을 열고, 선택 완료 시 zipCode와 address를 자동으로 채운다.
+  const openAddressSearch = () => {
+    if (!window.daum?.Postcode) {
+      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+    new window.daum.Postcode({
+      oncomplete: (data) => {
+        // 사용자가 도로명/지번 중 선택한 주소를 사용한다
+        const selectedAddress = data.roadAddress || data.jibunAddress
+        setForm((prev) => ({
+          ...prev,
+          zipCode: data.zonecode,
+          address: selectedAddress,
+          addressDetail: '', // 주소가 바뀌면 상세 주소를 초기화
+        }))
+      },
+    }).open()
+  }
+
   const handleOrder = async (e) => {
     e.preventDefault()
     if (cartItems.length === 0) return
     setLoading(true)
     try {
-      /* 장바구니의 모든 아이템으로 주문 생성 */
-      const orderItems = cartItems.map((i) => ({ cartItemId: i.id }))
-      const res = await createOrder({ items: orderItems })
+      /* 장바구니 아이템 ID 목록과 배송지 정보를 함께 전송한다 */
+      const res = await createOrder({
+        cartItemIds: cartItems.map((i) => i.id),
+        deliveryName: form.name,
+        deliveryPhone: form.phone,
+        deliveryZipCode: form.zipCode,
+        deliveryAddress: form.address,
+        deliveryAddressDetail: form.addressDetail,
+        deliveryNote: form.note,
+      })
       await refreshCart()
       navigate(`/orders/${res.data.id}`)
     } catch (err) {
@@ -44,6 +92,7 @@ export default function CartPage() {
     width: '100%',
     fontFamily: "'Noto Sans KR', sans-serif",
     fontWeight: 300,
+    boxSizing: 'border-box',
   }
 
   return (
@@ -101,12 +150,47 @@ export default function CartPage() {
             />
           </FormLabel>
           <FormLabel label="배송 주소">
+            {/* 1행: 우편번호 + 주소 찾기 버튼 */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                placeholder="우편번호"
+                readOnly
+                required
+                style={{ ...inputStyle, width: 120, flexShrink: 0, cursor: 'default', color: '#555' }}
+                value={form.zipCode}
+              />
+              <button
+                type="button"
+                onClick={openAddressSearch}
+                style={{
+                  flexShrink: 0,
+                  border: '1px solid #333330',
+                  background: '#333330',
+                  color: '#fffef2',
+                  padding: '0 16px',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                주소 찾기
+              </button>
+            </div>
+            {/* 2행: 도로명/지번 주소 (API가 채워줌, 읽기 전용) */}
             <input
-              placeholder="주소"
+              placeholder="주소를 검색하세요"
+              readOnly
               required
-              style={inputStyle}
-              onChange={setField('address')}
+              style={{ ...inputStyle, cursor: 'default', color: '#555' }}
               value={form.address}
+            />
+            {/* 3행: 상세 주소 (직접 입력) */}
+            <input
+              placeholder="상세 주소 (동·호수 등)"
+              style={inputStyle}
+              onChange={setField('addressDetail')}
+              value={form.addressDetail}
             />
           </FormLabel>
           <FormLabel label="배송 메모">
