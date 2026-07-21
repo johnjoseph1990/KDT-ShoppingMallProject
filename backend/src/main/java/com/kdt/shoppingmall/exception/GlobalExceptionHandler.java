@@ -27,6 +27,11 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
   }
 
+  @ExceptionHandler(PasswordMismatchException.class)
+  public ResponseEntity<Map<String, String>> handlePasswordMismatch(PasswordMismatchException e) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+  }
+
   @ExceptionHandler(EmptyCartException.class)
   public ResponseEntity<Map<String, String>> handleEmptyCart(EmptyCartException e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));

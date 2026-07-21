@@ -10,15 +10,19 @@ import static org.mockito.Mockito.verify;
 import com.kdt.shoppingmall.domain.member.Member;
 import com.kdt.shoppingmall.domain.member.MemberRole;
 import com.kdt.shoppingmall.dto.member.MemberResponse;
+import com.kdt.shoppingmall.dto.member.MemberUpdateRequest;
 import com.kdt.shoppingmall.dto.member.SignupRequest;
 import com.kdt.shoppingmall.exception.DuplicateEmailException;
+import com.kdt.shoppingmall.exception.PasswordMismatchException;
 import com.kdt.shoppingmall.repository.MemberRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -56,5 +60,57 @@ class MemberServiceTest {
         .hasMessageContaining("dup@test.com");
 
     verify(memberRepository, never()).save(any());
+  }
+
+  @Test
+  void update_이름변경_성공() {
+    Member member = new Member("test@test.com", "encoded", "기존이름", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+    MemberUpdateRequest request = new MemberUpdateRequest("새이름", null, null);
+    MemberResponse response = memberService.update(1L, request);
+
+    assertThat(response.name()).isEqualTo("새이름");
+  }
+
+  @Test
+  void update_비밀번호변경_성공() {
+    Member member = new Member("test@test.com", "encoded_old", "테스터", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    // 현재 비밀번호 일치 확인
+    given(passwordEncoder.matches("oldPass", "encoded_old")).willReturn(true);
+    given(passwordEncoder.encode("newPass123")).willReturn("encoded_new");
+
+    MemberUpdateRequest request = new MemberUpdateRequest(null, "oldPass", "newPass123");
+    memberService.update(1L, request);
+
+    // member.password가 바뀌었는지 검증
+    assertThat(member.getPassword()).isEqualTo("encoded_new");
+  }
+
+  @Test
+  void update_현재비밀번호_틀림_예외발생() {
+    Member member = new Member("test@test.com", "encoded_old", "테스터", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(passwordEncoder.matches("wrongPass", "encoded_old")).willReturn(false);
+
+    MemberUpdateRequest request = new MemberUpdateRequest(null, "wrongPass", "newPass123");
+
+    assertThatThrownBy(() -> memberService.update(1L, request))
+        .isInstanceOf(PasswordMismatchException.class);
+  }
+
+  @Test
+  void delete_성공() {
+    Member member = new Member("test@test.com", "encoded", "테스터", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+    memberService.delete(1L);
+
+    verify(memberRepository).delete(member);
   }
 }

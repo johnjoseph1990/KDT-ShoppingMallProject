@@ -50,4 +50,14 @@ public class Member {
   protected void onCreate() {
     this.createdAt = LocalDateTime.now();
   }
+
+  // 이름과 비밀번호를 선택적으로 변경한다. null을 전달하면 해당 필드는 그대로 유지.
+  public void update(String name, String encodedPassword) {
+    if (name != null && !name.isBlank()) {
+      this.name = name;
+    }
+    if (encodedPassword != null) {
+      this.password = encodedPassword;
+    }
+  }
 }
