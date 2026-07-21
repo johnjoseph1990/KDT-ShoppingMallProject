@@ -25,11 +25,11 @@ export default function Navbar() {
   // 로그아웃 버튼을 눌렀을 때 실행되는 함수다.
   // 1) 서버에 로그아웃 요청
   // 2) 로컬 로그인 상태 제거
-  // 3) 로그인 페이지로 이동
+  // 3) 메인 화면으로 이동
   const handleLogout = async () => {
     await logoutApi()
     logout()
-    navigate('/login')
+    navigate('/')
   }
 
   // "무엇을 둘러볼지"를 결정하는 콘텐츠 탐색 메뉴(primary nav)다.
