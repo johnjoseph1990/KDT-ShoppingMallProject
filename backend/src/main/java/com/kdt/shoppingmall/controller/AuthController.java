@@ -63,7 +63,11 @@ public class AuthController {
 
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
-    request.getSession().invalidate();
+    // getSession(false): 세션이 없으면 null 반환. getSession()은 없을 때 새 세션을 생성하므로 위험.
+    var session = request.getSession(false);
+    if (session != null) {
+      session.invalidate();
+    }
     SecurityContextHolder.clearContext();
     return ResponseEntity.noContent().build();
   }
