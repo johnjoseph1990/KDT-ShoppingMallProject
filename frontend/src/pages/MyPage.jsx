@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { updateMe, deleteMe, logout as logoutApi } from '../api/auth'
 import { getOrders } from '../api/orders'
+import { getAddresses, createAddress, updateAddress, deleteAddress } from '../api/addresses'
 
 // 주문 상태 한글 표기
 const STATUS_LABEL = {
@@ -39,7 +40,7 @@ const inputStyle = {
 export default function MyPage() {
   const { user, login: setUser, logout } = useAuth()
   const navigate = useNavigate()
-  const [tab, setTab] = useState('orders') // 'orders' | 'settings'
+  const [tab, setTab] = useState('orders') // 'orders' | 'addresses' | 'settings'
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // 이 페이지 전용 토스트 (CartContext의 Toast와 별개로 동작)
@@ -100,6 +101,9 @@ export default function MyPage() {
             <SidebarItem active={tab === 'orders'} onClick={() => setTab('orders')}>
               주문 내역
             </SidebarItem>
+            <SidebarItem active={tab === 'addresses'} onClick={() => setTab('addresses')}>
+              배송지 관리
+            </SidebarItem>
             <SidebarItem active={tab === 'settings'} onClick={() => setTab('settings')}>
               계정 설정
             </SidebarItem>
@@ -129,6 +133,7 @@ export default function MyPage() {
         {/* ── 콘텐츠 영역 ────────────────────────────────── */}
         <div style={{ flex: 1, minWidth: 0, padding: 'clamp(32px,4vw,56px) clamp(24px,4vw,56px)' }}>
           {tab === 'orders' && <OrdersPanel />}
+          {tab === 'addresses' && <AddressesPanel showNotice={showNotice} />}
           {tab === 'settings' && (
             <SettingsPanel user={user} setUser={setUser} showNotice={showNotice} />
           )}
@@ -570,6 +575,305 @@ function SmallBtn({ children, outline, ...props }) {
     >
       {children}
     </button>
+  )
+}
+
+// ── 배송지 관리 패널 ──────────────────────────────────────
+// 목록 조회, 추가, 수정, 삭제 기능을 한 화면에서 처리한다.
+function AddressesPanel({ showNotice }) {
+  const [addresses, setAddresses] = useState([])
+  const [loading, setLoading] = useState(true)
+  // 현재 수정 중인 배송지 ID ('new'면 추가 폼)
+  const [editing, setEditing] = useState(null)
+
+  // 컴포넌트가 마운트될 때 배송지 목록을 가져온다
+  useEffect(() => {
+    getAddresses()
+      .then((res) => setAddresses(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSave = async (formData, id) => {
+    try {
+      if (id === 'new') {
+        const res = await createAddress(formData)
+        setAddresses((prev) => {
+          // 새 배송지가 기본이면 기존 기본 배송지 해제 반영
+          const updated = formData.isDefault ? prev.map((a) => ({ ...a, isDefault: false })) : prev
+          return [...updated, res.data]
+        })
+        showNotice('배송지가 추가되었습니다.')
+      } else {
+        const res = await updateAddress(id, formData)
+        setAddresses((prev) => {
+          const updated = formData.isDefault ? prev.map((a) => ({ ...a, isDefault: false })) : prev
+          return updated.map((a) => (a.id === id ? res.data : a))
+        })
+        showNotice('배송지가 수정되었습니다.')
+      }
+      setEditing(null)
+    } catch {
+      showNotice('저장에 실패했습니다.', true)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteAddress(id)
+      setAddresses((prev) => prev.filter((a) => a.id !== id))
+      showNotice('배송지가 삭제되었습니다.')
+    } catch {
+      showNotice('삭제에 실패했습니다.', true)
+    }
+  }
+
+  // 기본 배송지를 목록 맨 앞으로 정렬한다
+  const sorted = [...addresses].sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0))
+
+  return (
+    <div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 28,
+        }}
+      >
+        <h2 style={{ fontFamily: "'Noto Serif KR', serif", fontWeight: 300, fontSize: 24 }}>
+          배송지 관리
+        </h2>
+        {editing !== 'new' && <SmallBtn onClick={() => setEditing('new')}>+ 배송지 추가</SmallBtn>}
+      </div>
+
+      {/* 배송지 추가 폼 */}
+      {editing === 'new' && (
+        <div style={{ border: '1px solid #dddaca', padding: '24px', marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: '#75775e', marginBottom: 18, letterSpacing: '0.04em' }}>
+            새 배송지
+          </p>
+          <AddressForm
+            onSave={(data) => handleSave(data, 'new')}
+            onCancel={() => setEditing(null)}
+          />
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>불러오는 중...</p>
+      ) : sorted.length === 0 ? (
+        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>저장된 배송지가 없습니다.</p>
+      ) : (
+        <div style={{ borderTop: '1px solid #dddaca' }}>
+          {sorted.map((addr) => (
+            <div key={addr.id} style={{ borderBottom: '1px solid #dddaca' }}>
+              {/* 배송지 정보 행 */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  padding: '20px 0',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 14 }}>{addr.recipientName}</span>
+                    <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                      {addr.phone}
+                    </span>
+                    {addr.isDefault && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          letterSpacing: '0.06em',
+                          color: '#4a5e3a',
+                          background: '#eef3e8',
+                          padding: '2px 7px',
+                        }}
+                      >
+                        기본
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 300, color: '#333330' }}>
+                    ({addr.zipCode}) {addr.address} {addr.addressDetail ?? ''}
+                  </span>
+                  {addr.note && (
+                    <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                      배송 메모: {addr.note}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 16 }}>
+                  <SmallBtn
+                    outline
+                    onClick={() => setEditing(editing === addr.id ? null : addr.id)}
+                  >
+                    {editing === addr.id ? '닫기' : '수정'}
+                  </SmallBtn>
+                  <SmallBtn
+                    outline
+                    onClick={() => handleDelete(addr.id)}
+                    style={{ borderColor: '#ccc', color: '#999' }}
+                  >
+                    삭제
+                  </SmallBtn>
+                </div>
+              </div>
+
+              {/* 수정 폼 — disclosure 패턴 */}
+              {editing === addr.id && (
+                <div style={{ paddingBottom: 24 }}>
+                  <AddressForm
+                    initial={addr}
+                    onSave={(data) => handleSave(data, addr.id)}
+                    onCancel={() => setEditing(null)}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 배송지 입력 폼 (추가/수정 공용) ──────────────────────
+// initial prop이 있으면 수정 모드, 없으면 추가 모드
+function AddressForm({ initial, onSave, onCancel }) {
+  const [form, setForm] = useState({
+    recipientName: initial?.recipientName ?? '',
+    phone: initial?.phone ?? '',
+    zipCode: initial?.zipCode ?? '',
+    address: initial?.address ?? '',
+    addressDetail: initial?.addressDetail ?? '',
+    note: initial?.note ?? '',
+    isDefault: initial?.isDefault ?? false,
+  })
+  const [loading, setLoading] = useState(false)
+
+  // Daum 우편번호 API를 스크립트로 동적 로드해서 주소 검색을 열어준다
+  const handleAddressSearch = () => {
+    const openPostcode = () => {
+      new window.daum.Postcode({
+        oncomplete(data) {
+          setForm((prev) => ({ ...prev, zipCode: data.zonecode, address: data.address }))
+        },
+      }).open()
+    }
+
+    if (window.daum?.Postcode) {
+      openPostcode()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+      script.onload = openPostcode
+      document.head.appendChild(script)
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.recipientName.trim() || !form.phone.trim() || !form.zipCode || !form.address) return
+    setLoading(true)
+    try {
+      await onSave(form)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <input
+          type="text"
+          placeholder="받는 분"
+          required
+          value={form.recipientName}
+          onChange={set('recipientName')}
+          style={{ ...inputStyle, flex: 1 }}
+        />
+        <input
+          type="tel"
+          placeholder="연락처"
+          required
+          value={form.phone}
+          onChange={set('phone')}
+          style={{ ...inputStyle, flex: 1 }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <input
+          type="text"
+          placeholder="우편번호"
+          required
+          readOnly
+          value={form.zipCode}
+          style={{ ...inputStyle, flex: '0 0 120px', background: '#f9f8f0' }}
+        />
+        <SmallBtn
+          type="button"
+          outline
+          onClick={handleAddressSearch}
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          주소 검색
+        </SmallBtn>
+      </div>
+      <input
+        type="text"
+        placeholder="주소"
+        required
+        readOnly
+        value={form.address}
+        style={{ ...inputStyle, background: '#f9f8f0' }}
+      />
+      <input
+        type="text"
+        placeholder="상세 주소"
+        value={form.addressDetail}
+        onChange={set('addressDetail')}
+        style={inputStyle}
+      />
+      <input
+        type="text"
+        placeholder="배송 메모 (선택)"
+        value={form.note}
+        onChange={set('note')}
+        style={inputStyle}
+      />
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: 13,
+          fontWeight: 300,
+          cursor: 'pointer',
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={form.isDefault}
+          onChange={(e) => setForm((prev) => ({ ...prev, isDefault: e.target.checked }))}
+        />
+        기본 배송지로 설정
+      </label>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+        <SmallBtn type="button" outline onClick={onCancel}>
+          취소
+        </SmallBtn>
+        <SmallBtn type="submit" disabled={loading}>
+          {loading ? '저장 중' : '저장'}
+        </SmallBtn>
+      </div>
+    </form>
   )
 }
 

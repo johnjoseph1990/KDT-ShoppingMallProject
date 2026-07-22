@@ -10,6 +10,7 @@ KDT 쇼핑몰 프로젝트를 진행하면서 배운 개념들을 주제별로 �
 | 문서 | 핵심 키워드 | 작성일 |
 |------|-----------|--------|
 | [테스트 계층 구조](./spring-test-layers.md) | @WebMvcTest, @ExtendWith, Mockito, given/willReturn | 2026-07-22 |
+| [배송지 관리 구현](./address-management.md) | @ManyToOne, JPA 네이밍, @Transactional, OWASP A01 | 2026-07-22 |
 
 ### React 프론트엔드
 
