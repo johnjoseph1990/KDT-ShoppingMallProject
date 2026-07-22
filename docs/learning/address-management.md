@@ -9,7 +9,7 @@
 ```
 [백엔드 흐름]
 
-GET /api/addresses
+GET /api/addresses/
    ↓
 AddressController.getAll()
    ↓ @AuthenticationPrincipal로 memberId 추출
