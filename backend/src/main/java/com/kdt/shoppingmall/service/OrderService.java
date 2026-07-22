@@ -63,12 +63,12 @@ public class OrderService {
     Order order =
         new Order(
             member,
-            request != null ? request.deliveryName() : null,
-            request != null ? request.deliveryPhone() : null,
-            request != null ? request.deliveryZipCode() : null,
-            request != null ? request.deliveryAddress() : null,
-            request != null ? request.deliveryAddressDetail() : null,
-            request != null ? request.deliveryNote() : null);
+            request.deliveryName(),
+            request.deliveryPhone(),
+            request.deliveryZipCode(),
+            request.deliveryAddress(),
+            request.deliveryAddressDetail(),
+            request.deliveryNote());
     for (CartItem cartItem : cartItems) {
       Product product = cartItem.getProduct();
       product.decreaseStock(cartItem.getQuantity());

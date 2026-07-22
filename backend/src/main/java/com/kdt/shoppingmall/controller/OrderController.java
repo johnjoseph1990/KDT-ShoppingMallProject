@@ -5,6 +5,7 @@ import com.kdt.shoppingmall.dto.order.OrderResponse;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.security.MemberPrincipal;
 import com.kdt.shoppingmall.service.OrderService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class OrderController {
   @PostMapping
   public ResponseEntity<OrderResponse> createOrder(
       @AuthenticationPrincipal MemberPrincipal principal,
-      @RequestBody(required = false) OrderCreateRequest request) {
+      @Valid @RequestBody OrderCreateRequest request) {
     OrderResponse response = orderService.createOrder(principal.getMember().getId(), request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
