@@ -98,10 +98,10 @@ public class OrderService {
     if (success) {
       order.changeStatus(OrderStatus.PAID);
     } else {
-      // PENDING → CANCELED 전이만 허용되므로, 이미 CANCELED인 주문에 pay()를 다시 호출하면
+      // ORDERED → CANCELED 전이만 허용되므로, 이미 CANCELED인 주문에 pay()를 다시 호출하면
       // changeStatus()가 InvalidOrderStatusException을 던진다. 이중 재고 복구는 구조적으로 불가.
       order.changeStatus(OrderStatus.CANCELED);
-      order.getOrderItems().forEach(item -> item.getProduct().increaseStock(item.getQuantity()));
+      restoreStock(order);
     }
 
     Payment payment =
@@ -129,7 +129,18 @@ public class OrderService {
             .findById(orderId)
             .orElseThrow(() -> new ResourceNotFoundException("주문을 찾을 수 없습니다. id=" + orderId));
     order.changeStatus(status);
+    // 관리자가 주문을 직접 취소하는 경로도 결제 실패 자동 취소(pay())와 동일하게 재고를 되돌려야
+    // 판매 가능한 재고가 취소된 주문에 묶여있는 문제를 막을 수 있다.
+    if (status == OrderStatus.CANCELED) {
+      restoreStock(order);
+    }
     return OrderResponse.from(order);
+  }
+
+  // 주문이 취소될 때 차감됐던 재고를 되돌리는 공통 로직. pay() 실패 분기와
+  // changeOrderStatus()의 관리자 취소 분기, 두 취소 경로에서 함께 사용한다.
+  private void restoreStock(Order order) {
+    order.getOrderItems().forEach(item -> item.getProduct().increaseStock(item.getQuantity()));
   }
 
   private List<CartItem> resolveCartItems(Long memberId, OrderCreateRequest request) {

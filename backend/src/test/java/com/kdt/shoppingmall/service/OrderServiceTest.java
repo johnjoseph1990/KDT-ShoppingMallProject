@@ -9,6 +9,7 @@ import com.kdt.shoppingmall.domain.cart.CartItem;
 import com.kdt.shoppingmall.domain.member.Member;
 import com.kdt.shoppingmall.domain.member.MemberRole;
 import com.kdt.shoppingmall.domain.order.Order;
+import com.kdt.shoppingmall.domain.order.OrderItem;
 import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.payment.Payment;
 import com.kdt.shoppingmall.domain.payment.PaymentStatus;
@@ -194,6 +195,33 @@ class OrderServiceTest {
 
     assertThatThrownBy(() -> orderService.changeOrderStatus(99L, OrderStatus.PAID))
         .isInstanceOf(ResourceNotFoundException.class);
+  }
+
+  @Test
+  void changeOrderStatus_취소시_재고복구() {
+    // 주문 생성 시 차감됐던 재고(2개)를 관리자 취소가 되돌리는지 확인한다.
+    product.decreaseStock(2);
+    Order order = new Order(member);
+    order.addItem(new OrderItem(product, product.getPrice(), 2));
+    ReflectionTestUtils.setField(order, "id", 1L);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    orderService.changeOrderStatus(1L, OrderStatus.CANCELED);
+
+    assertThat(product.getStockQuantity()).isEqualTo(100);
+  }
+
+  @Test
+  void changeOrderStatus_SHIPPING에서_취소_예외발생() {
+    // SPRINT_PLAN에서 확정한 규칙: 배송 시작(SHIPPING) 후에는 취소할 수 없다.
+    Order order = new Order(member);
+    order.changeStatus(OrderStatus.PAID);
+    order.changeStatus(OrderStatus.SHIPPING);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.changeOrderStatus(1L, OrderStatus.CANCELED))
+        .isInstanceOf(InvalidOrderStatusException.class);
   }
 
   @RepeatedTest(5)
