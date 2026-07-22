@@ -98,6 +98,8 @@ public class OrderService {
     if (success) {
       order.changeStatus(OrderStatus.PAID);
     } else {
+      // PENDING → CANCELED 전이만 허용되므로, 이미 CANCELED인 주문에 pay()를 다시 호출하면
+      // changeStatus()가 InvalidOrderStatusException을 던진다. 이중 재고 복구는 구조적으로 불가.
       order.changeStatus(OrderStatus.CANCELED);
       order.getOrderItems().forEach(item -> item.getProduct().increaseStock(item.getQuantity()));
     }

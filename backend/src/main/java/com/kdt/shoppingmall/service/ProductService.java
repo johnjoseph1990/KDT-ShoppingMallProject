@@ -39,10 +39,6 @@ public class ProductService {
     return toResponse(productRepository.save(product));
   }
 
-  public List<ProductResponse> findAll() {
-    return productRepository.findAll().stream().map(this::toResponse).toList();
-  }
-
   public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
     return productRepository.searchProducts(keyword, tag, pageable).map(this::toResponse);
   }

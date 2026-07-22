@@ -49,19 +49,6 @@ class ProductServiceTest {
   }
 
   @Test
-  void findAll_성공() {
-    Product p1 = new Product("상품A", "설명A", 10000, 50, null);
-    Product p2 = new Product("상품B", "설명B", 20000, 30, null);
-    given(productRepository.findAll()).willReturn(List.of(p1, p2));
-
-    List<ProductResponse> responses = productService.findAll();
-
-    assertThat(responses).hasSize(2);
-    assertThat(responses.get(0).name()).isEqualTo("상품A");
-    assertThat(responses.get(1).name()).isEqualTo("상품B");
-  }
-
-  @Test
   void findById_성공() {
     Product product = new Product("상품A", "설명", 10000, 100, null);
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
