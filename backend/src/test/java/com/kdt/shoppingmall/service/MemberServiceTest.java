@@ -14,6 +14,7 @@ import com.kdt.shoppingmall.dto.member.MemberUpdateRequest;
 import com.kdt.shoppingmall.dto.member.SignupRequest;
 import com.kdt.shoppingmall.exception.DuplicateEmailException;
 import com.kdt.shoppingmall.exception.PasswordMismatchException;
+import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -112,5 +113,57 @@ class MemberServiceTest {
     memberService.delete(1L);
 
     verify(memberRepository).delete(member);
+  }
+
+  @Test
+  void update_이름과_비밀번호_동시변경_성공() {
+    // 이름과 비밀번호를 한 번의 요청으로 함께 바꿀 수 있어야 한다
+    Member member = new Member("test@test.com", "encoded_old", "기존이름", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(passwordEncoder.matches("oldPass", "encoded_old")).willReturn(true);
+    given(passwordEncoder.encode("newPass123")).willReturn("encoded_new");
+
+    MemberUpdateRequest request = new MemberUpdateRequest("새이름", "oldPass", "newPass123");
+    MemberResponse response = memberService.update(1L, request);
+
+    assertThat(response.name()).isEqualTo("새이름");
+    assertThat(member.getPassword()).isEqualTo("encoded_new");
+  }
+
+  @Test
+  void update_존재하지않는_회원_예외발생() {
+    // 없는 ID로 수정 요청 시 ResourceNotFoundException이 발생해야 한다
+    given(memberRepository.findById(99L)).willReturn(Optional.empty());
+
+    MemberUpdateRequest request = new MemberUpdateRequest("새이름", null, null);
+
+    assertThatThrownBy(() -> memberService.update(99L, request))
+        .isInstanceOf(ResourceNotFoundException.class);
+  }
+
+  @Test
+  void update_currentPassword_null인데_newPassword_요청시_예외발생() {
+    // currentPassword 없이 newPassword만 보내면 현재 비밀번호 검증이 실패해야 한다
+    Member member = new Member("test@test.com", "encoded_old", "테스터", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    // currentPassword가 null이면 matches()가 호출되지 않으므로 stub 불필요
+
+    MemberUpdateRequest request = new MemberUpdateRequest(null, null, "newPass123");
+
+    assertThatThrownBy(() -> memberService.update(1L, request))
+        .isInstanceOf(PasswordMismatchException.class);
+  }
+
+  @Test
+  void delete_존재하지않는_회원_예외발생() {
+    // 없는 ID로 탈퇴 요청 시 ResourceNotFoundException이 발생해야 한다
+    given(memberRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> memberService.delete(99L))
+        .isInstanceOf(ResourceNotFoundException.class);
+
+    verify(memberRepository, never()).delete(any());
   }
 }

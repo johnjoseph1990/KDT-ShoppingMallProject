@@ -17,6 +17,7 @@ import com.kdt.shoppingmall.dto.member.MemberResponse;
 import com.kdt.shoppingmall.dto.member.MemberUpdateRequest;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
 import com.kdt.shoppingmall.exception.PasswordMismatchException;
+import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import com.kdt.shoppingmall.service.MemberService;
 import com.kdt.shoppingmall.support.WithMockMemberPrincipal;
@@ -104,5 +105,29 @@ class MemberControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void 미로그인_탈퇴요청_401() throws Exception {
+    // 인증 없이 DELETE /api/members/me 요청 시 401이 반환되어야 한다
+    mockMvc.perform(delete("/api/members/me")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 존재하지않는_회원_수정요청_404() throws Exception {
+    // 서비스에서 ResourceNotFoundException이 발생하면 404로 응답해야 한다
+    MemberUpdateRequest request = new MemberUpdateRequest("새이름", null, null);
+    willThrow(new ResourceNotFoundException("존재하지 않는 회원입니다."))
+        .given(memberService)
+        .update(eq(1L), any());
+
+    mockMvc
+        .perform(
+            put("/api/members/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("존재하지 않는 회원입니다."));
   }
 }
