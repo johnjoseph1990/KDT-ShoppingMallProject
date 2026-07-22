@@ -8,6 +8,7 @@ import com.kdt.shoppingmall.dto.member.SignupRequest;
 import com.kdt.shoppingmall.exception.DuplicateEmailException;
 import com.kdt.shoppingmall.exception.PasswordMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
+import com.kdt.shoppingmall.repository.AddressRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,15 @@ public class MemberService {
 
   private final MemberRepository memberRepository;
   private final PasswordEncoder passwordEncoder;
+  private final AddressRepository addressRepository;
 
-  public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
+  public MemberService(
+      MemberRepository memberRepository,
+      PasswordEncoder passwordEncoder,
+      AddressRepository addressRepository) {
     this.memberRepository = memberRepository;
     this.passwordEncoder = passwordEncoder;
+    this.addressRepository = addressRepository;
   }
 
   @Transactional
@@ -68,6 +74,8 @@ public class MemberService {
         memberRepository
             .findById(memberId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
+    // address.member_id FK가 NOT NULL이므로 회원 삭제 전에 배송지를 먼저 일괄 삭제한다.
+    addressRepository.deleteAllByMemberId(memberId);
     memberRepository.delete(member);
   }
 }

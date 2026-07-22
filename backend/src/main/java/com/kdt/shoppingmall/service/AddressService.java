@@ -72,8 +72,9 @@ public class AddressService {
         request.addressDetail(),
         request.note());
 
-    // 기본 배송지로 변경하는 경우, 기존 기본 배송지를 해제한다.
-    if (request.isDefault() && !address.isDefault()) {
+    // create()와 동일하게 isDefault=true면 무조건 기존 기본 배송지를 해제한다.
+    // "이미 기본이니까 생략"하면 다른 경로로 isDefault=true가 2개 생긴 상태를 고치지 못한다.
+    if (request.isDefault()) {
       clearDefaultAddresses(memberId);
     }
     address.setDefault(request.isDefault());

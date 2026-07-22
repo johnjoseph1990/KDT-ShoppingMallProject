@@ -3,6 +3,9 @@ package com.kdt.shoppingmall.repository;
 import com.kdt.shoppingmall.domain.address.Address;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 // JpaRepository를 상속하면 save/findById/delete 등 기본 CRUD 메서드가 자동으로 생긴다.
 public interface AddressRepository extends JpaRepository<Address, Long> {
@@ -12,4 +15,10 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
   // 특정 회원의 현재 기본 배송지를 조회한다. 기본 배송지 교체 시 기존 것을 해제하기 위해 사용.
   List<Address> findByMemberIdAndIsDefaultTrue(Long memberId);
+
+  // 단건 SELECT 없이 DELETE SQL 한 방으로 처리한다.
+  // 회원 탈퇴 시 address.member_id FK(NOT NULL) 제약을 위반하지 않도록 회원보다 먼저 삭제한다.
+  @Modifying
+  @Query("DELETE FROM Address a WHERE a.member.id = :memberId")
+  void deleteAllByMemberId(@Param("memberId") Long memberId);
 }

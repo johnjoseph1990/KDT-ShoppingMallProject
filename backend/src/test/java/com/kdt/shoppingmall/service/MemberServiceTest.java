@@ -15,6 +15,7 @@ import com.kdt.shoppingmall.dto.member.SignupRequest;
 import com.kdt.shoppingmall.exception.DuplicateEmailException;
 import com.kdt.shoppingmall.exception.PasswordMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
+import com.kdt.shoppingmall.repository.AddressRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,8 @@ class MemberServiceTest {
   @Mock private MemberRepository memberRepository;
 
   @Mock private PasswordEncoder passwordEncoder;
+
+  @Mock private AddressRepository addressRepository;
 
   @InjectMocks private MemberService memberService;
 
@@ -112,6 +115,8 @@ class MemberServiceTest {
 
     memberService.delete(1L);
 
+    // 배송지가 회원보다 먼저 삭제되어야 FK 제약 위반이 발생하지 않는다
+    verify(addressRepository).deleteAllByMemberId(1L);
     verify(memberRepository).delete(member);
   }
 

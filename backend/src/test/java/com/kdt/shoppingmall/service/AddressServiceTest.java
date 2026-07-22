@@ -119,6 +119,24 @@ class AddressServiceTest {
   }
 
   @Test
+  void update_이미기본배송지인데_기본으로수정해도_clearDefault_호출됨() {
+    // address가 이미 isDefault=true인 경우에도 clearDefaultAddresses()가 호출되어야 한다.
+    // 동시성 이슈로 isDefault=true가 2개가 된 상태를 이 경로에서 정리할 수 있어야 하기 때문.
+    Address address = makeAddress(1L, true); // 이미 기본 배송지
+    Address anotherDefault = makeAddress(2L, true); // 레이스 컨디션으로 생긴 두 번째 기본 배송지
+    AddressRequest request =
+        new AddressRequest("홍길동", "010-1234-5678", "12345", "서울시 강남구", "101호", "문 앞", true);
+    given(addressRepository.findById(1L)).willReturn(Optional.of(address));
+    given(addressRepository.findByMemberIdAndIsDefaultTrue(1L))
+        .willReturn(List.of(address, anotherDefault));
+
+    addressService.update(1L, 1L, request);
+
+    // 두 기본 배송지가 모두 해제된 뒤, address만 기본으로 재설정되어야 한다
+    assertThat(anotherDefault.isDefault()).isFalse();
+  }
+
+  @Test
   void update_다른회원_배송지_수정시_예외발생() {
     // 다른 회원(memberId=2)의 배송지(memberId=1 소유)를 수정하면 예외가 발생해야 한다
     Address address = makeAddress(1L, false); // member id=1 소유

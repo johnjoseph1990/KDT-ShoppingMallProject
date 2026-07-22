@@ -96,6 +96,19 @@ class OrderServiceTest {
   }
 
   @Test
+  void createOrder_빈_cartItemIds_예외발생() {
+    // cartItemIds=[]는 null(전체 주문)과 달리 '선택 항목 없음'이므로 EmptyCartException이 발생해야 한다.
+    // 이전에는 isEmpty() 조건에서 전체 장바구니 폴백이 실행되는 버그가 있었다.
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    1L, new OrderCreateRequest(List.of(), null, null, null, null, null, null)))
+        .isInstanceOf(EmptyCartException.class);
+  }
+
+  @Test
   void getOrders_성공() {
     Order order = new Order(member);
     given(orderRepository.findByMemberIdOrderByCreatedAtDesc(1L)).willReturn(List.of(order));

@@ -133,8 +133,14 @@ public class OrderService {
   }
 
   private List<CartItem> resolveCartItems(Long memberId, OrderCreateRequest request) {
-    if (request == null || request.cartItemIds() == null || request.cartItemIds().isEmpty()) {
+    // null → 전체 장바구니 주문 (프론트가 '전체 주문' 시 null로 보냄)
+    if (request.cartItemIds() == null) {
       return cartItemRepository.findByMemberId(memberId);
+    }
+    // [] → 빈 배열, 즉 아무것도 선택 안 함. null과 다른 의도이므로 폴백 없이 빈 목록 반환.
+    // createOrder()에서 isEmpty() 체크가 EmptyCartException을 던진다.
+    if (request.cartItemIds().isEmpty()) {
+      return List.of();
     }
     return request.cartItemIds().stream()
         .map(

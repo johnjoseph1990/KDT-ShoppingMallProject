@@ -57,7 +57,11 @@ export default function MyPage() {
     try {
       await deleteMe()
     } catch {
-      /* 서버가 세션을 먼저 끊을 수 있으므로 무시 */
+      // 서버 삭제 실패 시 탈퇴를 중단하고 에러를 사용자에게 알린다.
+      // 성공한 척 로그아웃하면 계정이 서버에 남은 채 사용자가 인지하지 못하는 불일치 상태가 된다.
+      showNotice('회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.', true)
+      setShowDeleteModal(false)
+      return
     }
     try {
       await logoutApi()
@@ -766,13 +770,23 @@ function AddressForm({ initial, onSave, onCancel }) {
     }
 
     if (window.daum?.Postcode) {
+      // 이미 로드 완료
       openPostcode()
-    } else {
-      const script = document.createElement('script')
-      script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
-      script.onload = openPostcode
-      document.head.appendChild(script)
+      return
     }
+
+    // script 태그가 이미 삽입되어 있으면(=로딩 중) 중복 삽입 없이 onload 콜백만 추가한다.
+    // window.daum만 체크하면 스크립트가 실행되기 전 두 번째 클릭에서 중복 삽입이 발생한다.
+    const existing = document.querySelector('script[src*="postcode.v2.js"]')
+    if (existing) {
+      existing.addEventListener('load', openPostcode, { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.onload = openPostcode
+    document.head.appendChild(script)
   }
 
   const handleSubmit = async (e) => {
