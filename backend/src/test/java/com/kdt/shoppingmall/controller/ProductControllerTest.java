@@ -129,6 +129,21 @@ class ProductControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "USER")
+  void 상품등록_USER권한_403() throws Exception {
+    ProductRequest request = new ProductRequest("상품A", "설명", 10000, 100, null, null);
+
+    mockMvc
+        .perform(
+            post("/api/products")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        // 로그인은 했지만(USER) ADMIN 권한이 없으므로 403. SecurityConfig의
+        // hasRole("ADMIN") 규칙이 실제로 USER를 막는지는 이 "실패해야 하는" 케이스로만 증명된다.
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
   void 상품등록_미인증_401() throws Exception {
     ProductRequest request = new ProductRequest("상품A", "설명", 10000, 100, null, null);
 

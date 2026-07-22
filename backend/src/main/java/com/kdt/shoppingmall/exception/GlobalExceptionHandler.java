@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -20,6 +21,17 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+  }
+
+  // AuthController.login()에서 authenticationManager.authenticate()가 던지는
+  // BadCredentialsException(비밀번호 틀림) · UsernameNotFoundException(가입 안 된 이메일,
+  // DaoAuthenticationProvider가 내부적으로 BadCredentialsException으로 감춰서 던짐)이 여기로 온다.
+  // 이 핸들러가 없으면 아래 handleUnexpected(Exception.class)가 먼저 잡아 500을 내려버려서,
+  // SecurityConfig의 authenticationEntryPoint(401 설정)까지 도달하지 못하는 문제가 있었다.
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<Map<String, String>> handleAuthentication(AuthenticationException e) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(Map.of("message", "이메일 또는 비밀번호가 올바르지 않습니다."));
   }
 
   @ExceptionHandler(ResourceNotFoundException.class)
