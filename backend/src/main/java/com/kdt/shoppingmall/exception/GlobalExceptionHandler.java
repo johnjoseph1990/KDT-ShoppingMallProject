@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -72,6 +73,13 @@ public class GlobalExceptionHandler {
             .map(error -> error.getField() + ": " + error.getDefaultMessage())
             .orElse("잘못된 요청입니다.");
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", message));
+  }
+
+  // body가 아예 없거나 JSON 문법이 틀린 경우. @Valid 검증 이전 단계에서 발생하므로 별도 처리.
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<Map<String, String>> handleUnreadable(HttpMessageNotReadableException e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("message", "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요."));
   }
 
   // 위의 핸들러들이 잡지 못한 모든 예외의 최후 방어선.
