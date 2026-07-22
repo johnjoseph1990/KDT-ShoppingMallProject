@@ -44,10 +44,8 @@ export default function Navbar() {
   // primaryLinks와 성격이 다르므로 배열을 따로 두고, 화면에서도 구분선으로 분리해 보여준다.
   const accountLinks = user
     ? [
-        // "마이페이지"라고 이름 붙였지만 실제로는 주문 목록(/orders) 페이지로 연결된다.
-        // 주소록 등 별도의 마이페이지 기능은 아직 없고, 지금은 로그인한 사용자의
-        // 진입점 역할만 한다 (추후 마이페이지가 별도로 생기면 그때 라우트를 나눈다).
-        { to: '/orders', label: '마이페이지' },
+        { to: '/mypage', label: '마이페이지' },
+        { to: '/orders', label: '주문 내역' },
         // 관리자만 관리자 페이지를 볼 수 있게 role을 확인한다.
         ...(user.role === 'ADMIN' ? [{ to: '/admin', label: '관리자' }] : []),
       ]

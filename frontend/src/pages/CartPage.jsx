@@ -13,8 +13,8 @@ export default function CartPage() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    zipCode: '',       // 우편번호 — 주소 검색 API가 자동으로 채워준다
-    address: '',       // 도로명/지번 주소 — 주소 검색 API가 자동으로 채워준다
+    zipCode: '', // 우편번호 — 주소 검색 API가 자동으로 채워준다
+    address: '', // 도로명/지번 주소 — 주소 검색 API가 자동으로 채워준다
     addressDetail: '', // 상세 주소 (동·호수 등) — 직접 입력
     note: '',
   })
@@ -156,7 +156,13 @@ export default function CartPage() {
                 placeholder="우편번호"
                 readOnly
                 required
-                style={{ ...inputStyle, width: 120, flexShrink: 0, cursor: 'default', color: '#555' }}
+                style={{
+                  ...inputStyle,
+                  width: 120,
+                  flexShrink: 0,
+                  cursor: 'default',
+                  color: '#555',
+                }}
                 value={form.zipCode}
               />
               <button

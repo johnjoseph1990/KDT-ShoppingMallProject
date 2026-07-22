@@ -15,6 +15,7 @@ import CartPage from './pages/CartPage'
 import OrderListPage from './pages/OrderListPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import AdminPage from './pages/AdminPage'
+import MyPage from './pages/MyPage'
 import StoryPage from './pages/StoryPage'
 import AboutPage from './pages/AboutPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -58,6 +59,14 @@ export default function App() {
                 element={
                   <PrivateRoute>
                     <OrderDetailPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/mypage"
+                element={
+                  <PrivateRoute>
+                    <MyPage />
                   </PrivateRoute>
                 }
               />

@@ -32,7 +32,8 @@ const FARMERS = [
     region: '충남 서천',
     farm: '바다들녘',
     name: '정미영',
-    imageUrl: 'https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?w=800&q=80&auto=format&fit=crop',
+    imageUrl:
+      'https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?w=800&q=80&auto=format&fit=crop',
     quote: '잎을 보면 알아요. 급하게 키운 잎은 빛깔부터 다릅니다.',
     story:
       '바닷바람이 닿는 노지에서 잎채소를 기릅니다. 천천히 자란 잎은 조직이 단단해 쉽게 무르지 않고, 씹는 맛이 살아 있습니다.',

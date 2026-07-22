@@ -132,12 +132,39 @@ h3 {
    ② 모바일용 햄버거 메뉴 보임
    ③ 그리드 레이아웃을 모바일에 맞게 재조정
 */
+/* ── 마이페이지 2컬럼 레이아웃 ── */
+.mypage-layout {
+  display: flex;
+  /* 공지 배너(42px) + 헤더(72px) 높이를 제외한 전체 높이 확보 */
+  min-height: calc(100vh - 114px);
+}
+
+.mypage-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid #dddaca;
+  padding: clamp(32px, 4vw, 56px) clamp(16px, 2.5vw, 32px);
+  display: flex;
+  flex-direction: column;
+}
+
 @media (max-width: 768px) {
   .navbar-desktop-nav {
     display: none; /* 데스크톱 네비 숨김 */
   }
   .navbar-mobile-actions {
     display: flex; /* 모바일 액션(햄버거) 보임 */
+  }
+
+  /* 마이페이지: 모바일에서 사이드바가 상단 탭으로 전환 */
+  .mypage-layout {
+    flex-direction: column;
+  }
+  .mypage-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #dddaca;
+    padding: 24px clamp(20px, 5vw, 72px);
   }
 
   /* ====== 그리드 레이아웃 모바일 대응 ====== */

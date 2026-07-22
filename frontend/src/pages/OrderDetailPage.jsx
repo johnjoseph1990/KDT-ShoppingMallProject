@@ -154,8 +154,7 @@ export default function OrderDetailPage() {
               {order.deliveryName} · {order.deliveryPhone}
             </p>
             <p style={{ margin: 0 }}>
-              ({order.deliveryZipCode}) {order.deliveryAddress}{' '}
-              {order.deliveryAddressDetail}
+              ({order.deliveryZipCode}) {order.deliveryAddress} {order.deliveryAddressDetail}
             </p>
             {order.deliveryNote && (
               <p style={{ margin: 0, color: '#6d6c61' }}>메모: {order.deliveryNote}</p>
