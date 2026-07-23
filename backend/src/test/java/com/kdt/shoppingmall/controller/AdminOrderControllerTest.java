@@ -120,4 +120,26 @@ class AdminOrderControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void 전체주문조회_USER권한_403() throws Exception {
+    // 로그인은 했지만(USER) ADMIN 권한이 없으므로 403.
+    // SecurityConfig의 /api/admin/** → hasRole("ADMIN") 규칙이 실제로 USER를 막는지 검증.
+    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void 주문상태변경_USER권한_403() throws Exception {
+    // 로그인은 했지만(USER) ADMIN 권한이 없으므로 403.
+    OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderStatus.SHIPPING);
+
+    mockMvc
+        .perform(
+            patch("/api/admin/orders/1/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isForbidden());
+  }
 }

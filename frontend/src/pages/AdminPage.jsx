@@ -243,14 +243,21 @@ function ProductManager() {
 function OrderManager() {
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(0)
+  const [statusFilter, setStatusFilter] = useState(null) // null이면 전체 조회
 
   useEffect(() => {
     loadOrders()
-  }, [page])
+  }, [page, statusFilter])
 
   const loadOrders = () => {
     // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
-    getAdminOrders(page).then((res) => setOrders(res.data.content))
+    getAdminOrders(page, statusFilter).then((res) => setOrders(res.data.content))
+  }
+
+  // 필터 변경 시 첫 페이지로 리셋해서 이전 페이지 번호가 남는 부작용을 방지
+  const handleFilterChange = (e) => {
+    setStatusFilter(e.target.value || null)
+    setPage(0)
   }
 
   const handleStatusChange = async (orderId, newStatus) => {
@@ -264,6 +271,17 @@ function OrderManager() {
 
   return (
     <>
+      {/* 상태 필터 — 선택한 상태의 주문만 표시, 전체 선택 시 필터 없이 조회 */}
+      <div style={{ marginBottom: '0.75rem' }}>
+        <select value={statusFilter ?? ''} onChange={handleFilterChange} style={styles.select}>
+          <option value="">전체</option>
+          {ORDER_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </option>
+          ))}
+        </select>
+      </div>
       <Table.Root style={styles.table}>
         <Table.Header>
           <Table.Row>
