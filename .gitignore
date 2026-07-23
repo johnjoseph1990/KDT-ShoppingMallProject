@@ -29,3 +29,6 @@ Thumbs.db
 # Claude Code 로컬 설정
 .claude/
 .agents/
+
+# 학습 슬라이드 (발표 확정 시에만 생성, 평소엔 추적 제외)
+docs/learning/slides/

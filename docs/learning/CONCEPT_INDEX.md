@@ -1,5 +1,7 @@
 # 🗂️ 개념 인덱스 (Concept Index)
 
+> ⛔ **동결 (2026-07-23):** 이 문서는 완성 상태로 동결합니다. 더 이상 업데이트하지 않습니다. 새로 배운 개념은 `notes/` 또는 `topics/`에 기록하세요.
+
 > 전체 커리큘럼 목차(`인프라 강의 - 풀스택 모든 강의 정리.xlsx`, 13개 강의)를 기반으로,
 > **이 쇼핑몰 프로젝트에 실제로 들어가는 개념**을 계층/기능별로 정리한 색인.
 > 기능 ID는 [`FUNCTIONAL_SPEC.md`](../../document/FUNCTIONAL_SPEC.md), 일정은 [`SPRINT_PLAN.md`](../../document/SPRINT_PLAN.md), 장기 학습은 [`LEARNING_PLAN.md`](./LEARNING_PLAN.md) 기준.

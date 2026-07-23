@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import com.kdt.shoppingmall.domain.product.Product;
+import com.kdt.shoppingmall.domain.product.ProductTag;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
@@ -168,5 +169,43 @@ class ProductServiceTest {
     Page<ProductResponse> result = productService.search("없는상품", null, pageable);
 
     assertThat(result.isEmpty()).isTrue();
+  }
+
+  @Test
+  void getRecommendations_태그기반_추천상품_반환() {
+    // 태그가 있는 상품 → 같은 태그를 가진 다른 상품 목록 반환
+    Product product = new Product("운동화", "설명", 89000, 50, null);
+    product.addTag(new ProductTag("스포츠"));
+    product.addTag(new ProductTag("신발"));
+    Product recommended = new Product("러닝화", "설명", 79000, 30, null);
+
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(productRepository.findByTagNamesExcludingProduct(any(), any(), any()))
+        .willReturn(List.of(recommended));
+
+    List<ProductResponse> result = productService.getRecommendations(1L);
+
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).name()).isEqualTo("러닝화");
+  }
+
+  @Test
+  void getRecommendations_태그없는상품_빈리스트반환() {
+    // 태그가 없으면 추천 근거가 없으므로 빈 리스트
+    Product product = new Product("태그없는상품", "설명", 10000, 10, null);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+    List<ProductResponse> result = productService.getRecommendations(1L);
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void getRecommendations_존재하지않는상품_예외발생() {
+    given(productRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> productService.getRecommendations(99L))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
   }
 }
