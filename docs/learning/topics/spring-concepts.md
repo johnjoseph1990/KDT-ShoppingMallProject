@@ -60,8 +60,12 @@ private List<OrderItem> orderItems = new ArrayList<>();
 // Product.java
 @Version
 private Long version;
+// → UPDATE product SET stock_quantity=?, version=version+1
+//   WHERE id=? AND version=?  ← version 조건이 동시성 충돌을 감지한다
 ```
-두 사람이 동시에 같은 상품 재고를 차감하려 할 때, 버전이 안 맞으면 `OptimisticLockingFailureException`이 터진다. `GlobalExceptionHandler`가 이걸 잡아서 "다른 주문과 재고 처리가 충돌했습니다. 다시 시도해주세요."로 응답한다.
+두 사람이 동시에 같은 상품 재고를 차감하려 할 때, 먼저 커밋한 쪽이 version을 올려버리면 뒤늦게 저장하려는 쪽은 `WHERE version=이전값` 조건이 맞지 않아 업데이트 행 수가 0이 된다. JPA가 이를 감지하고 `OptimisticLockingFailureException`을 던지며, `GlobalExceptionHandler`가 이걸 잡아서 HTTP 409로 응답한다.
+
+낙관적 락의 3계층 테스트 전략(Repository/Service/Controller)과 비관적 락과의 비교는 `topics/stock-sync.md` 참고.
 
 ## 4. DTO — record + Bean Validation
 
@@ -143,3 +147,4 @@ public class Product { ... }
 4. N+1 문제란 무엇인가? 이 프로젝트의 어떤 코드에서 발생할 가능성이 있는가?
 5. 서비스 클래스에 `@Transactional(readOnly = true)`를 기본으로 깔고, 쓰기 메서드에만 `@Transactional`을 덮어쓰는 이유는?
 6. `@RestControllerAdvice`가 없다면 예외 처리 코드를 어디에 어떻게 써야 하는가? 왜 불편한가?
+7. `@Version` 필드가 있는 엔티티를 UPDATE할 때 JPA가 만드는 SQL과, 충돌 감지 방식을 설명하라.

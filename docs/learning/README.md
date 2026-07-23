@@ -37,8 +37,9 @@ docs/learning/
 
 | 문서 | 핵심 키워드 | 최종 수정 |
 |------|-----------|----------|
-| [Spring 핵심 개념](./topics/spring-concepts.md) | DI, 생성자 주입, 전략 패턴, @Transactional | 2026-07-23 |
+| [Spring 핵심 개념](./topics/spring-concepts.md) | DI, 생성자 주입, 전략 패턴, @Transactional, @Version | 2026-07-23 |
 | [테스트 계층 구조](./topics/spring-test-layers.md) | @WebMvcTest, @ExtendWith, Mockito, 결정론적 테스트, 전략 패턴 | 2026-07-23 |
+| [재고 동기화 설계](./topics/stock-sync.md) | 낙관적 락, @Version, restoreStock, @DataJpaTest, 3계층 테스트 | 2026-07-23 |
 | [배송지 관리 구현](./topics/address-management.md) | @ManyToOne, JPA 네이밍, @Transactional, OWASP A01 | 2026-07-22 |
 
 ### React 프론트엔드
