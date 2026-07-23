@@ -27,9 +27,13 @@ export default function Navbar() {
   // 2) 로컬 로그인 상태 제거
   // 3) 메인 화면으로 이동
   const handleLogout = async () => {
-    await logoutApi()
-    logout()
-    navigate('/')
+    try {
+      await logoutApi()
+    } finally {
+      // API 실패 여부와 관계없이 로컬 상태를 초기화하고 홈으로 이동
+      logout()
+      navigate('/')
+    }
   }
 
   // "무엇을 둘러볼지"를 결정하는 콘텐츠 탐색 메뉴(primary nav)다.
