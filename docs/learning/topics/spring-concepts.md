@@ -126,3 +126,16 @@ public class Product { ... }
 ## 참고
 - 이 문서는 2026-07-14 기준 코드 조사 결과다. 이후 코드가 바뀌면 이 문서도 같이 갱신할 것.
 - 아키텍처 관점의 개선 우선순위는 `docs/learning/notes/architecture-review-2026-07-14.md` 참고.
+
+---
+
+## 셀프 체크 (답을 보지 말고 먼저 떠올려 볼 것)
+
+> 이 문서를 다시 열 때마다, 본문을 읽기 전에 아래 질문에 먼저 답해보세요.
+
+1. 이 프로젝트가 `@Autowired` 필드 주입 대신 생성자 주입만 쓰는 이유 두 가지는?
+2. `JpaRepository`를 상속한 인터페이스에 `@Repository`를 붙이지 않아도 되는 이유는?
+3. `@OneToMany`의 `mappedBy`, `cascade`, `orphanRemoval` 각각이 의미하는 바를 한 문장씩 설명하라.
+4. N+1 문제란 무엇인가? 이 프로젝트의 어떤 코드에서 발생할 가능성이 있는가?
+5. 서비스 클래스에 `@Transactional(readOnly = true)`를 기본으로 깔고, 쓰기 메서드에만 `@Transactional`을 덮어쓰는 이유는?
+6. `@RestControllerAdvice`가 없다면 예외 처리 코드를 어디에 어떻게 써야 하는가? 왜 불편한가?

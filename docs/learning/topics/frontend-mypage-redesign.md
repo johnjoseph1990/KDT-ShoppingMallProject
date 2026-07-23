@@ -151,3 +151,15 @@ frontend/src/
 1. **Context 갱신 누락**: 이름 변경 후 `setUser(res.data)` 안 하면 Navbar에 이전 이름이 그대로 남음.
 2. **disclosure에서 두 섹션이 동시에 열림**: `toggle` 함수에서 현재와 같은 섹션이면 `null`로 닫아줘야 함.
 3. **모달에서 버블링**: 모달 내부 클릭이 오버레이 클릭(`onClose`)으로 전파됨 → `e.stopPropagation()` 필수.
+
+---
+
+## 셀프 체크 (답을 보지 말고 먼저 떠올려 볼 것)
+
+> 이 문서를 다시 열 때마다, 본문을 읽기 전에 아래 질문에 먼저 답해보세요.
+
+1. Context API의 3단계 구조(`createContext` → `Provider` → `useContext`)를 그림 없이 말로 설명할 수 있는가? props 전달과 무엇이 다른가?
+2. 이름 변경 후 `setUser(res.data)`를 호출하지 않으면 어떤 증상이 나타나는가? 왜 그런가?
+3. disclosure 패턴에서 "한 번에 하나만 열리게" 하려면 `toggle` 함수를 어떻게 구현하는가?
+4. `.mypage-sidebar { flex-shrink: 0 }`과 콘텐츠 영역의 `flex: 1`이 각각 어떤 역할을 하는가?
+5. 탈퇴 버튼을 페이지 중앙이 아니라 사이드바 최하단 작은 링크로 옮긴 UX 이유는?

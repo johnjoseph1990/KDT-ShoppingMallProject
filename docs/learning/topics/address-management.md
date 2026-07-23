@@ -223,3 +223,15 @@ order.deliveryAddress = "서울시 강남구 테헤란로 123"
 2. **기본 배송지 중복**: `isDefault=true`로 저장 전에 `clearDefaultAddresses()`를 호출하지 않으면 기본 배송지가 둘 이상이 될 수 있다.
 3. **비로그인 상태에서 저장된 배송지 버튼 클릭**: CartPage는 `PrivateRoute`로 보호되어 있지만, 비로그인 사용자가 직접 URL을 입력하면 `getAddresses()` API가 401을 반환한다 → `.catch(() => {})`로 처리.
 4. **React Fragment 누락**: 하나의 `return`에서 `<form>`과 `<Modal>` 두 요소를 나란히 반환할 때 `<>...</>` Fragment가 없으면 JSX 파싱 에러.
+
+---
+
+## 셀프 체크 (답을 보지 말고 먼저 떠올려 볼 것)
+
+> 이 문서를 다시 열 때마다, 본문을 읽기 전에 아래 질문에 먼저 답해보세요.
+
+1. `@ManyToOne @JoinColumn(name = "member_id")`를 Address 엔티티에 붙이면 DB에서 어떤 컬럼이 생기는가?
+2. `findByMemberIdAndIsDefaultTrue(Long memberId)`는 어떤 SQL로 변환되는가? 이 메서드를 직접 만들 필요가 없는 이유는?
+3. 기본 배송지를 교체할 때 `@Transactional`이 없으면 어떤 문제가 생기는가?
+4. 소유권 검증 실패 시 403 대신 404로 응답하는 이유는 무엇인가? (OWASP 관점)
+5. 주문 엔티티가 배송지를 FK로 참조하지 않고 필드에 직접 복사해 저장하는 이유는? 이 패턴의 이름은?

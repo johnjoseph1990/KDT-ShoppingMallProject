@@ -175,3 +175,15 @@ mockMvc.perform(put("/api/members/me")...)
 1. **`@MockitoBean` vs `@Mock` 혼용**: `@WebMvcTest`에서는 `@MockitoBean`, `@ExtendWith(Mockito...)`에서는 `@Mock` 사용. 섞으면 빈 주입 오류 발생.
 2. **테스트가 UP-TO-DATE로 건너뜀**: Gradle이 이전 결과를 캐시함. 강제 재실행은 `./gradlew cleanTest test`.
 3. **`given` 없이 Mock 호출**: stubbing 안 된 메서드는 기본값(null, 0, false) 반환. 의도치 않은 테스트 통과 원인.
+
+---
+
+## 셀프 체크 (답을 보지 말고 먼저 떠올려 볼 것)
+
+> 이 문서를 다시 열 때마다, 본문을 읽기 전에 아래 질문에 먼저 답해보세요.
+
+1. `@WebMvcTest` / `@ExtendWith(MockitoExtension.class)` / `@DataJpaTest` — 각각 어느 계층을 테스트하고, 나머지 계층을 어떻게 처리하는가?
+2. `@MockitoBean`과 `@Mock`의 차이는? 어느 어노테이션을 어느 테스트에서 쓰는가?
+3. `given(repo.findById(1L)).willReturn(Optional.of(member))`의 역할을 한 문장으로 설명하라.
+4. `assertThatThrownBy`로 예외를 검증할 때 체크해야 하는 두 가지는?
+5. `willThrow(new SomeException()).given(service).method(any())`를 왜 쓰는가? (어떤 시나리오를 테스트하는 목적인가)
