@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spring 핵심 개념 — KDT 쇼핑몰</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --accent: #f78166;
+    --accent2: #79c0ff;
+    --accent3: #56d364;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --code-bg: #21262d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── 진행 바 ── */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .4s ease;
+    z-index: 100;
+  }
+
+  /* ── 슬라이드 컨테이너 ── */
+  #deck {
+    width: 100vw; height: 100vh;
+    position: relative;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity .45s ease, transform .45s ease;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── 슬라이드 번호 ── */
+  #counter {
+    position: fixed;
+    bottom: 20px; right: 28px;
+    font-size: 13px;
+    color: var(--muted);
+    z-index: 100;
+  }
+
+  /* ── 네비게이션 버튼 ── */
+  .nav-btn {
+    position: fixed;
+    bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, border-color .2s;
+    z-index: 100;
+  }
+  .nav-btn:hover { background: var(--border); border-color: var(--accent2); }
+  #btn-prev { left: calc(50% - 58px); }
+  #btn-next { left: calc(50% + 14px); }
+
+  /* ── 타이포그래피 ── */
+  .slide-title {
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: -.5px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .slide-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .tag {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── 카드 그리드 ── */
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card p, .card li {
+    font-size: .88rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .card ul { padding-left: 16px; }
+
+  /* ── 코드 블록 ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-size: .85rem;
+    font-family: 'Cascadia Code', 'D2Coding', 'Fira Code', monospace;
+    line-height: 1.8;
+    overflow-x: auto;
+    width: 100%;
+    max-width: 820px;
+  }
+  .c-green  { color: var(--accent3); }
+  .c-blue   { color: var(--accent2); }
+  .c-red    { color: var(--accent); }
+  .c-purple { color: var(--accent4); }
+  .c-muted  { color: var(--muted); }
+  .c-yellow { color: #e3b341; }
+
+  /* ── 흐름 다이어그램 ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 860px;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 150px;
+  }
+  .flow-box .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .flow-box .label { font-size: .78rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .flow-box .name { font-size: 1rem; font-weight: 700; }
+  .flow-arrow {
+    font-size: 1.4rem;
+    color: var(--border);
+    margin: 0 6px;
+  }
+  .flow-cmd {
+    font-size: .72rem;
+    color: var(--accent2);
+    font-family: monospace;
+    margin-top: 6px;
+  }
+
+  /* ── 뱃지 ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .badge-green { background: #1a3a22; color: var(--accent3); }
+  .badge-blue  { background: #1a2d45; color: var(--accent2); }
+  .badge-red   { background: #3a1a1a; color: var(--accent); }
+  .badge-purple{ background: #2a1a40; color: var(--accent4); }
+
+  /* ── 테이블 ── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 860px;
+    font-size: .88rem;
+  }
+  th {
+    background: var(--surface);
+    color: var(--muted);
+    font-size: .75rem;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code, th code {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: .82rem;
+    color: var(--accent2);
+  }
+  td.muted { color: var(--muted); font-size: .83rem; }
+
+  /* ── 타이틀 슬라이드 전용 ── */
+  .hero-icon { font-size: 5rem; margin-bottom: 20px; }
+  .hero-title { font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+  .hero-desc  { font-size: 1rem; color: var(--muted); line-height: 1.7; text-align: center; max-width: 560px; }
+  .hero-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+
+  /* ── 키보드 힌트 ── */
+  #kb-hint {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .72rem;
+    color: #484f58;
+    z-index: 100;
+  }
+
+  /* ── 셀프 체크 번호 목록 ── */
+  .check-list {
+    list-style: none;
+    width: 100%;
+    max-width: 820px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: .88rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .check-list li .num {
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--accent2);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="deck"></div>
+
+<button class="nav-btn" id="btn-prev" onclick="go(-1)">‹</button>
+<button class="nav-btn" id="btn-next" onclick="go(1)">›</button>
+<div id="counter"></div>
+<div id="kb-hint">← → 키보드로 이동</div>
+
+<script>
+const slides = [
+
+/* ══════════════════════════════════════════════
+   슬라이드 01 — 타이틀
+══════════════════════════════════════════════ */
+`<div class="hero-icon">🍃</div>
+<div class="hero-title">Spring 핵심 개념</div>
+<div class="hero-desc">이 프로젝트에서 실제로 쓰이는 개념만 정리</div>
+<div class="hero-chips">
+  <span class="tag" style="margin-bottom:0">BACKEND · SPRING BOOT 3.5</span>
+</div>
+<div class="hero-chips" style="margin-top:16px">
+  <span class="badge badge-blue">DI / IoC</span>
+  <span class="badge badge-green">JPA</span>
+  <span class="badge badge-purple">@Transactional</span>
+  <span class="badge badge-red">예외 처리</span>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 02 — 의존성 주입 (DI)
+══════════════════════════════════════════════ */
+`<div class="tag">01 · DI</div>
+<div class="slide-title">의존성 주입 (DI)</div>
+<div class="slide-subtitle">이 프로젝트는 <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-family:monospace;color:var(--accent)">@Autowired</code> 필드 주입을 한 곳도 쓰지 않는다 — 전부 생성자 주입</div>
+<pre style="margin-bottom:20px">
+<span class="c-muted">// OrderService.java — 생성자 주입 패턴</span>
+<span class="c-blue">public</span> <span class="c-green">OrderService</span>(
+    <span class="c-purple">OrderRepository</span>    orderRepository,
+    <span class="c-purple">CartItemRepository</span> cartItemRepository,
+    <span class="c-purple">MemberRepository</span>   memberRepository,
+    <span class="c-purple">PaymentRepository</span>  paymentRepository,
+    <span class="c-purple">PaymentProcessor</span>   paymentProcessor) {  <span class="c-muted">// 인터페이스!</span>
+  <span class="c-blue">this</span>.orderRepository    = orderRepository;
+  <span class="c-blue">this</span>.paymentProcessor   = paymentProcessor;
+  <span class="c-muted">// ...</span>
+}
+</pre>
+<div class="card-grid cols-2">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>🔒 이유 1 — final 보장</h3>
+    <p>필드를 <code>final</code>로 선언하면 컴파일러가<br>"객체 생성 이후 절대 안 바뀐다"를 보장.<br><code>@Autowired</code> 필드 주입은 <code>final</code> 불가.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>🧪 이유 2 — 테스트 용이성</h3>
+    <p>테스트에서 스프링 컨텍스트 없이<br><code>new OrderService(mock1, mock2, ...)</code>로<br>직접 만들 수 있어 Mockito 테스트가 쉬워짐.</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 03 — 전략 패턴 미리보기
+══════════════════════════════════════════════ */
+`<div class="tag">01-B · 전략 패턴</div>
+<div class="slide-title">전략 패턴 미리보기</div>
+<div class="slide-subtitle">PaymentProcessor 인터페이스가 생성자 주입과 연결되는 방식</div>
+<pre style="margin-bottom:24px">
+<span class="c-muted">// "행동"을 인터페이스로 분리 → 구현체를 교체 가능</span>
+<span class="c-blue">public interface</span> <span class="c-green">PaymentProcessor</span> {
+    <span class="c-blue">boolean</span> process(<span class="c-purple">Payment</span> payment);
+}
+</pre>
+<table style="max-width:820px">
+  <tr>
+    <th>상황</th>
+    <th>주입되는 구현체</th>
+    <th>동작</th>
+  </tr>
+  <tr>
+    <td>운영 환경</td>
+    <td><code>MockPaymentProcessor</code></td>
+    <td class="muted">90% 확률로 성공 반환 (현재 학습용 구현)</td>
+  </tr>
+  <tr>
+    <td>테스트 환경</td>
+    <td>Mockito Mock</td>
+    <td class="muted"><code>willReturn(true/false)</code>로 결과 고정, 예측 가능한 검증</td>
+  </tr>
+</table>
+<div class="card" style="max-width:820px;margin-top:16px;border-color:var(--accent4)">
+  <p style="font-size:.88rem;line-height:1.8">
+    💡 <strong>전략 패턴</strong>: "결제 성공 여부를 어떻게 결정할지"는 <code>OrderService</code>가 알 필요 없음.<br>
+    인터페이스 뒤에 숨겨두면 <code>OrderService</code>는 결제 방식이 바뀌어도 수정할 필요가 없다.
+  </p>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 04 — 계층 어노테이션
+══════════════════════════════════════════════ */
+`<div class="tag">02 · 어노테이션</div>
+<div class="slide-title">계층 어노테이션</div>
+<div class="slide-subtitle">각 어노테이션이 무엇을 하는지 — 그리고 @Repository가 없는 이유</div>
+<table style="max-width:900px">
+  <tr>
+    <th>어노테이션</th>
+    <th>이 프로젝트에서의 역할</th>
+  </tr>
+  <tr>
+    <td><code>@RestController</code></td>
+    <td class="muted">컨트롤러 6개 전부. <code>@Controller</code> + <code>@ResponseBody</code>를 합친 것 — 메서드 반환값이 뷰가 아니라 그대로 JSON 응답 본문이 됨</td>
+  </tr>
+  <tr>
+    <td><code>@Service</code></td>
+    <td class="muted">서비스 6개 전부. "이 클래스는 비즈니스 로직을 담당한다"는 표시 + 스프링이 빈으로 등록해서 컨트롤러에 주입 가능하게 해줌</td>
+  </tr>
+  <tr>
+    <td><code>@Configuration</code></td>
+    <td class="muted"><code>SecurityConfig</code>, <code>DevDataInitializer</code> — <code>@Bean</code> 메서드를 담는 설정 클래스</td>
+  </tr>
+  <tr>
+    <td><code>@Repository</code> ❌</td>
+    <td class="muted">repository/*.java는 전부 <code>JpaRepository</code>를 상속하는 <strong>인터페이스</strong>. Spring Data JPA가 앱 시작 시 구현체를 자동 생성 + 빈 등록까지 해주므로 직접 붙일 필요 없음</td>
+  </tr>
+</table>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 05 — 엔티티 매핑
+══════════════════════════════════════════════ */
+`<div class="tag">03 · JPA</div>
+<div class="slide-title">엔티티 매핑 — 기본키 &amp; 연관관계</div>
+<div class="slide-subtitle">@OneToMany의 세 가지 속성과 fetch 기본값</div>
+<pre style="margin-bottom:18px">
+<span class="c-muted">// Order.java — 연관관계 선언</span>
+<span class="c-blue">@OneToMany</span>(mappedBy = <span class="c-green">"order"</span>, cascade = <span class="c-purple">CascadeType.ALL</span>, orphanRemoval = <span class="c-blue">true</span>)
+<span class="c-blue">private</span> List&lt;<span class="c-purple">OrderItem</span>&gt; orderItems = <span class="c-blue">new</span> ArrayList&lt;&gt;();
+
+<span class="c-muted">// 모든 엔티티 공통 기본키</span>
+<span class="c-blue">@Id @GeneratedValue</span>(strategy = <span class="c-purple">GenerationType.IDENTITY</span>)
+<span class="c-blue">private</span> <span class="c-purple">Long</span> id;  <span class="c-muted">// DB auto-increment로 채번</span>
+</pre>
+<table style="max-width:860px">
+  <tr>
+    <th>속성</th>
+    <th>의미</th>
+  </tr>
+  <tr>
+    <td><code>mappedBy = "order"</code></td>
+    <td class="muted">연관관계의 주인은 내가 아니라 <code>OrderItem.order</code> 필드. FK는 OrderItem 테이블에 있음</td>
+  </tr>
+  <tr>
+    <td><code>cascade = CascadeType.ALL</code></td>
+    <td class="muted">Order를 저장/삭제하면 그 안의 OrderItem들도 같이 저장/삭제됨</td>
+  </tr>
+  <tr>
+    <td><code>orphanRemoval = true</code></td>
+    <td class="muted">orderItems 리스트에서 항목을 빼면 DB에서도 그 OrderItem이 삭제됨</td>
+  </tr>
+  <tr>
+    <td><code>@ManyToOne</code> fetch 기본값</td>
+    <td class="muted"><strong>EAGER</strong> — 즉시 로딩 (연관 엔티티를 함께 바로 조회)</td>
+  </tr>
+  <tr>
+    <td><code>@OneToMany</code> fetch 기본값</td>
+    <td class="muted"><strong>LAZY</strong> — 지연 로딩 (실제로 접근할 때 쿼리 실행)</td>
+  </tr>
+</table>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 06 — N+1 문제
+══════════════════════════════════════════════ */
+`<div class="tag">03-B · N+1 문제</div>
+<div class="slide-title">N+1 문제</div>
+<div class="slide-subtitle">Order 10개를 조회하면 추가 쿼리가 10번 더 나가는 이유</div>
+<pre style="margin-bottom:20px">
+<span class="c-muted">// OrderService.getOrders() — LAZY 로딩 함정</span>
+List&lt;<span class="c-purple">Order</span>&gt; orders = orderRepository.findAll();
+<span class="c-muted">// ↑ 쿼리 1번: SELECT * FROM orders</span>
+
+<span class="c-blue">for</span> (<span class="c-purple">Order</span> order : orders) {
+    order.getOrderItems();  <span class="c-muted">// ← LAZY 로딩: 여기서 쿼리 1번씩 추가!</span>
+    <span class="c-muted">// Order가 10개 → SELECT * FROM order_item WHERE order_id=1</span>
+    <span class="c-muted">//                SELECT * FROM order_item WHERE order_id=2</span>
+    <span class="c-muted">//                ... (총 10번 추가 = 1 + N번)</span>
+}
+</pre>
+<div class="card-grid cols-2">
+  <div class="card" style="border-color:var(--accent)">
+    <h3>⚠️ 지금 이 프로젝트 상태</h3>
+    <p><code>@EntityGraph</code>나 fetch join 같은 해결책이 아직 적용되어 있지 않음. 트래픽이 적은 학습 프로젝트에서는 체감 안 되지만 실무에서는 성능 이슈의 단골 원인.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>✅ 해결 방법 (실무)</h3>
+    <ul>
+      <li><code>@EntityGraph</code> — 즉시 로딩 지정</li>
+      <li>JPQL fetch join — 한 번에 조인 조회</li>
+      <li>Batch Size 설정 — IN 쿼리로 묶기</li>
+    </ul>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 07 — 낙관적 락
+══════════════════════════════════════════════ */
+`<div class="tag">04 · 동시성</div>
+<div class="slide-title">낙관적 락 — @Version</div>
+<div class="slide-subtitle">동시에 같은 상품 재고를 차감하려 할 때 충돌을 감지하는 방식</div>
+<pre style="margin-bottom:20px">
+<span class="c-muted">// Product.java</span>
+<span class="c-blue">@Version</span>
+<span class="c-blue">private</span> <span class="c-purple">Long</span> version;
+
+<span class="c-muted">// JPA가 생성하는 UPDATE SQL</span>
+<span class="c-green">UPDATE</span> product
+<span class="c-green">SET</span>    stock_quantity = ?, version = version + <span class="c-yellow">1</span>
+<span class="c-green">WHERE</span>  id = ? <span class="c-green">AND</span> version = ?  <span class="c-muted">← 충돌 감지 핵심!</span>
+</pre>
+<div class="card-grid cols-3">
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>1단계</h3>
+    <p>사용자 A, B 동시에<br>version=5 상태의<br>Product 조회</p>
+  </div>
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>2단계</h3>
+    <p>A가 먼저 커밋.<br>version이 5→6으로<br>증가. DB 반영 완료.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent)">
+    <h3>3단계</h3>
+    <p>B가 저장 시도 시<br><code>version=5</code> 조건 불일치<br>→ 업데이트 0건<br>→ <code>OptimisticLockException</code><br>→ HTTP 409 응답</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 08 — DTO record + Bean Validation
+══════════════════════════════════════════════ */
+`<div class="tag">05 · DTO</div>
+<div class="slide-title">DTO — record + Bean Validation</div>
+<div class="slide-subtitle">이 프로젝트의 DTO 15개 전부가 record. 일반 class DTO는 없다.</div>
+<pre style="margin-bottom:20px">
+<span class="c-muted">// SignupRequest.java — record DTO 예시</span>
+<span class="c-blue">public record</span> <span class="c-green">SignupRequest</span>(
+    <span class="c-purple">@NotBlank @Email</span>                              <span class="c-purple">String</span> email,
+    <span class="c-purple">@NotBlank @Size</span>(min = <span class="c-yellow">8</span>, message = <span class="c-green">"비밀번호는 8자 이상"</span>) <span class="c-purple">String</span> password,
+    <span class="c-purple">@NotBlank</span>                                     <span class="c-purple">String</span> name) {}
+</pre>
+<div class="card-grid cols-2">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>📦 record가 자동 생성하는 것</h3>
+    <ul>
+      <li>모든 필드를 받는 생성자</li>
+      <li>getter (필드명과 동일한 메서드명)</li>
+      <li><code>equals</code> / <code>hashCode</code> / <code>toString</code></li>
+      <li>불변(immutable) — setter 없음</li>
+    </ul>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>✅ Bean Validation 어노테이션</h3>
+    <ul>
+      <li><code>@NotBlank</code> — null·빈 문자열 거부</li>
+      <li><code>@Email</code> — 이메일 형식 검사</li>
+      <li><code>@Size(min, max)</code> — 길이 범위 검사</li>
+      <li><code>@Min</code> / <code>@Max</code> — 숫자 범위</li>
+      <li><code>@NotNull</code> — null만 거부</li>
+    </ul>
+    <p style="margin-top:8px">컨트롤러 파라미터에 <code>@Valid</code>를 붙여야 검사 시작</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 09 — 예외 처리
+══════════════════════════════════════════════ */
+`<div class="tag">06 · 예외 처리</div>
+<div class="slide-title">예외 처리 — @RestControllerAdvice</div>
+<div class="slide-subtitle">각 컨트롤러마다 try-catch를 반복하지 않아도 되는 이유</div>
+<pre style="margin-bottom:18px">
+<span class="c-blue">@RestControllerAdvice</span>  <span class="c-muted">// 앱 전역 예외를 한 곳에서 처리</span>
+<span class="c-blue">public class</span> <span class="c-green">GlobalExceptionHandler</span> {
+  <span class="c-blue">@ExceptionHandler</span>(<span class="c-purple">ResourceNotFoundException.class</span>)
+  <span class="c-blue">public</span> ResponseEntity&lt;...&gt; handleNotFound(<span class="c-purple">ResourceNotFoundException</span> e) {
+    <span class="c-blue">return</span> ResponseEntity.status(<span class="c-purple">HttpStatus.NOT_FOUND</span>).body(...);
+  }
+}
+</pre>
+<table style="max-width:900px">
+  <tr>
+    <th>예외 타입</th>
+    <th>HTTP 상태</th>
+  </tr>
+  <tr><td><code>MethodArgumentNotValidException</code></td><td class="muted">400 Bad Request (Bean Validation 실패)</td></tr>
+  <tr><td><code>HttpMessageNotReadableException</code></td><td class="muted">400 Bad Request (요청 본문 파싱 실패)</td></tr>
+  <tr><td><code>MissingServletRequestParameterException</code></td><td class="muted">400 Bad Request (필수 파라미터 누락)</td></tr>
+  <tr><td><code>AccessDeniedException</code></td><td class="muted">403 Forbidden (권한 없음)</td></tr>
+  <tr><td><code>ResourceNotFoundException</code></td><td class="muted">404 Not Found</td></tr>
+  <tr><td><code>DuplicateEmailException</code></td><td class="muted">409 Conflict</td></tr>
+  <tr><td><code>InsufficientStockException</code></td><td class="muted">409 Conflict</td></tr>
+  <tr><td><code>InvalidOrderStatusException</code></td><td class="muted">409 Conflict</td></tr>
+  <tr><td><code>OptimisticLockingFailureException</code></td><td class="muted">409 Conflict (동시성 충돌)</td></tr>
+</table>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 10 — 트랜잭션
+══════════════════════════════════════════════ */
+`<div class="tag">07 · 트랜잭션</div>
+<div class="slide-title">트랜잭션 — @Transactional</div>
+<div class="slide-subtitle">6개 서비스 전부 동일한 패턴 — 클래스 readOnly 기본 + 메서드 오버라이드</div>
+<pre style="margin-bottom:20px">
+<span class="c-blue">@Service</span>
+<span class="c-blue">@Transactional</span>(readOnly = <span class="c-blue">true</span>)  <span class="c-muted">// 클래스 전체: 조회 전용 (기본값)</span>
+<span class="c-blue">public class</span> <span class="c-green">OrderService</span> {
+
+  <span class="c-muted">// 조회 메서드 — readOnly 그대로 (추가 어노테이션 불필요)</span>
+  <span class="c-blue">public</span> <span class="c-purple">OrderResponse</span> getOrder(<span class="c-purple">Long</span> id) { ... }
+
+  <span class="c-blue">@Transactional</span>  <span class="c-muted">// 쓰기 메서드만 덮어써서 "쓰기 가능" 모드로 전환</span>
+  <span class="c-blue">public</span> <span class="c-purple">OrderResponse</span> createOrder(<span class="c-purple">OrderRequest</span> req) { ... }
+}
+</pre>
+<div class="card-grid cols-2">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>💡 readOnly = true 효과</h3>
+    <p>변경 감지(dirty checking) 오버헤드를 줄여 조회가 약간 더 빠름. DB에 따라 읽기 전용 replica로 라우팅 가능.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent)">
+    <h3>⚠️ 흔한 실수</h3>
+    <p><code>readOnly = true</code> 메서드 안에서 엔티티 값을 바꾸면 그 변경이 DB에 조용히 무시됨.<br>"이 메서드가 데이터를 바꾸는가?"를 먼저 판단하고 어노테이션을 달 것.</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 11 — Lombok + 테스트 계층
+══════════════════════════════════════════════ */
+`<div class="tag">08 · Lombok &amp; 테스트</div>
+<div class="slide-title">Lombok + 테스트 계층</div>
+<div class="slide-subtitle">엔티티에는 최소 Lombok만. 테스트는 계층마다 다른 어노테이션.</div>
+<pre style="margin-bottom:18px">
+<span class="c-muted">// 모든 엔티티 공통 패턴</span>
+<span class="c-blue">@Getter</span>  <span class="c-muted">// getter 자동 생성 — 손으로 쓸 필요 없음</span>
+<span class="c-blue">@NoArgsConstructor</span>(access = <span class="c-purple">AccessLevel.PROTECTED</span>)
+<span class="c-muted">// JPA 프록시용 기본 생성자를 protected로 — public으로 열면 빈 엔티티 생성 위험</span>
+<span class="c-blue">public class</span> <span class="c-green">Product</span> { ... }
+
+<span class="c-muted">// @Setter, @Builder, @Data 는 의도적으로 안 씀</span>
+<span class="c-muted">// → product.decreaseStock(qty) 처럼 의미 있는 메서드로만 상태를 바꾸게 강제</span>
+</pre>
+<table style="max-width:900px">
+  <tr>
+    <th>계층</th>
+    <th>어노테이션</th>
+    <th>이 프로젝트 예시</th>
+  </tr>
+  <tr>
+    <td>Controller</td>
+    <td><code>@WebMvcTest</code> + <code>@Import(SecurityConfig.class)</code></td>
+    <td class="muted">MockMvc로 HTTP 요청/응답 검증, 서비스는 껍데기만 로드</td>
+  </tr>
+  <tr>
+    <td>Service</td>
+    <td><code>@ExtendWith(MockitoExtension.class)</code> + <code>@Mock</code></td>
+    <td class="muted">스프링 컨텍스트 없이 순수 자바 객체로 테스트 — 빠름</td>
+  </tr>
+  <tr>
+    <td>Repository</td>
+    <td><code>@DataJpaTest</code></td>
+    <td class="muted">실제 H2 DB에 저장/조회까지 검증</td>
+  </tr>
+</table>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 12 — 셀프 체크
+══════════════════════════════════════════════ */
+`<div class="tag">09 · 셀프 체크</div>
+<div class="slide-title">셀프 체크</div>
+<div class="slide-subtitle">본문을 읽기 전에 먼저 답해보세요 — 답을 보지 말 것</div>
+<ol class="check-list">
+  <li><span class="num">1</span>이 프로젝트가 <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@Autowired</code> 필드 주입 대신 생성자 주입만 쓰는 이유 두 가지는?</li>
+  <li><span class="num">2</span><code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">JpaRepository</code>를 상속한 인터페이스에 <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@Repository</code>를 붙이지 않아도 되는 이유는?</li>
+  <li><span class="num">3</span><code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@OneToMany</code>의 <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent3)">mappedBy</code>, <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent3)">cascade</code>, <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent3)">orphanRemoval</code> 각각이 의미하는 바를 한 문장씩 설명하라.</li>
+  <li><span class="num">4</span>N+1 문제란 무엇인가? 이 프로젝트의 어떤 코드에서 발생할 가능성이 있는가?</li>
+  <li><span class="num">5</span>서비스 클래스에 <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@Transactional(readOnly = true)</code>를 기본으로 깔고, 쓰기 메서드에만 <code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@Transactional</code>을 덮어쓰는 이유는?</li>
+  <li><span class="num">6</span><code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@RestControllerAdvice</code>가 없다면 예외 처리 코드를 어디에 어떻게 써야 하는가? 왜 불편한가?</li>
+  <li><span class="num">7</span><code style="background:var(--code-bg);padding:1px 5px;border-radius:3px;font-family:monospace;color:var(--accent2)">@Version</code> 필드가 있는 엔티티를 UPDATE할 때 JPA가 만드는 SQL과, 충돌 감지 방식을 설명하라.</li>
+</ol>`,
+
+];
+
+/* ── 렌더링 엔진 ── */
+let cur = 0;
+const deck   = document.getElementById('deck');
+const bar    = document.getElementById('progress-bar');
+const counter= document.getElementById('counter');
+
+function render() {
+  const total = slides.length;
+  bar.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = `${cur + 1} / ${total}`;
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  let el = document.getElementById('slide-' + cur);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'slide';
+    el.id = 'slide-' + cur;
+    el.innerHTML = slides[cur];
+    deck.appendChild(el);
+  }
+  requestAnimationFrame(() => el.classList.add('active'));
+}
+
+function go(dir) {
+  const next = cur + dir;
+  if (next < 0 || next >= slides.length) return;
+  const old = document.getElementById('slide-' + cur);
+  if (old) {
+    old.classList.remove('active');
+    if (dir > 0) old.classList.add('exit');
+    setTimeout(() => old && old.remove(), 450);
+  }
+  cur = next;
+  render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+});
+
+render();
+</script>
+</body>
+</html>

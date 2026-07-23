@@ -65,3 +65,8 @@ docs/learning/
 | 파일 | 원본 | 생성일 |
 |------|------|--------|
 | [git-slide.html](./slides/git-slide.html) | [topics/git-basics.md](./topics/git-basics.md) | 2026-07-23 |
+| [spring-concepts-slide.html](./slides/spring-concepts-slide.html) | [topics/spring-concepts.md](./topics/spring-concepts.md) | 2026-07-23 |
+| [spring-test-layers-slide.html](./slides/spring-test-layers-slide.html) | [topics/spring-test-layers.md](./topics/spring-test-layers.md) | 2026-07-23 |
+| [stock-sync-slide.html](./slides/stock-sync-slide.html) | [topics/stock-sync.md](./topics/stock-sync.md) | 2026-07-23 |
+| [address-management-slide.html](./slides/address-management-slide.html) | [topics/address-management.md](./topics/address-management.md) | 2026-07-23 |
+| [frontend-mypage-slide.html](./slides/frontend-mypage-slide.html) | [topics/frontend-mypage-redesign.md](./topics/frontend-mypage-redesign.md) | 2026-07-23 |

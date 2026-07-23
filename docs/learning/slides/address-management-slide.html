@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>배송지 관리 — KDT 쇼핑몰</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --accent: #f78166;
+    --accent2: #79c0ff;
+    --accent3: #56d364;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --code-bg: #21262d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── 진행 바 ── */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .4s ease;
+    z-index: 100;
+  }
+
+  /* ── 슬라이드 컨테이너 ── */
+  #deck {
+    width: 100vw; height: 100vh;
+    position: relative;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity .45s ease, transform .45s ease;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── 슬라이드 번호 ── */
+  #counter {
+    position: fixed;
+    bottom: 20px; right: 28px;
+    font-size: 13px;
+    color: var(--muted);
+    z-index: 100;
+  }
+
+  /* ── 네비게이션 버튼 ── */
+  .nav-btn {
+    position: fixed;
+    bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 18px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, border-color .2s;
+    z-index: 100;
+  }
+  .nav-btn:hover { background: var(--border); border-color: var(--accent2); }
+  #btn-prev { left: calc(50% - 58px); }
+  #btn-next { left: calc(50% + 14px); }
+
+  /* ── 타이포그래피 ── */
+  .slide-title {
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: -.5px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .slide-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .tag {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── 카드 그리드 ── */
+  .card-grid {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card p, .card li {
+    font-size: .88rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .card ul { padding-left: 16px; }
+
+  /* ── 코드 블록 ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-size: .85rem;
+    font-family: 'Cascadia Code', 'D2Coding', 'Fira Code', monospace;
+    line-height: 1.8;
+    overflow-x: auto;
+    width: 100%;
+    max-width: 820px;
+  }
+  .c-green  { color: var(--accent3); }
+  .c-blue   { color: var(--accent2); }
+  .c-red    { color: var(--accent); }
+  .c-purple { color: var(--accent4); }
+  .c-muted  { color: var(--muted); }
+  .c-yellow { color: #e3b341; }
+
+  /* ── 흐름 다이어그램 ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 860px;
+  }
+  .flow-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 150px;
+  }
+  .flow-box .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .flow-box .label { font-size: .78rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .flow-box .name { font-size: 1rem; font-weight: 700; }
+  .flow-arrow {
+    font-size: 1.4rem;
+    color: var(--border);
+    margin: 0 6px;
+  }
+  .flow-cmd {
+    font-size: .72rem;
+    color: var(--accent2);
+    font-family: monospace;
+    margin-top: 6px;
+  }
+
+  /* ── 뱃지 ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .badge-green { background: #1a3a22; color: var(--accent3); }
+  .badge-blue  { background: #1a2d45; color: var(--accent2); }
+  .badge-red   { background: #3a1a1a; color: var(--accent); }
+  .badge-purple{ background: #2a1a40; color: var(--accent4); }
+
+  /* ── 테이블 ── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 860px;
+    font-size: .88rem;
+  }
+  th {
+    background: var(--surface);
+    color: var(--muted);
+    font-size: .75rem;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code, th code {
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: .82rem;
+    color: var(--accent2);
+  }
+  td.muted { color: var(--muted); font-size: .83rem; }
+
+  /* ── 타이틀 슬라이드 전용 ── */
+  .hero-icon { font-size: 5rem; margin-bottom: 20px; }
+  .hero-title { font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+  .hero-desc  { font-size: 1rem; color: var(--muted); line-height: 1.7; text-align: center; max-width: 560px; }
+  .hero-chips { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+
+  /* ── 키보드 힌트 ── */
+  #kb-hint {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: .72rem;
+    color: #484f58;
+    z-index: 100;
+  }
+
+  /* ── 파일 트리 ── */
+  .file-tree {
+    font-family: 'Cascadia Code', 'D2Coding', 'Fira Code', monospace;
+    font-size: .82rem;
+    line-height: 1.9;
+    color: var(--muted);
+  }
+  .file-tree .dir  { color: var(--accent2); font-weight: 600; }
+  .file-tree .file { color: var(--text); }
+  .file-tree .new  { color: var(--accent3); }
+  .file-tree .mod  { color: var(--accent); }
+  .file-tree .note { color: var(--muted); font-size: .75rem; }
+
+  /* ── 번호 목록 ── */
+  .check-list {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-width: 820px;
+  }
+  .check-list li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin-bottom: 10px;
+    font-size: .9rem;
+    line-height: 1.6;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .check-num {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent2);
+    min-width: 24px;
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="deck"></div>
+
+<button class="nav-btn" id="btn-prev" onclick="go(-1)">‹</button>
+<button class="nav-btn" id="btn-next" onclick="go(1)">›</button>
+<div id="counter"></div>
+<div id="kb-hint">← → 키보드로 이동</div>
+
+<script>
+const slides = [
+
+/* ══════════════════════════════════════════════
+   슬라이드 01 — 타이틀
+══════════════════════════════════════════════ */
+`<div class="hero-icon">📦</div>
+<div class="hero-title">배송지 관리 기능 구현</div>
+<div class="hero-desc">CRUD + OWASP A01 + 스냅샷 패턴<br>백엔드 API 설계부터 React 연동까지</div>
+<div class="hero-chips">
+  <span class="badge badge-blue">FULLSTACK</span>
+  <span class="badge badge-green">BACKEND</span>
+  <span class="badge badge-purple">REACT</span>
+  <span class="badge badge-red">OWASP A01</span>
+</div>
+<div style="margin-top:16px;font-size:.78rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase">FULLSTACK · BACKEND + REACT</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 02 — 전체 흐름도
+══════════════════════════════════════════════ */
+`<div class="tag">01 · 전체 흐름</div>
+<div class="slide-title">전체 흐름도</div>
+<div class="slide-subtitle">백엔드 레이어 체인과 프론트엔드 컴포넌트 구조</div>
+<div class="card-grid cols-2" style="max-width:900px">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>🖥️ 백엔드 흐름</h3>
+    <div style="font-family:monospace;font-size:.82rem;line-height:2;color:var(--muted)">
+      <span class="c-yellow">GET /api/addresses</span><br>
+      &nbsp;&nbsp;↓<br>
+      <span class="c-blue">AddressController</span><br>
+      &nbsp;&nbsp;↓ <span style="font-size:.72rem">@AuthenticationPrincipal → memberId 추출</span><br>
+      <span class="c-green">AddressService</span><br>
+      &nbsp;&nbsp;↓<br>
+      <span class="c-purple">AddressRepository</span><br>
+      &nbsp;&nbsp;↓<br>
+      <span class="c-muted">List&lt;AddressResponse&gt; 반환</span>
+    </div>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>⚛️ 프론트엔드 흐름</h3>
+    <div style="font-family:monospace;font-size:.82rem;line-height:2;color:var(--muted)">
+      <span class="c-yellow">마이페이지 → "배송지 관리" 탭</span><br>
+      &nbsp;&nbsp;↓<br>
+      <span class="c-blue">AddressesPanel</span> 마운트<br>
+      &nbsp;&nbsp;↓ <span style="font-size:.72rem">getAddresses() 호출</span><br>
+      <span class="c-green">배송지 목록 렌더링</span><br>
+      &nbsp;&nbsp;↓<br>
+      <span class="c-purple">AddressForm</span> / <span class="c-purple">AddressPickerModal</span>
+    </div>
+  </div>
+</div>
+<div class="card" style="max-width:900px;margin-top:16px">
+  <p style="font-size:.87rem;line-height:1.8">
+    주문 화면(CartPage)에서 "저장된 배송지" 버튼 클릭 →
+    <span class="badge badge-blue">AddressPickerModal</span> 열림 →
+    목록에서 선택 → 폼 자동 채우기 → 모달 닫기
+  </p>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 03 — @ManyToOne JPA 연관관계
+══════════════════════════════════════════════ */
+`<div class="tag">02 · JPA</div>
+<div class="slide-title">@ManyToOne — JPA 연관관계</div>
+<div class="slide-subtitle">"여러 배송지가 한 회원에 속한다"는 DB 관계를 Java 코드로 표현</div>
+<div class="card-grid cols-2" style="max-width:900px;margin-bottom:20px">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>💡 개념</h3>
+    <ul>
+      <li>Address(N) : Member(1) 관계</li>
+      <li>DB에는 <code style="color:var(--accent2)">address.member_id</code> 컬럼(FK)이 생성됨</li>
+      <li>Java에서는 객체 참조(<code style="color:var(--accent3)">private Member member</code>)로 표현</li>
+    </ul>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>🏭 실무 활용 예</h3>
+    <ul>
+      <li>주문 ↔ 회원 <code style="color:var(--muted)">Order @ManyToOne Member</code></li>
+      <li>리뷰 ↔ 상품 <code style="color:var(--muted)">Review @ManyToOne Product</code></li>
+      <li>댓글 ↔ 게시글 등 N:1 관계 전반</li>
+    </ul>
+  </div>
+</div>
+<pre>
+<span class="c-muted">// Address 엔티티 — 회원과의 연관관계 선언</span>
+<span class="c-purple">@ManyToOne</span>                          <span class="c-muted">// N:1 관계 (여러 배송지 → 한 회원)</span>
+<span class="c-purple">@JoinColumn</span>(name = <span class="c-green">"member_id"</span>, nullable = <span class="c-blue">false</span>)
+<span class="c-muted">// → DB: address 테이블에 member_id FK 컬럼이 자동 생성</span>
+<span class="c-blue">private</span> Member member;
+<span class="c-muted">// → DB: address.member_id  FK  →  member.id  PK</span>
+</pre>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 04 — Spring Data JPA 메서드 네이밍
+══════════════════════════════════════════════ */
+`<div class="tag">03 · Spring Data JPA</div>
+<div class="slide-title">메서드 네이밍 규칙</div>
+<div class="slide-subtitle">메서드 이름만 맞게 지으면 SQL을 자동으로 생성해준다</div>
+<table style="max-width:900px;margin-bottom:20px">
+  <tr>
+    <th>Repository 메서드</th>
+    <th>생성되는 SQL</th>
+  </tr>
+  <tr>
+    <td><code>findByMemberId(Long id)</code></td>
+    <td class="muted">WHERE member_id = ?</td>
+  </tr>
+  <tr>
+    <td><code>findByMemberIdAndIsDefaultTrue(Long id)</code></td>
+    <td class="muted">WHERE member_id = ? AND is_default = true</td>
+  </tr>
+  <tr>
+    <td><code>existsByEmail(String email)</code></td>
+    <td class="muted">SELECT COUNT(*) &gt; 0 WHERE email = ?</td>
+  </tr>
+  <tr>
+    <td><code>deleteByMemberId(Long id)</code></td>
+    <td class="muted">DELETE WHERE member_id = ?</td>
+  </tr>
+</table>
+<div class="card" style="max-width:900px;border-color:var(--accent2)">
+  <p style="font-size:.88rem;line-height:1.8">
+    💡 <strong>왜 직접 SQL을 안 짜도 되나요?</strong><br>
+    <code style="color:var(--accent2)">JpaRepository</code>를 상속하면 Spring Data JPA가 메서드 이름을 파싱해서
+    JPQL/SQL로 자동 변환합니다. <strong>메서드 이름 = 쿼리 명세서</strong>인 셈입니다.
+  </p>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 05 — @Transactional 기본 배송지 교체
+══════════════════════════════════════════════ */
+`<div class="tag">04 · 트랜잭션</div>
+<div class="slide-title">@Transactional — 기본 배송지 교체</div>
+<div class="slide-subtitle">두 DB 작업이 반드시 함께 성공해야 할 때 묶는 도구</div>
+<div class="card-grid cols-2" style="max-width:900px;margin-bottom:20px">
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>✅ 트랜잭션이 필요한 이유</h3>
+    <ul>
+      <li>"기존 기본 해제 + 새 기본 설정"은 반드시 같이 성공해야 함</li>
+      <li>중간에 예외 발생 시 둘 다 롤백 (없었던 일)</li>
+      <li>기본 배송지가 0개 또는 2개가 되는 상황 방지</li>
+    </ul>
+  </div>
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>🏭 실무 활용 예</h3>
+    <ul>
+      <li>결제: 포인트 차감 + 주문 생성</li>
+      <li>이체: A계좌 출금 + B계좌 입금</li>
+      <li><strong>원자성(Atomicity)</strong>이 필요한 모든 작업</li>
+    </ul>
+  </div>
+</div>
+<pre>
+<span class="c-muted">// 기본 배송지 교체 — 반드시 한 트랜잭션 안에서 처리</span>
+<span class="c-purple">@Transactional</span>
+<span class="c-blue">public</span> AddressResponse <span class="c-yellow">create</span>(Long memberId, AddressRequest request) {
+    <span class="c-blue">if</span> (request.<span class="c-yellow">isDefault</span>()) {
+        <span class="c-yellow">clearDefaultAddresses</span>(memberId);  <span class="c-muted">// 1. 기존 기본 배송지 모두 해제</span>
+    }
+    Address address = <span class="c-blue">new</span> Address(member, request);
+    <span class="c-blue">return</span> AddressResponse.<span class="c-yellow">from</span>(addressRepository.<span class="c-yellow">save</span>(address));  <span class="c-muted">// 2. 새 배송지 저장</span>
+}
+</pre>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 06 — OWASP A01 접근 제어 취약점
+══════════════════════════════════════════════ */
+`<div class="tag">05 · 보안 · OWASP A01</div>
+<div class="slide-title">OWASP A01 — 접근 제어 취약점</div>
+<div class="slide-subtitle">"내 배송지는 나만 수정/삭제할 수 있어야 한다"는 규칙을 코드로 강제</div>
+<div class="card-grid cols-2" style="max-width:900px;margin-bottom:16px">
+  <pre style="border-color:var(--accent);margin:0">
+<span class="c-red">// ❌ 잘못된 예</span>
+<span class="c-muted">// addressId만 확인, memberId 검증 없음</span>
+<span class="c-muted">// → 다른 사람 배송지 URL로 삭제 가능!</span>
+<span class="c-blue">public void</span> <span class="c-yellow">delete</span>(Long addressId) {
+    addressRepository
+        .<span class="c-yellow">deleteById</span>(addressId);
+}
+</pre>
+  <pre style="border-color:var(--accent3);margin:0">
+<span class="c-green">// ✅ 올바른 예</span>
+<span class="c-muted">// memberId + addressId 동시 검증</span>
+<span class="c-blue">private</span> Address <span class="c-yellow">findAddressOwnedBy</span>(
+        Long memberId, Long addressId) {
+    Address addr = addressRepository
+        .<span class="c-yellow">findById</span>(addressId)
+        .<span class="c-yellow">orElseThrow</span>(...);
+    <span class="c-blue">if</span> (!addr.<span class="c-yellow">getMember</span>().<span class="c-yellow">getId</span>()
+              .<span class="c-yellow">equals</span>(memberId)) {
+        <span class="c-blue">throw new</span> ResourceNotFoundException(<span class="c-green">"..."</span>);
+    }
+    <span class="c-blue">return</span> addr;
+}
+</pre>
+</div>
+<div class="card" style="max-width:900px;border-color:var(--accent4)">
+  <p style="font-size:.88rem;line-height:1.8">
+    💜 <strong>왜 403이 아닌 404로 응답하나요?</strong><br>
+    403(접근 거부)은 "해당 ID의 배송지가 존재함"을 공격자에게 알려주는 정보 노출입니다.
+    404로 응답하면 존재 자체를 숨겨 다른 사람의 배송지 ID를 탐지할 수 없게 만듭니다.
+  </p>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 07 — React useEffect + API 호출
+══════════════════════════════════════════════ */
+`<div class="tag">06 · React</div>
+<div class="slide-title">React useEffect + API 호출</div>
+<div class="slide-subtitle">컴포넌트가 화면에 나타나자마자 서버에서 데이터를 가져오는 표준 방법</div>
+<pre style="max-width:820px;margin-bottom:20px">
+<span class="c-purple">useEffect</span>(<span class="c-blue">() =></span> {
+  <span class="c-yellow">getAddresses</span>()                             <span class="c-muted">// API 호출</span>
+    .<span class="c-yellow">then</span>((res) <span class="c-blue">=></span> <span class="c-yellow">setAddresses</span>(res.data))    <span class="c-muted">// 성공: 상태에 저장</span>
+    .<span class="c-yellow">catch</span>(() <span class="c-blue">=></span> {})                         <span class="c-muted">// 실패: 빈 목록 유지 (화면 깨짐 방지)</span>
+    .<span class="c-yellow">finally</span>(() <span class="c-blue">=></span> <span class="c-yellow">setLoading</span>(<span class="c-blue">false</span>))         <span class="c-muted">// 성공/실패 모두 로딩 종료</span>
+}, [])   <span class="c-muted">// [] = 마운트 시 1회만 실행</span>
+</pre>
+<div class="card-grid cols-3" style="max-width:900px">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>.then()</h3>
+    <p>API 호출이 <strong>성공</strong>했을 때 실행.<br>응답 데이터를 state에 저장.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent)">
+    <h3>.catch()</h3>
+    <p>네트워크 오류 · 401 등 <strong>실패</strong>했을 때.<br>빈 처리로 화면 깨짐 방지.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>.finally()</h3>
+    <p>성공·실패 <strong>모두</strong> 실행.<br>로딩 스피너를 반드시 해제.</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 08 — 스냅샷 패턴
+══════════════════════════════════════════════ */
+`<div class="tag">07 · 설계 결정</div>
+<div class="slide-title">스냅샷 패턴</div>
+<div class="slide-subtitle">Order 엔티티가 배송지를 FK로 참조하지 않고 필드에 직접 복사하는 이유</div>
+<div class="card-grid cols-2" style="max-width:900px;margin-bottom:16px">
+  <pre style="border-color:var(--accent3);margin:0">
+<span class="c-green">// ✅ 이 프로젝트 방식 — 스냅샷</span>
+<span class="c-muted">// 주문 시점의 주소를 Order에 직접 저장</span>
+order.deliveryAddress =
+    <span class="c-green">"서울시 강남구 테헤란로 123"</span>
+
+<span class="c-muted">// → 나중에 배송지를 수정/삭제해도</span>
+<span class="c-muted">//   과거 주문 내역은 그대로 보존됨 ✅</span>
+</pre>
+  <pre style="border-color:var(--accent);margin:0">
+<span class="c-red">// ❌ FK 참조 방식의 문제점</span>
+order.addressId = 42L  <span class="c-muted">// FK 참조</span>
+
+<span class="c-muted">// 나중에 배송지 42번을 삭제하면?</span>
+<span class="c-muted">// → 과거 주문의 주소가 null!</span>
+
+<span class="c-muted">// 배송지 주소를 수정하면?</span>
+<span class="c-muted">// → 과거 주문 내역의 주소도 바뀜!</span>
+</pre>
+</div>
+<div class="card" style="max-width:900px;border-color:var(--accent4)">
+  <p style="font-size:.88rem;line-height:1.8">
+    💜 <strong>스냅샷 패턴이란?</strong>
+    "그 시점의 상태를 보존해야 하는" 도메인에서 사용하는 설계.
+    이커머스(주문 금액·배송지), 결제(카드번호 마스킹), 계약서(계약 당시 조건) 등에 활용됩니다.
+  </p>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 09 — 파일 구조
+══════════════════════════════════════════════ */
+`<div class="tag">08 · 파일 구조</div>
+<div class="slide-title">이번 작업 파일 구조</div>
+<div class="slide-subtitle">추가(신규)와 수정 파일 전체 목록</div>
+<div class="card-grid cols-2" style="max-width:960px">
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>🖥️ backend/</h3>
+    <div class="file-tree">
+      <div><span class="dir">domain/address/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ Address.java</span> <span class="note">← 신규: @ManyToOne Member</span></div>
+      <div><span class="dir">repository/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ AddressRepository.java</span> <span class="note">← 신규</span></div>
+      <div><span class="dir">dto/address/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">├ AddressRequest.java</span> <span class="note">← 신규: record</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ AddressResponse.java</span> <span class="note">← 신규: 정적 팩토리</span></div>
+      <div><span class="dir">service/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ AddressService.java</span> <span class="note">← 신규: CRUD + 소유권 검증</span></div>
+      <div><span class="dir">controller/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ AddressController.java</span> <span class="note">← 신규: GET/POST/PUT/DELETE</span></div>
+    </div>
+  </div>
+  <div class="card" style="border-color:var(--accent3)">
+    <h3>⚛️ frontend/src/</h3>
+    <div class="file-tree">
+      <div><span class="dir">api/</span></div>
+      <div>&nbsp;&nbsp;<span class="new">└ addresses.js</span> <span class="note">← 신규: CRUD API 함수</span></div>
+      <div><span class="dir">pages/</span></div>
+      <div>&nbsp;&nbsp;<span class="mod">├ MyPage.jsx</span> <span class="note">← 수정: 배송지 탭 추가</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">AddressesPanel, AddressForm 포함</span></div>
+      <div>&nbsp;&nbsp;<span class="mod">└ CartPage.jsx</span> <span class="note">← 수정: 배송지 버튼 추가</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="note">AddressPickerModal 포함</span></div>
+    </div>
+    <div style="margin-top:14px">
+      <span class="badge badge-green">신규</span>
+      <span style="font-size:.78rem;color:var(--muted);margin-left:6px">새로 생성한 파일</span>
+      &nbsp;
+      <span class="badge badge-red">수정</span>
+      <span style="font-size:.78rem;color:var(--muted);margin-left:6px">기존 파일 변경</span>
+    </div>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 10 — 자주 하는 실수
+══════════════════════════════════════════════ */
+`<div class="tag">09 · 실수</div>
+<div class="slide-title">자주 하는 실수 3가지</div>
+<div class="slide-subtitle">한 번 겪으면 절대 안 잊는다 — 미리 알아두자</div>
+<div class="card-grid cols-3" style="max-width:960px">
+  <div class="card" style="border-color:var(--accent)">
+    <h3>⚠️ 소유권 검증 누락</h3>
+    <p style="margin-bottom:10px">
+      <code style="color:var(--accent2)">findById</code>만 하고<br>
+      <code style="color:var(--accent)">getMember().getId()</code> 비교를 빠뜨리면
+      <strong>OWASP A01 취약점</strong> 발생.
+    </p>
+    <p>다른 사람의 배송지를 URL만으로 수정/삭제할 수 있게 됨.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent4)">
+    <h3>⚠️ 기본 배송지 중복</h3>
+    <p style="margin-bottom:10px">
+      <code style="color:var(--accent3)">isDefault=true</code>로 저장 전에
+      <code style="color:var(--accent4)">clearDefaultAddresses()</code>를 호출하지 않으면
+    </p>
+    <p>기본 배송지가 <strong>둘 이상</strong>이 될 수 있다.<br>반드시 @Transactional 안에서 처리.</p>
+  </div>
+  <div class="card" style="border-color:var(--accent2)">
+    <h3>⚠️ React Fragment 누락</h3>
+    <p style="margin-bottom:10px">
+      하나의 <code style="color:var(--accent2)">return</code>에서<br>
+      <code style="color:var(--accent3)">&lt;form&gt;</code>과 <code style="color:var(--accent3)">&lt;Modal&gt;</code> 두 요소를 나란히 반환할 때
+    </p>
+    <p><code style="color:var(--accent2)">&lt;&gt;...&lt;/&gt;</code> Fragment가 없으면<br><strong>JSX 파싱 에러</strong> 발생.</p>
+  </div>
+</div>`,
+
+/* ══════════════════════════════════════════════
+   슬라이드 11 — 셀프 체크
+══════════════════════════════════════════════ */
+`<div class="tag">10 · 셀프 체크</div>
+<div class="slide-title">셀프 체크 — 5가지 질문</div>
+<div class="slide-subtitle">본문을 읽기 전에 먼저 답해보세요. 막히는 부분이 복습 포인트입니다.</div>
+<ol class="check-list">
+  <li>
+    <span class="check-num">1</span>
+    <span><code style="color:var(--accent2)">@ManyToOne @JoinColumn(name = "member_id")</code>를 Address 엔티티에 붙이면 DB에서 어떤 컬럼이 생기는가?</span>
+  </li>
+  <li>
+    <span class="check-num">2</span>
+    <span><code style="color:var(--accent2)">findByMemberIdAndIsDefaultTrue(Long memberId)</code>는 어떤 SQL로 변환되는가? 이 메서드를 직접 만들 필요가 없는 이유는?</span>
+  </li>
+  <li>
+    <span class="check-num">3</span>
+    <span>기본 배송지를 교체할 때 <code style="color:var(--accent2)">@Transactional</code>이 없으면 어떤 문제가 생기는가?</span>
+  </li>
+  <li>
+    <span class="check-num">4</span>
+    <span>소유권 검증 실패 시 <strong>403 대신 404</strong>로 응답하는 이유는 무엇인가? (OWASP 관점)</span>
+  </li>
+  <li>
+    <span class="check-num">5</span>
+    <span>주문 엔티티가 배송지를 FK로 참조하지 않고 <strong>필드에 직접 복사</strong>해 저장하는 이유는? 이 패턴의 이름은?</span>
+  </li>
+</ol>`,
+
+];
+
+/* ── 렌더링 엔진 ── */
+let cur = 0;
+const deck   = document.getElementById('deck');
+const bar    = document.getElementById('progress-bar');
+const counter= document.getElementById('counter');
+
+function render() {
+  const total = slides.length;
+  bar.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = `${cur + 1} / ${total}`;
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  let el = document.getElementById('slide-' + cur);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'slide';
+    el.id = 'slide-' + cur;
+    el.innerHTML = slides[cur];
+    deck.appendChild(el);
+  }
+  requestAnimationFrame(() => el.classList.add('active'));
+}
+
+function go(dir) {
+  const next = cur + dir;
+  if (next < 0 || next >= slides.length) return;
+  const old = document.getElementById('slide-' + cur);
+  if (old) {
+    old.classList.remove('active');
+    if (dir > 0) old.classList.add('exit');
+    setTimeout(() => old && old.remove(), 450);
+  }
+  cur = next;
+  render();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+});
+
+render();
+</script>
+</body>
+</html>
