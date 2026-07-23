@@ -150,6 +150,72 @@ mockMvc.perform(put("/api/members/me")...)
 
 ---
 
+### 6. 전략 패턴 + Mock 교체 — 결정론적 테스트
+
+**초보자 설명**
+"`ThreadLocalRandom`처럼 랜덤 요소가 있으면 테스트가 때론 성공, 때론 실패해서 신뢰할 수 없다.
+인터페이스로 분리한 뒤 Mock을 주입하면 결과를 고정할 수 있다."
+
+**어느 부분**
+전략 패턴(Strategy Pattern) + Mockito `willReturn`. 비결정론적 코드를 테스트 가능하게 만드는 핵심 기법.
+
+**왜 `@RepeatedTest`로는 부족한가**
+
+```java
+// 문제: 90% 성공 / 10% 실패라서 실패 케이스가 5번 반복해도 안 나올 수 있음
+@RepeatedTest(5)
+void pay_결제결과에따라_재고상태가_올바르다() {
+    orderService.pay(1L, 1L);  // 내부적으로 ThreadLocalRandom 호출
+    if (order.getStatus() == OrderStatus.CANCELED) {
+        assertThat(product.getStockQuantity()).isEqualTo(100);  // 이 분기가 실행 안 될 수도 있음
+    }
+}
+```
+
+**해결: PaymentProcessor 인터페이스 분리 + Mock 주입**
+
+```java
+// 1. PaymentProcessor 인터페이스 정의
+public interface PaymentProcessor {
+    boolean isSuccess();
+}
+
+// 2. 운영용 구현체
+@Component
+public class MockPaymentProcessor implements PaymentProcessor {
+    @Override
+    public boolean isSuccess() {
+        return ThreadLocalRandom.current().nextInt(100) < 90;  // 90% 성공
+    }
+}
+
+// 3. 테스트 — Mock으로 결과 고정
+@Mock private PaymentProcessor paymentProcessor;  // @InjectMocks가 생성자에 자동 주입
+
+@Test
+void pay_결제성공시_PAID_상태_유지() {
+    given(paymentProcessor.isSuccess()).willReturn(true);  // ← 항상 성공으로 고정
+    orderService.pay(1L, 1L);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);  // 항상 통과
+}
+
+@Test
+void pay_결제실패시_CANCELED_재고복구() {
+    given(paymentProcessor.isSuccess()).willReturn(false);  // ← 항상 실패로 고정
+    orderService.pay(1L, 1L);
+    assertThat(product.getStockQuantity()).isEqualTo(100);  // 항상 통과
+}
+```
+
+**`@InjectMocks`는 타입으로 매칭한다**
+
+`@Mock private PaymentProcessor paymentProcessor`를 선언하면, Mockito가 `OrderService` 생성자에서 `PaymentProcessor` 타입 파라미터를 찾아 자동 주입한다. 선언 순서를 생성자와 맞출 필요가 없다. 단, 같은 타입의 `@Mock`이 둘 이상이면 필드 이름으로 매칭하므로 주의.
+
+**실무 활용**
+결제, 이메일 발송, 외부 API 호출처럼 "외부 시스템에 의존하는 로직"을 인터페이스로 분리하면 테스트에서 완벽하게 제어할 수 있다. 단위 테스트에서 실제 PG사에 결제 요청을 보내는 것은 불가능하지만, 인터페이스를 주입하면 "PG가 성공했을 때"와 "PG가 실패했을 때"를 모두 검증할 수 있다.
+
+---
+
 ## 이번 작업에서 추가된 테스트 케이스
 
 ### MemberServiceTest — 추가 케이스
@@ -187,3 +253,4 @@ mockMvc.perform(put("/api/members/me")...)
 3. `given(repo.findById(1L)).willReturn(Optional.of(member))`의 역할을 한 문장으로 설명하라.
 4. `assertThatThrownBy`로 예외를 검증할 때 체크해야 하는 두 가지는?
 5. `willThrow(new SomeException()).given(service).method(any())`를 왜 쓰는가? (어떤 시나리오를 테스트하는 목적인가)
+6. `ThreadLocalRandom`을 사용하는 메서드를 `@RepeatedTest(5)`로 검증하면 왜 불안정한가? 이를 해결하려면 코드 구조를 어떻게 바꿔야 하는가?

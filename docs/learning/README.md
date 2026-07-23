@@ -37,8 +37,8 @@ docs/learning/
 
 | 문서 | 핵심 키워드 | 최종 수정 |
 |------|-----------|----------|
-| [Spring 핵심 개념](./topics/spring-concepts.md) | DI, 생성자 주입, 계층 어노테이션, @Transactional | 2026-07-14 |
-| [테스트 계층 구조](./topics/spring-test-layers.md) | @WebMvcTest, @ExtendWith, Mockito, given/willReturn | 2026-07-22 |
+| [Spring 핵심 개념](./topics/spring-concepts.md) | DI, 생성자 주입, 전략 패턴, @Transactional | 2026-07-23 |
+| [테스트 계층 구조](./topics/spring-test-layers.md) | @WebMvcTest, @ExtendWith, Mockito, 결정론적 테스트, 전략 패턴 | 2026-07-23 |
 | [배송지 관리 구현](./topics/address-management.md) | @ManyToOne, JPA 네이밍, @Transactional, OWASP A01 | 2026-07-22 |
 
 ### React 프론트엔드
@@ -55,6 +55,7 @@ docs/learning/
 |------|------|------|
 | 2026-07-14 | [아키텍처 리뷰](./notes/architecture-review-2026-07-14.md) | OrderService 책임 과다 등 개선 우선순위 |
 | 2026-07-23 | [인증/주문 요구사항 검증](./notes/2026-07-23_인증주문요구사항검증_학습노트.md) | 로그인 401→500 회귀, 관리자 취소 재고 미복구 버그 |
+| 2026-07-23 | [PaymentProcessor 리팩토링](./notes/2026-07-23_PaymentProcessor_리팩토링_학습노트.md) | 전략 패턴, 결정론적 테스트, @InjectMocks 타입 매칭 |
 
 ---
 

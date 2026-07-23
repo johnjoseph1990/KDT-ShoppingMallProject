@@ -7,20 +7,24 @@
 이 프로젝트는 `@Autowired` 필드 주입을 **한 곳도 쓰지 않는다.** 전부 생성자 주입이다.
 
 ```java
-// OrderService.java
+// OrderService.java (2026-07-23 리팩토링 후 — PaymentProcessor 분리)
 public OrderService(
     OrderRepository orderRepository,
     CartItemRepository cartItemRepository,
     MemberRepository memberRepository,
-    PaymentRepository paymentRepository) {
+    PaymentRepository paymentRepository,
+    PaymentProcessor paymentProcessor) {  // 결제 결정 로직을 인터페이스로 분리
   this.orderRepository = orderRepository;
   ...
+  this.paymentProcessor = paymentProcessor;
 }
 ```
 
 **왜 생성자 주입인가**: 필드가 `final`로 선언되어 객체 생성 이후 절대 바뀌지 않는다는 걸 컴파일러가 보장해준다. 또 테스트에서 `new OrderService(mock1, mock2, ...)`로 직접 만들 수 있어 Mockito 테스트 작성이 쉬워진다(아래 8번 참고).
 
-**실무 팁**: 생성자 파라미터가 4개를 넘으면(`OrderService`가 딱 4개) "이 서비스가 너무 많은 책임을 지고 있는 게 아닌가"를 의심하는 신호로 쓰인다. 지금은 Payment 로직까지 `OrderService`가 맡고 있어서 그렇다 (`docs/learning/notes/architecture-review-2026-07-14.md` 참고).
+**실무 팁**: 생성자 파라미터가 4개를 넘으면 "이 서비스가 너무 많은 책임을 지고 있는 게 아닌가"를 의심하는 신호다. `OrderService`는 이제 5개인데, `PaymentProcessor`를 인터페이스로 분리한 덕분에 오히려 책임이 명확해진 사례다 — "결제 성공 여부를 어떻게 결정할지"는 이제 `OrderService`가 알 필요가 없다. 아키텍처 개선 맥락은 `docs/learning/notes/architecture-review-2026-07-14.md` 참고.
+
+**전략 패턴 미리보기**: `PaymentProcessor`가 인터페이스이기 때문에, 운영에서는 `MockPaymentProcessor`(90% 확률), 테스트에서는 Mockito Mock(`willReturn(true/false)`으로 고정)을 주입할 수 있다. 이처럼 "행동을 인터페이스로 분리해서 교체 가능하게 만드는 패턴"을 전략 패턴이라고 한다.
 
 ## 2. 계층 어노테이션
 
