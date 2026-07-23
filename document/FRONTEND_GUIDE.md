@@ -2,7 +2,7 @@
 
 > 이 쇼핑몰 프론트엔드(React + Vite + 인라인 스타일)를 만지면서 실제로 부딪힌 HTML·CSS·React
 > 개념을, **"개념 → 이 프로젝트 어디에 있나 → 자주 하는 실수"** 순서로 정리한 실전 사전.
-> 강의 매핑은 [`CONCEPT_INDEX.md`](./CONCEPT_INDEX.md) §6 (강의 #9 "html", #10 "자바스크립트", React는 커리큘럼 외) 기준.
+> 강의 매핑은 [`CONCEPT_INDEX.md`](../docs/learning/CONCEPT_INDEX.md) §6 (강의 #9 "html", #10 "자바스크립트", React는 커리큘럼 외) 기준.
 >
 > **사용법:** 코드에서 이해 안 되는 부분이 나오면 → 아래 목차에서 개념을 찾고 → 해당 절의
 > "프로젝트 위치"에 적힌 파일을 열어 실제 코드와 대조한다.
@@ -527,5 +527,5 @@ background:
 | 컴포넌트 variant 패턴 | `style: 모바일 메뉴 활성 표시를 밑줄에서 왼쪽 세로 막대로 변경` |
 
 > - HTML·CSS 이론: 강의 #9 "html 강의"의 CSS Flexbox/Grid, Media Query 섹션
-> - JS(map/filter, async, 구조분해): 강의 #10 "자바스크립트 강의" ([`CONCEPT_INDEX.md`](./CONCEPT_INDEX.md) §6)
+> - JS(map/filter, async, 구조분해): 강의 #10 "자바스크립트 강의" ([`CONCEPT_INDEX.md`](../docs/learning/CONCEPT_INDEX.md) §6)
 > - **React**: 커리큘럼 외 → 공식 문서 [react.dev](https://react.dev) + 위 §10~16을 실전 진입점으로.

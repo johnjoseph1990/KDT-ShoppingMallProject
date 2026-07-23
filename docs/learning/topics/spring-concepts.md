@@ -20,7 +20,7 @@ public OrderService(
 
 **왜 생성자 주입인가**: 필드가 `final`로 선언되어 객체 생성 이후 절대 바뀌지 않는다는 걸 컴파일러가 보장해준다. 또 테스트에서 `new OrderService(mock1, mock2, ...)`로 직접 만들 수 있어 Mockito 테스트 작성이 쉬워진다(아래 8번 참고).
 
-**실무 팁**: 생성자 파라미터가 4개를 넘으면(`OrderService`가 딱 4개) "이 서비스가 너무 많은 책임을 지고 있는 게 아닌가"를 의심하는 신호로 쓰인다. 지금은 Payment 로직까지 `OrderService`가 맡고 있어서 그렇다 (`docs/architecture-review-2026-07-14.md` 참고).
+**실무 팁**: 생성자 파라미터가 4개를 넘으면(`OrderService`가 딱 4개) "이 서비스가 너무 많은 책임을 지고 있는 게 아닌가"를 의심하는 신호로 쓰인다. 지금은 Payment 로직까지 `OrderService`가 맡고 있어서 그렇다 (`docs/learning/notes/architecture-review-2026-07-14.md` 참고).
 
 ## 2. 계층 어노테이션
 
@@ -125,4 +125,4 @@ public class Product { ... }
 
 ## 참고
 - 이 문서는 2026-07-14 기준 코드 조사 결과다. 이후 코드가 바뀌면 이 문서도 같이 갱신할 것.
-- 아키텍처 관점의 개선 우선순위는 `docs/architecture-review-2026-07-14.md` 참고.
+- 아키텍처 관점의 개선 우선순위는 `docs/learning/notes/architecture-review-2026-07-14.md` 참고.

@@ -2,7 +2,7 @@
 
 > 전체 커리큘럼 목차(`인프라 강의 - 풀스택 모든 강의 정리.xlsx`, 13개 강의)를 기반으로,
 > **이 쇼핑몰 프로젝트에 실제로 들어가는 개념**을 계층/기능별로 정리한 색인.
-> 기능 ID는 [`FUNCTIONAL_SPEC.md`](./FUNCTIONAL_SPEC.md), 일정은 [`SPRINT_PLAN.md`](./SPRINT_PLAN.md), 장기 학습은 [`LEARNING_PLAN.md`](./LEARNING_PLAN.md) 기준.
+> 기능 ID는 [`FUNCTIONAL_SPEC.md`](../../document/FUNCTIONAL_SPEC.md), 일정은 [`SPRINT_PLAN.md`](../../document/SPRINT_PLAN.md), 장기 학습은 [`LEARNING_PLAN.md`](./LEARNING_PLAN.md) 기준.
 
 **사용법:** 스프린트 중 어떤 코드가 이해 안 되면 → 아래 표에서 개념을 찾고 → "강의 위치"의 해당 섹션만 골라 본다. (강의를 순서대로 다 보는 용도가 아니라, **역방향 사전**으로 쓰는 문서)
 

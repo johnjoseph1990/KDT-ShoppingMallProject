@@ -56,20 +56,14 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 - **커밋 메시지에 "무엇을"이 아니라 "왜"를 적는다.** 나중의 나에게 남기는 학습 기록입니다.
 
 > ⚡ **실제 제출 계획(1주):** [`document/SPRINT_PLAN.md`](./document/SPRINT_PLAN.md) — 마감에 맞춘 일자별 계획 (AI 페어 + 이해 체크포인트)
-> 📚 **제출 후 장기 학습 계획:** [`document/LEARNING_PLAN.md`](./document/LEARNING_PLAN.md) — 처음부터 다시 깊게 배우는 16~20주 계획
+> 📚 **제출 후 장기 학습 계획:** [`docs/learning/LEARNING_PLAN.md`](./docs/learning/LEARNING_PLAN.md) — 처음부터 다시 깊게 배우는 16~20주 계획
 
 ---
 
-## 📝 학습 로그 (Learning Log)
+## 📝 학습 기록 (Learning Log)
 
-> 각 Step을 마칠 때마다 직접 채워 넣으세요. 이 표를 채우는 것 자체가 학습의 핵심입니다.
-> (완벽한 문장이 아니어도 됩니다 — "이해한 것 / 헷갈린 것"을 솔직하게 남기는 게 중요합니다.)
-
-| 날짜 | 다룬 개념 | 새로 이해한 것 | 아직 헷갈리는 것 / 더 볼 것 |
-|------|-----------|----------------|------------------------------|
-|      |           |                |                              |
-|      |           |                |                              |
-|      |           |                |                              |
+학습하며 배운 것은 [`docs/learning/`](./docs/learning)에 기록합니다.
+날짜별 노트는 `notes/`, 주제별 정리는 `topics/` — 인덱스는 [`docs/learning/README.md`](./docs/learning/README.md) 참고.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **마감:** 1주일 (오늘 기준 2026-07-11 시작)
 > **전략:** AI 페어 프로그래밍 — AI가 코드를 주도 작성하고, 학습자는 **각 단계마다 "이 코드가 무엇을 하는지" 이해하며 따라간다.**
-> **깊은 학습:** 제출 후 [`LEARNING_PLAN.md`](./LEARNING_PLAN.md)(16~20주)로 다시 진행
+> **깊은 학습:** 제출 후 [`LEARNING_PLAN.md`](../docs/learning/LEARNING_PLAN.md)(16~20주)로 다시 진행
 > **스택:** Spring Boot + Spring Data JPA + Spring Security / React + Vapor / H2(개발) → PostgreSQL(배포) / AWS
 
 ## 📏 확정된 범위 (Scope 결정사항)
