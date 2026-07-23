@@ -24,6 +24,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// 낙관적 락 충돌 시 자동 재시도(@Retryable). spring-aspects는 @Retryable이
+	// 동작하는 데 필요한 AOP(프록시) 지원을 제공한다.
+	implementation 'org.springframework.retry:spring-retry'
+	implementation 'org.springframework:spring-aspects'
 	compileOnly 'org.projectlombok:lombok'
 	// 운영/개발: PostgreSQL 드라이버
 	runtimeOnly 'org.postgresql:postgresql'

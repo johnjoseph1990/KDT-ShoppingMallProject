@@ -18,8 +18,11 @@ import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.OrderRepository;
 import com.kdt.shoppingmall.repository.PaymentRepository;
 import java.util.List;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +51,16 @@ public class OrderService {
     this.paymentProcessor = paymentProcessor;
   }
 
+  // @Retryable: 동시 주문으로 재고 차감이 겹쳐 낙관적 락 충돌
+  // (OptimisticLockingFailureException)이 나면 최대 3번까지 자동으로 재호출한다.
+  // backoff delay=50ms: 재시도 사이에 잠깐 쉬어, 충돌한 두 요청이 동시에 재돌진하는 것을 피한다.
+  // @Retryable 어드바이스가 @Transactional보다 바깥에 위치하므로, 재시도마다 새 트랜잭션이
+  // 열려 이전 시도에서 롤백된 상태를 이어받지 않는다. 3번 모두 실패하면 마지막 예외가 그대로
+  // 전파되어 GlobalExceptionHandler가 409(충돌)로 응답한다.
+  @Retryable(
+      retryFor = OptimisticLockingFailureException.class,
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 50))
   @Transactional
   public OrderResponse createOrder(Long memberId, OrderCreateRequest request) {
     Member member =
