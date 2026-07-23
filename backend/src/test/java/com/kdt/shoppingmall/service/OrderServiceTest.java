@@ -18,6 +18,7 @@ import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
+import com.kdt.shoppingmall.exception.InsufficientStockException;
 import com.kdt.shoppingmall.exception.InvalidOrderStatusException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.CartItemRepository;
@@ -94,6 +95,23 @@ class OrderServiceTest {
                 orderService.createOrder(
                     1L, new OrderCreateRequest(null, null, null, null, null, null, null)))
         .isInstanceOf(EmptyCartException.class);
+  }
+
+  @Test
+  void createOrder_재고부족_예외발생() {
+    // 재고(1개)보다 많은 수량(2개)을 주문하면 도메인의 InsufficientStockException이 서비스까지 전파돼야 한다.
+    Product lowStock = new Product("품절임박상품", "설명", 10000, 1, null);
+    ReflectionTestUtils.setField(lowStock, "id", 2L);
+    CartItem cartItem = new CartItem(member, lowStock, 2);
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findByMemberId(1L)).willReturn(List.of(cartItem));
+
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    1L, new OrderCreateRequest(null, null, null, null, null, null, null)))
+        .isInstanceOf(InsufficientStockException.class);
   }
 
   @Test
@@ -236,5 +254,28 @@ class OrderServiceTest {
 
     assertThat(response.status()).isIn(PaymentStatus.SUCCESS, PaymentStatus.FAILED);
     assertThat(order.getStatus()).isIn(OrderStatus.PAID, OrderStatus.CANCELED);
+  }
+
+  // pay()의 모의 결제는 90% 성공 / 10% 실패 확률(ThreadLocalRandom)이라 결정론적이지 않다.
+  // 5회 반복 중 실패 케이스가 나올 때마다 재고 복구 경로를 검증한다.
+  // (결정론적 검증이 필요하면 PaymentProcessor 의존성 주입으로 리팩토링 후 Mock 처리 필요)
+  @RepeatedTest(5)
+  void pay_결제결과에따라_재고상태가_올바르다() {
+    product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태를 흉내낸다 (100 → 98)
+    Order order = new Order(member);
+    order.addItem(new OrderItem(product, product.getPrice(), 2));
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
+
+    orderService.pay(1L, 1L);
+
+    // 결제 성공(PAID) → 차감 유지(98), 결제 실패(CANCELED) → 재고 복구(100)
+    if (order.getStatus() == OrderStatus.CANCELED) {
+      assertThat(product.getStockQuantity()).as("결제 실패 시 차감됐던 재고(2개)가 복구돼야 한다").isEqualTo(100);
+    } else {
+      assertThat(product.getStockQuantity()).as("결제 성공 시 재고가 차감된 상태로 유지돼야 한다").isEqualTo(98);
+    }
   }
 }

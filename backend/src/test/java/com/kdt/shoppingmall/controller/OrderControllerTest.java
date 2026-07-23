@@ -15,6 +15,7 @@ import com.kdt.shoppingmall.dto.order.OrderResponse;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
+import com.kdt.shoppingmall.exception.InsufficientStockException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import com.kdt.shoppingmall.service.OrderService;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -149,6 +151,47 @@ class OrderControllerTest {
         .willThrow(new ResourceNotFoundException("주문을 찾을 수 없습니다. id=99"));
 
     mockMvc.perform(get("/api/orders/99")).andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 주문생성_재고부족_409() throws Exception {
+    // 서비스에서 InsufficientStockException 발생 → GlobalExceptionHandler가 409로 변환하는지 검증
+    // Bean Validation 통과를 위해 필수 배송지 필드를 채운다
+    OrderCreateRequest request =
+        new OrderCreateRequest(
+            List.of(1L), "홍길동", "010-1234-5678", "12345", "서울시 강남구 테헤란로 1", "101호", null);
+    given(orderService.createOrder(eq(1L), any()))
+        .willThrow(new InsufficientStockException("재고가 부족합니다."));
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("재고가 부족합니다."));
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 주문생성_동시성충돌_409() throws Exception {
+    // 낙관적 락 충돌(OptimisticLockingFailureException) → GlobalExceptionHandler가 409로 변환하는지 검증
+    // 동시 주문 상황에서 먼저 커밋된 거래가 version을 올려놓으면, 늦게 커밋하려는 쪽에서 이 예외가 발생한다.
+    // Bean Validation 통과를 위해 필수 배송지 필드를 채운다
+    OrderCreateRequest request =
+        new OrderCreateRequest(
+            List.of(1L), "홍길동", "010-1234-5678", "12345", "서울시 강남구 테헤란로 1", "101호", null);
+    given(orderService.createOrder(eq(1L), any()))
+        .willThrow(new OptimisticLockingFailureException("version conflict"));
+
+    mockMvc
+        .perform(
+            post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("다른 주문과 재고 처리가 충돌했습니다. 다시 시도해주세요."));
   }
 
   @Test
