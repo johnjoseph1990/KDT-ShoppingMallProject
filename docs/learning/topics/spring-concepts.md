@@ -131,8 +131,38 @@ public class Product { ... }
 
 **`@MockBean`을 안 쓰는 이유**: `@MockBean`은 스프링 컨텍스트 전체를 띄우면서 그 안의 특정 빈만 가짜로 바꾸는 방식이라 무겁다. 이 프로젝트는 Service 테스트에서 스프링 컨텍스트를 아예 띄우지 않고 순수 자바 객체(`new OrderService(mock, mock, ...)`)로 테스트하기 때문에 `@MockBean`이 필요 없다 — 1번(생성자 주입)이 있어서 가능한 방식이다.
 
+## 9. Spring Security — URL 기반 인가
+
+이 프로젝트의 인가(Authorization) 규칙은 `SecurityConfig.filterChain()` 안에 URL 패턴으로 선언한다.
+
+```java
+.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/api/auth/**").permitAll()                         // 누구나 허용
+    .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()     // 상품 조회는 비로그인도 OK
+    .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN") // 상품 등록은 ADMIN만
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")                  // 관리자 API 전체
+    .anyRequest().authenticated()                                        // 나머지는 로그인만
+)
+```
+
+**세 가지 접근 수준**:
+
+| 메서드 | 의미 |
+|---|---|
+| `permitAll()` | 로그인 여부 관계없이 누구나 허용 |
+| `authenticated()` | 로그인한 사용자면 OK (권한 무관) |
+| `hasRole("ADMIN")` | `ROLE_ADMIN` 권한을 가진 사용자만 허용 |
+
+**순서가 중요하다**: 위에서부터 매칭되는 첫 번째 규칙만 적용된다.
+`GET /api/products/1`은 두 번째 줄에서 `permitAll()` 처리되어 `anyRequest().authenticated()`까지 내려가지 않는다.
+
+**401 vs 403**: 인증 실패(로그인 안 함)는 401, 인가 실패(권한 부족)는 403이다.
+스프링 시큐리티 기본값은 두 경우 모두 403을 반환하는데, `HttpStatusEntryPoint(UNAUTHORIZED)`를 등록하면 인증 실패 시 401로 구분된다.
+
+관리자 기능의 전체 인가 규칙, 401/403 테스트 전략, 프론트엔드 라우트 가드는 `topics/admin-feature.md` 참고.
+
 ## 참고
-- 이 문서는 2026-07-14 기준 코드 조사 결과다. 이후 코드가 바뀌면 이 문서도 같이 갱신할 것.
+- 이 문서는 2026-07-14 기준 코드 조사 결과이며, 2026-07-23 Spring Security 섹션 추가됨.
 - 아키텍처 관점의 개선 우선순위는 `docs/learning/notes/architecture-review-2026-07-14.md` 참고.
 
 ---
@@ -148,3 +178,4 @@ public class Product { ... }
 5. 서비스 클래스에 `@Transactional(readOnly = true)`를 기본으로 깔고, 쓰기 메서드에만 `@Transactional`을 덮어쓰는 이유는?
 6. `@RestControllerAdvice`가 없다면 예외 처리 코드를 어디에 어떻게 써야 하는가? 왜 불편한가?
 7. `@Version` 필드가 있는 엔티티를 UPDATE할 때 JPA가 만드는 SQL과, 충돌 감지 방식을 설명하라.
+8. `hasRole("ADMIN")`, `authenticated()`, `permitAll()` 각각의 차이는? URL 규칙 매칭에서 순서가 왜 중요한가?

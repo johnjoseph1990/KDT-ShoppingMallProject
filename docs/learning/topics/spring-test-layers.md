@@ -216,6 +216,64 @@ void pay_결제실패시_CANCELED_재고복구() {
 
 ---
 
+### 7. `@WithMockUser` — 인가 테스트 (401 vs 403)
+
+**초보자 설명**
+"실제 로그인 과정 없이 '이 역할을 가진 사용자가 요청했다'는 상태를 시뮬레이션하는 어노테이션"
+인가 규칙이 걸린 엔드포인트를 `@WebMvcTest`에서 검증할 때 사용한다.
+
+**어느 부분**
+`spring-security-test` 모듈. `SecurityContext`에 가짜 인증 정보를 직접 주입한다.
+
+**세 가지 인증 상태를 분리 테스트**
+
+```java
+// ① 로그인 안 함 → 401 (인증 자체가 없음)
+@Test
+void 주문조회_미인증_401() throws Exception {
+    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isUnauthorized());
+}
+
+// ② 로그인했지만 USER 권한 → 403 (인가 실패)
+@Test
+@WithMockUser(roles = "USER")
+void 주문조회_USER권한_403() throws Exception {
+    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isForbidden());
+}
+
+// ③ ADMIN 권한으로 로그인 → 200 (성공)
+@Test
+@WithMockUser(roles = "ADMIN")
+void 주문조회_ADMIN_200() throws Exception {
+    given(orderService.getAllOrders(any(), any())).willReturn(page);
+    mockMvc.perform(get("/api/admin/orders")).andExpect(status().isOk());
+}
+```
+
+**왜 세 케이스를 모두 작성해야 하는가**:
+- ①만 있으면: "로그인만 해도 관리자 API에 접근되는 게 아닌가?"를 검증 못 함
+- ①②만 있으면: "ADMIN이 실제로 성공하는가?"를 검증 못 함
+- 세 가지가 함께 있어야 SecurityConfig의 인가 규칙이 의도대로 동작함을 완전히 검증할 수 있다.
+
+**`@WithMockUser`가 실제로 하는 일**: 실제 DB 조회나 비밀번호 검증이 일어나지 않는다.
+Spring Security의 `SecurityContext`에 "이 역할을 가진 인증된 사용자" 상태를 직접 주입할 뿐이다.
+실제 로그인 흐름 없이 인가 규칙만 빠르게 검증할 수 있는 이유다.
+
+**`hasRole("ADMIN")`을 테스트하려면 `MemberUserDetailsService`도 `@MockitoBean`으로 등록**:
+`@WebMvcTest`는 `SecurityConfig`를 `@Import`해서 필터 체인을 활성화한다.
+`SecurityConfig`가 `MemberUserDetailsService`를 생성자로 받기 때문에,
+이 서비스도 Mock으로 등록하지 않으면 빈을 못 찾아서 테스트 실행 전부터 오류가 난다.
+
+```java
+@WebMvcTest(AdminOrderController.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
+class AdminOrderControllerTest {
+    @MockitoBean private MemberUserDetailsService memberUserDetailsService; // ← 필수
+}
+```
+
+---
+
 ## 이번 작업에서 추가된 테스트 케이스
 
 ### MemberServiceTest — 추가 케이스
@@ -254,3 +312,4 @@ void pay_결제실패시_CANCELED_재고복구() {
 4. `assertThatThrownBy`로 예외를 검증할 때 체크해야 하는 두 가지는?
 5. `willThrow(new SomeException()).given(service).method(any())`를 왜 쓰는가? (어떤 시나리오를 테스트하는 목적인가)
 6. `ThreadLocalRandom`을 사용하는 메서드를 `@RepeatedTest(5)`로 검증하면 왜 불안정한가? 이를 해결하려면 코드 구조를 어떻게 바꿔야 하는가?
+7. 인가가 걸린 엔드포인트 테스트에서 세 가지 케이스(미인증 401, USER권한 403, ADMIN 200)를 모두 작성해야 하는 이유는? `@WithMockUser`를 빠뜨리면 어떻게 되는가?
