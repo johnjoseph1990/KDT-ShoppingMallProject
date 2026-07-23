@@ -28,7 +28,6 @@ import com.kdt.shoppingmall.repository.PaymentRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,6 +50,9 @@ class OrderServiceTest {
   @Mock private MemberRepository memberRepository;
 
   @Mock private PaymentRepository paymentRepository;
+
+  // 결제 결과를 고정하기 위해 Mock으로 주입한다 — 성공/실패를 willReturn으로 제어
+  @Mock private PaymentProcessor paymentProcessor;
 
   @InjectMocks private OrderService orderService;
 
@@ -242,26 +244,11 @@ class OrderServiceTest {
         .isInstanceOf(InvalidOrderStatusException.class);
   }
 
-  @RepeatedTest(5)
-  void pay_결제처리됨() {
-    Order order = new Order(member);
-    ReflectionTestUtils.setField(order, "id", 1L);
-
-    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
-    given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
-
-    PaymentResponse response = orderService.pay(1L, 1L);
-
-    assertThat(response.status()).isIn(PaymentStatus.SUCCESS, PaymentStatus.FAILED);
-    assertThat(order.getStatus()).isIn(OrderStatus.PAID, OrderStatus.CANCELED);
-  }
-
-  // pay()의 모의 결제는 90% 성공 / 10% 실패 확률(ThreadLocalRandom)이라 결정론적이지 않다.
-  // 5회 반복 중 실패 케이스가 나올 때마다 재고 복구 경로를 검증한다.
-  // (결정론적 검증이 필요하면 PaymentProcessor 의존성 주입으로 리팩토링 후 Mock 처리 필요)
-  @RepeatedTest(5)
-  void pay_결제결과에따라_재고상태가_올바르다() {
-    product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태를 흉내낸다 (100 → 98)
+  @Test
+  void pay_결제성공시_PAID_상태_유지() {
+    // paymentProcessor.isSuccess()가 true를 반환하도록 고정 → 항상 성공 경로를 검증
+    given(paymentProcessor.isSuccess()).willReturn(true);
+    product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
     Order order = new Order(member);
     order.addItem(new OrderItem(product, product.getPrice(), 2));
     ReflectionTestUtils.setField(order, "id", 1L);
@@ -269,13 +256,29 @@ class OrderServiceTest {
     given(orderRepository.findById(1L)).willReturn(Optional.of(order));
     given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
 
-    orderService.pay(1L, 1L);
+    PaymentResponse response = orderService.pay(1L, 1L);
 
-    // 결제 성공(PAID) → 차감 유지(98), 결제 실패(CANCELED) → 재고 복구(100)
-    if (order.getStatus() == OrderStatus.CANCELED) {
-      assertThat(product.getStockQuantity()).as("결제 실패 시 차감됐던 재고(2개)가 복구돼야 한다").isEqualTo(100);
-    } else {
-      assertThat(product.getStockQuantity()).as("결제 성공 시 재고가 차감된 상태로 유지돼야 한다").isEqualTo(98);
-    }
+    assertThat(response.status()).isEqualTo(PaymentStatus.SUCCESS);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    assertThat(product.getStockQuantity()).as("결제 성공 시 재고가 차감된 상태로 유지돼야 한다").isEqualTo(98);
+  }
+
+  @Test
+  void pay_결제실패시_CANCELED_재고복구() {
+    // paymentProcessor.isSuccess()가 false를 반환하도록 고정 → 항상 실패 경로를 검증
+    given(paymentProcessor.isSuccess()).willReturn(false);
+    product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
+    Order order = new Order(member);
+    order.addItem(new OrderItem(product, product.getPrice(), 2));
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
+
+    PaymentResponse response = orderService.pay(1L, 1L);
+
+    assertThat(response.status()).isEqualTo(PaymentStatus.FAILED);
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
+    assertThat(product.getStockQuantity()).as("결제 실패 시 차감됐던 재고(2개)가 복구돼야 한다").isEqualTo(100);
   }
 }

@@ -18,7 +18,6 @@ import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.OrderRepository;
 import com.kdt.shoppingmall.repository.PaymentRepository;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,22 +28,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class OrderService {
 
-  private static final int MOCK_PAYMENT_SUCCESS_RATE = 90;
-
   private final OrderRepository orderRepository;
   private final CartItemRepository cartItemRepository;
   private final MemberRepository memberRepository;
   private final PaymentRepository paymentRepository;
+  // 결제 성공 여부를 결정하는 전략 — 테스트에서 Mock으로 교체해 결과를 고정할 수 있다.
+  private final PaymentProcessor paymentProcessor;
 
   public OrderService(
       OrderRepository orderRepository,
       CartItemRepository cartItemRepository,
       MemberRepository memberRepository,
-      PaymentRepository paymentRepository) {
+      PaymentRepository paymentRepository,
+      PaymentProcessor paymentProcessor) {
     this.orderRepository = orderRepository;
     this.cartItemRepository = cartItemRepository;
     this.memberRepository = memberRepository;
     this.paymentRepository = paymentRepository;
+    this.paymentProcessor = paymentProcessor;
   }
 
   @Transactional
@@ -93,7 +94,7 @@ public class OrderService {
   @Transactional
   public PaymentResponse pay(Long memberId, Long orderId) {
     Order order = getOwnedOrderOrThrow(memberId, orderId);
-    boolean success = ThreadLocalRandom.current().nextInt(100) < MOCK_PAYMENT_SUCCESS_RATE;
+    boolean success = paymentProcessor.isSuccess();
 
     if (success) {
       order.changeStatus(OrderStatus.PAID);
