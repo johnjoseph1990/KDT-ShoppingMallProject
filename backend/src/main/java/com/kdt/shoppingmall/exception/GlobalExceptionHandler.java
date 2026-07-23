@@ -60,6 +60,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
   }
 
+  @ExceptionHandler(PaymentAmountMismatchException.class)
+  public ResponseEntity<Map<String, String>> handlePaymentAmountMismatch(
+      PaymentAmountMismatchException e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+  }
+
   @ExceptionHandler(InsufficientStockException.class)
   public ResponseEntity<Map<String, String>> handleInsufficientStock(InsufficientStockException e) {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));

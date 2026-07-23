@@ -10,8 +10,10 @@ import com.kdt.shoppingmall.domain.payment.PaymentStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
+import com.kdt.shoppingmall.dto.payment.PaymentConfirmRequest;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
+import com.kdt.shoppingmall.exception.PaymentAmountMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.CartItemRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
@@ -105,9 +107,17 @@ public class OrderService {
   }
 
   @Transactional
-  public PaymentResponse pay(Long memberId, Long orderId) {
+  public PaymentResponse pay(Long memberId, Long orderId, PaymentConfirmRequest request) {
     Order order = getOwnedOrderOrThrow(memberId, orderId);
-    boolean success = paymentProcessor.isSuccess();
+
+    // 프론트가 보낸 amount는 브라우저 개발자도구로 조작 가능하므로 절대 신뢰하지 않는다.
+    // 서버가 order.getTotalPrice()로 직접 계산한 금액과 다르면 토스 승인 API 호출 자체를 막는다.
+    if (order.getTotalPrice() != request.amount()) {
+      throw new PaymentAmountMismatchException("결제 금액이 일치하지 않습니다.");
+    }
+
+    boolean success =
+        paymentProcessor.confirm(request.paymentKey(), request.orderId(), order.getTotalPrice());
 
     if (success) {
       order.changeStatus(OrderStatus.PAID);
@@ -123,7 +133,8 @@ public class OrderService {
             new Payment(
                 order,
                 success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
-                order.getTotalPrice()));
+                order.getTotalPrice(),
+                request.paymentKey()));
     return PaymentResponse.from(payment);
   }
 

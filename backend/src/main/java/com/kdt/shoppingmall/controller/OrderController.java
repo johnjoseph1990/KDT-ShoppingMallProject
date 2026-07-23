@@ -2,6 +2,7 @@ package com.kdt.shoppingmall.controller;
 
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
+import com.kdt.shoppingmall.dto.payment.PaymentConfirmRequest;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.security.MemberPrincipal;
 import com.kdt.shoppingmall.service.OrderService;
@@ -48,7 +49,9 @@ public class OrderController {
 
   @PostMapping("/{orderId}/pay")
   public PaymentResponse pay(
-      @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
-    return orderService.pay(principal.getMember().getId(), orderId);
+      @AuthenticationPrincipal MemberPrincipal principal,
+      @PathVariable Long orderId,
+      @Valid @RequestBody PaymentConfirmRequest request) {
+    return orderService.pay(principal.getMember().getId(), orderId, request);
   }
 }

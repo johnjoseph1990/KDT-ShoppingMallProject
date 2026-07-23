@@ -3,7 +3,10 @@ package com.kdt.shoppingmall.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import com.kdt.shoppingmall.domain.cart.CartItem;
 import com.kdt.shoppingmall.domain.member.Member;
@@ -16,10 +19,12 @@ import com.kdt.shoppingmall.domain.payment.PaymentStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
+import com.kdt.shoppingmall.dto.payment.PaymentConfirmRequest;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
 import com.kdt.shoppingmall.exception.InsufficientStockException;
 import com.kdt.shoppingmall.exception.InvalidOrderStatusException;
+import com.kdt.shoppingmall.exception.PaymentAmountMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.CartItemRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
@@ -246,17 +251,18 @@ class OrderServiceTest {
 
   @Test
   void pay_결제성공시_PAID_상태_유지() {
-    // paymentProcessor.isSuccess()가 true를 반환하도록 고정 → 항상 성공 경로를 검증
-    given(paymentProcessor.isSuccess()).willReturn(true);
+    // paymentProcessor.confirm(...)이 true를 반환하도록 고정 → 항상 성공 경로를 검증
+    given(paymentProcessor.confirm(any(), any(), anyInt())).willReturn(true);
     product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
     Order order = new Order(member);
-    order.addItem(new OrderItem(product, product.getPrice(), 2));
+    order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
     ReflectionTestUtils.setField(order, "id", 1L);
 
     given(orderRepository.findById(1L)).willReturn(Optional.of(order));
     given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
 
-    PaymentResponse response = orderService.pay(1L, 1L);
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 20000);
+    PaymentResponse response = orderService.pay(1L, 1L, request);
 
     assertThat(response.status()).isEqualTo(PaymentStatus.SUCCESS);
     assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
@@ -265,20 +271,39 @@ class OrderServiceTest {
 
   @Test
   void pay_결제실패시_CANCELED_재고복구() {
-    // paymentProcessor.isSuccess()가 false를 반환하도록 고정 → 항상 실패 경로를 검증
-    given(paymentProcessor.isSuccess()).willReturn(false);
+    // paymentProcessor.confirm(...)이 false를 반환하도록 고정 → 항상 실패 경로를 검증
+    given(paymentProcessor.confirm(any(), any(), anyInt())).willReturn(false);
     product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
     Order order = new Order(member);
-    order.addItem(new OrderItem(product, product.getPrice(), 2));
+    order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
     ReflectionTestUtils.setField(order, "id", 1L);
 
     given(orderRepository.findById(1L)).willReturn(Optional.of(order));
     given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
 
-    PaymentResponse response = orderService.pay(1L, 1L);
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 20000);
+    PaymentResponse response = orderService.pay(1L, 1L, request);
 
     assertThat(response.status()).isEqualTo(PaymentStatus.FAILED);
     assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
     assertThat(product.getStockQuantity()).as("결제 실패 시 차감됐던 재고(2개)가 복구돼야 한다").isEqualTo(100);
+  }
+
+  @Test
+  void pay_금액불일치시_예외발생() {
+    // 클라이언트(프론트)가 보낸 amount는 브라우저 개발자도구로 조작 가능하므로 절대 신뢰하지 않는다.
+    // 서버가 order.getTotalPrice()로 직접 계산한 금액과 다르면 토스 승인 API를 호출하지도 않고 즉시 거부한다.
+    product.decreaseStock(2);
+    Order order = new Order(member);
+    order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
+    ReflectionTestUtils.setField(order, "id", 1L);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 9999);
+
+    assertThatThrownBy(() -> orderService.pay(1L, 1L, request))
+        .isInstanceOf(PaymentAmountMismatchException.class);
+    // 금액이 안 맞으면 외부 API(토스)를 호출할 필요가 없어야 한다 — 불필요한 외부 호출 방지 검증
+    verify(paymentProcessor, never()).confirm(any(), any(), anyInt());
   }
 }

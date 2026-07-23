@@ -12,10 +12,12 @@ import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.payment.PaymentStatus;
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
+import com.kdt.shoppingmall.dto.payment.PaymentConfirmRequest;
 import com.kdt.shoppingmall.dto.payment.PaymentResponse;
 import com.kdt.shoppingmall.exception.EmptyCartException;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
 import com.kdt.shoppingmall.exception.InsufficientStockException;
+import com.kdt.shoppingmall.exception.PaymentAmountMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import com.kdt.shoppingmall.service.OrderService;
@@ -198,12 +200,49 @@ class OrderControllerTest {
   @WithMockMemberPrincipal
   void 결제_인증후_200() throws Exception {
     PaymentResponse response =
-        new PaymentResponse(1L, PaymentStatus.SUCCESS, 20000, LocalDateTime.now());
-    given(orderService.pay(1L, 1L)).willReturn(response);
+        new PaymentResponse(
+            1L, PaymentStatus.SUCCESS, 20000, LocalDateTime.now(), "test_payment_key");
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 20000);
+    given(orderService.pay(eq(1L), eq(1L), any(PaymentConfirmRequest.class))).willReturn(response);
 
     mockMvc
-        .perform(post("/api/orders/1/pay"))
+        .perform(
+            post("/api/orders/1/pay")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("SUCCESS"));
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 결제_금액불일치_400() throws Exception {
+    // 서비스가 PaymentAmountMismatchException을 던지면 GlobalExceptionHandler가 400으로 변환하는지 검증
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 9999);
+    given(orderService.pay(eq(1L), eq(1L), any(PaymentConfirmRequest.class)))
+        .willThrow(new PaymentAmountMismatchException("결제 금액이 일치하지 않습니다."));
+
+    mockMvc
+        .perform(
+            post("/api/orders/1/pay")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("결제 금액이 일치하지 않습니다."));
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 결제_요청바디없음_400() throws Exception {
+    // paymentKey 등 필수 필드가 비어있으면 @Valid 검증(MethodArgumentNotValidException)이
+    // GlobalExceptionHandler.handleValidation()을 거쳐 400으로 응답해야 한다.
+    PaymentConfirmRequest invalidRequest = new PaymentConfirmRequest("", "", 0);
+
+    mockMvc
+        .perform(
+            post("/api/orders/1/pay")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRequest)))
+        .andExpect(status().isBadRequest());
   }
 }

@@ -14,6 +14,8 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import CartPage from './pages/CartPage'
 import OrderListPage from './pages/OrderListPage'
 import OrderDetailPage from './pages/OrderDetailPage'
+import PaymentSuccessPage from './pages/PaymentSuccessPage'
+import PaymentFailPage from './pages/PaymentFailPage'
 import AdminPage from './pages/AdminPage'
 import MyPage from './pages/MyPage'
 import StoryPage from './pages/StoryPage'
@@ -59,6 +61,22 @@ export default function App() {
                 element={
                   <PrivateRoute>
                     <OrderDetailPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/payments/success"
+                element={
+                  <PrivateRoute>
+                    <PaymentSuccessPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/payments/fail"
+                element={
+                  <PrivateRoute>
+                    <PaymentFailPage />
                   </PrivateRoute>
                 }
               />

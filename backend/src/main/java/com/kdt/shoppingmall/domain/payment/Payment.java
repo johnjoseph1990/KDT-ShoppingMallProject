@@ -40,10 +40,14 @@ public class Payment {
   @Column(nullable = false)
   private LocalDateTime paidAt;
 
-  public Payment(Order order, PaymentStatus status, int amount) {
+  // 토스페이먼츠가 발급한 결제 건 식별자. 기존에 저장된 row에는 값이 없을 수 있어 nullable로 둔다.
+  @Column private String paymentKey;
+
+  public Payment(Order order, PaymentStatus status, int amount, String paymentKey) {
     this.order = order;
     this.status = status;
     this.amount = amount;
+    this.paymentKey = paymentKey;
     this.paidAt = LocalDateTime.now();
   }
 }

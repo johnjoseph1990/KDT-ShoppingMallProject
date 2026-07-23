@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getOrder, payOrder } from '../api/orders'
+import { loadTossPayments } from '@tosspayments/payment-sdk'
+import { getOrder } from '../api/orders'
+import { buildTossOrderId } from '../utils/toss'
+import { useAuth } from '../context/AuthContext'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 const STATUS_LABEL = {
@@ -14,19 +17,37 @@ const STATUS_LABEL = {
 export default function OrderDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [order, setOrder] = useState(null)
 
   useEffect(() => {
     getOrder(id).then((res) => setOrder(res.data))
   }, [id])
 
+  // "결제하기" 클릭 → 토스 결제창(팝업/리다이렉트) 오픈. 결제창 자체에서 카드 승인까지 끝나면
+  // successUrl로 리다이렉트되고, 그 이후 승인(confirm) 요청은 PaymentSuccessPage에서 이어진다.
   const handlePay = async () => {
     try {
-      await payOrder(id)
-      const res = await getOrder(id)
-      setOrder(res.data)
+      const tossPayments = await loadTossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY)
+      const orderName =
+        order.items.length > 1
+          ? `${order.items[0].productName} 외 ${order.items.length - 1}건`
+          : order.items[0].productName
+
+      await tossPayments.requestPayment('카드', {
+        amount: order.totalPrice,
+        orderId: buildTossOrderId(order.id),
+        orderName,
+        successUrl: `${window.location.origin}/payments/success`,
+        failUrl: `${window.location.origin}/payments/fail`,
+        customerEmail: user?.email,
+        customerName: user?.name,
+      })
     } catch (err) {
-      alert(err.response?.data?.message || '결제 실패')
+      // 사용자가 결제창을 직접 닫은 경우(USER_CANCEL)는 굳이 에러로 알릴 필요 없다.
+      if (err.code !== 'USER_CANCEL') {
+        alert(err.message || '결제창을 여는 중 문제가 발생했습니다.')
+      }
     }
   }
 
