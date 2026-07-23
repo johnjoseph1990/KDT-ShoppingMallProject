@@ -14,6 +14,7 @@ const CATS = [
   { key: 'all', label: '전체', tag: '' },
   { key: 'veg', label: '채소', tag: '채소' },
   { key: 'fruit', label: '과일', tag: '과일' },
+  { key: 'meat', label: '정육', tag: '정육' },
   { key: 'bake', label: '베이커리·간식', tag: '베이커리' },
   { key: 'box', label: '꾸러미·정기배송', tag: '꾸러미' },
 ]
