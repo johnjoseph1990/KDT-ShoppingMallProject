@@ -10,6 +10,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+  // 같은 이름의 상품이 이미 있는지 확인한다. 시드(DevDataInitializer)에서
+  // 상품별 중복 여부를 이름으로 판단해, 여러 번 실행돼도 중복이 안 쌓이게(멱등) 하려고 사용한다.
+  // 메서드 이름만으로 SELECT ... WHERE name = ? 쿼리를 Spring Data JPA가 자동 생성한다.
+  boolean existsByName(String name);
+
   // CAST(:keyword AS string): keyword/tag가 null일 때 PostgreSQL이 파라미터 타입을
   // bytea로 잘못 추론해서 LOWER(bytea) 같은 함수 호출이 실패하는 문제를 막기 위해,
   // JPQL 단계에서 명시적으로 문자열 타입임을 알려준다.

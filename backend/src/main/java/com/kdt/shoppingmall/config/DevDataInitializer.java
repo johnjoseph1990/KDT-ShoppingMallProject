@@ -68,9 +68,6 @@ public class DevDataInitializer {
   @Bean
   public ApplicationRunner seedProducts(ProductRepository productRepository) {
     return (ApplicationArguments args) -> {
-      // 이미 상품이 있으면 중복 삽입 방지
-      if (productRepository.count() > 0) return;
-
       // 상품명, 설명, 가격, 재고, 이미지, 태그 순서로 정의
       // 이미지는 Unsplash 무료 라이선스 사진(실제 농가 사진 아님, 상품 구분용 임시 대체)
       List<Object[]> data =
@@ -138,12 +135,99 @@ public class DevDataInitializer {
                 10,
                 "https://images.unsplash.com/photo-1695798790639-c3c4294373ab?w=800&q=80&auto=format&fit=crop",
                 List.of("꾸러미")
+              },
+              // 정육 카테고리 상품 10개 — 기존에는 관리자 UI로 실행 중 DB에만 넣어
+              // git에 안 남아 클론/재시작 시 사라졌다. 재현성을 위해 시드 코드로 옮긴다.
+              // 이미지는 Unsplash 무료 사진(상품 구분용 임시 대체)
+              new Object[] {
+                "홍성 암소 한우 등심",
+                "충남 홍성에서 자란 1++ 암소 한우 등심. 마블링이 촘촘해 구이용으로 좋습니다.",
+                39_000,
+                20,
+                "https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "홍성 한우 불고기감",
+                "앞다리·설도를 얇게 저민 불고기용. 양념 없이도 육향이 진합니다.",
+                21_000,
+                25,
+                "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "논산 무항생제 삼겹살",
+                "무항생제 인증 농가의 국내산 삼겹살. 두툼하게 썰어 구워 먹기 좋습니다.",
+                16_500,
+                30,
+                "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "논산 무항생제 목살",
+                "지방이 적고 담백한 국내산 목살. 수육·스테이크 어디에나 무난합니다.",
+                15_000,
+                30,
+                "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "서천 방목 토종닭",
+                "노지에서 방목해 키운 토종닭 한 마리. 백숙·닭볶음탕용으로 씹는 맛이 좋습니다.",
+                13_000,
+                20,
+                "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "서천 닭가슴살 1kg",
+                "당일 손질한 국내산 닭가슴살 1kg. 냉장 진공 포장으로 신선하게 보내드립니다.",
+                11_000,
+                40,
+                "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "예산 참나무 훈제 오리",
+                "참나무 장작으로 천천히 훈제한 오리 슬라이스. 데워서 바로 먹을 수 있습니다.",
+                17_500,
+                18,
+                "https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "금산 흑돼지 갈비",
+                "금산 흑돼지 생갈비. 잔칼집을 넣어 양념이 잘 배도록 손질했습니다.",
+                23_000,
+                15,
+                "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "홍성 한우 국거리",
+                "양지·사태를 섞은 국거리용. 오래 끓여도 질기지 않고 국물이 깊습니다.",
+                18_000,
+                22,
+                "https://images.unsplash.com/photo-1588347818133-38c4106ca7f6?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
+              },
+              new Object[] {
+                "청양 양념 돼지불고기",
+                "청양고추를 더한 매콤 양념 돼지불고기. 팬에 볶기만 하면 되는 밀키트형 상품입니다.",
+                14_000,
+                28,
+                "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80&auto=format&fit=crop",
+                List.of("정육")
               });
 
       for (Object[] row : data) {
+        // 같은 이름의 상품이 이미 있으면 건너뛴다(멱등). 예전의 count()>0 방식은
+        // 상품이 하나라도 있으면 새 상품(정육)을 아예 못 넣어서, 이름 기준 체크로 바꿨다.
+        String name = (String) row[0];
+        if (productRepository.existsByName(name)) continue;
+
         Product product =
-            new Product(
-                (String) row[0], (String) row[1], (int) row[2], (int) row[3], (String) row[4]);
+            new Product(name, (String) row[1], (int) row[2], (int) row[3], (String) row[4]);
 
         @SuppressWarnings("unchecked")
         List<String> tagNames = (List<String>) row[5];

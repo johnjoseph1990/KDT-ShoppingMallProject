@@ -57,4 +57,12 @@ class ProductRepositoryTest {
     Product result = productRepository.findById(productId).orElseThrow();
     assertThat(result.getStockQuantity()).isEqualTo(7);
   }
+
+  // 시드 데이터의 멱등성(중복 방지)을 이름 기준으로 판단하기 위해 existsByName을 검증한다.
+  @Test
+  void 이름으로_상품_존재_여부를_확인한다() {
+    // setUp에서 "상품A"를 저장했으므로 true, 없는 이름은 false 여야 한다.
+    assertThat(productRepository.existsByName("상품A")).isTrue();
+    assertThat(productRepository.existsByName("존재하지_않는_상품")).isFalse();
+  }
 }
