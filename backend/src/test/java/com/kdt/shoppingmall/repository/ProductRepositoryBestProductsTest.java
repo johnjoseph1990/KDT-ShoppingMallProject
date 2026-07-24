@@ -58,8 +58,7 @@ class ProductRepositoryBestProductsTest {
   // 리뷰 없는 상품은 컷오프에 걸려 결과에 포함되지 않는다.
   @Test
   void 리뷰없는상품은_베스트_목록에서_제외된다() {
-    Page<Object[]> result =
-        productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 10));
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 10));
 
     List<String> names =
         result.getContent().stream().map(row -> ((Product) row[0]).getName()).toList();
@@ -71,8 +70,7 @@ class ProductRepositoryBestProductsTest {
   @Test
   void 조건_충족_상품이_없으면_빈페이지반환() {
     // 기존 데이터 없는 새 DB에 상품만 있고 리뷰 0개인 경우 시뮬레이션
-    Page<Object[]> result =
-        productRepository.findBestProductsWithAvgRating(Pageable.unpaged());
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(Pageable.unpaged());
 
     // setUp에서 리뷰 5개 이상 상품이 2개 있으므로 총 2개가 반환된다.
     assertThat(result.getTotalElements()).isEqualTo(2);
@@ -81,8 +79,7 @@ class ProductRepositoryBestProductsTest {
   // Object[1]이 실제 평균 별점 Double 값인지 검증한다.
   @Test
   void 반환된_평균별점이_정확하다() {
-    Page<Object[]> result =
-        productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 1));
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 1));
 
     Object[] top = result.getContent().get(0);
     Product topProduct = (Product) top[0];

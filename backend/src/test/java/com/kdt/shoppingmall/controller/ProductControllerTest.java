@@ -86,8 +86,7 @@ class ProductControllerTest {
   void 베스트상품조회_인증없이_성공() throws Exception {
     BestProductResponse bestResponse =
         new BestProductResponse(
-            1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now(),
-            "REVIEW_BEST");
+            1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now(), "REVIEW_BEST");
     Page<BestProductResponse> page = new PageImpl<>(List.of(bestResponse));
     given(productService.findBestProducts(any(Pageable.class))).willReturn(page);
 

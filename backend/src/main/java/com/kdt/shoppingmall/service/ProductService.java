@@ -97,18 +97,28 @@ public class ProductService {
     return toResponse(getProductOrThrow(id));
   }
 
+  // [추천 폴백] 태그 기반 추천이 없을 때 최신 등록 상품으로 대체 (4부 리스크 해소).
+  // 1순위: 같은 태그를 가진 상품 (연관 추천)
+  // 2순위: 최신 등록 상품 — 태그가 없거나 결과가 비었을 때 (콜드스타트 폴백)
   public List<ProductResponse> getRecommendations(Long productId) {
     Product product = getProductOrThrow(productId);
     List<String> tagNames = product.getTags().stream().map(ProductTag::getName).toList();
 
-    // 태그가 하나도 없는 상품이면 추천할 근거가 없으니 빈 리스트 반환
-    if (tagNames.isEmpty()) {
-      return List.of();
+    if (!tagNames.isEmpty()) {
+      List<ProductResponse> byTag =
+          productRepository
+              .findByTagNamesExcludingProduct(tagNames, productId, PageRequest.of(0, 4))
+              .stream()
+              .map(this::toResponse)
+              .toList();
+      if (!byTag.isEmpty()) {
+        return byTag;
+      }
     }
 
-    // 같은 태그를 가진 다른 상품을 최대 4개까지 조회해서 응답 형태로 변환
+    // 태그가 없거나 같은 태그 상품이 0개이면 최신 상품 4개를 폴백으로 반환한다.
     return productRepository
-        .findByTagNamesExcludingProduct(tagNames, productId, PageRequest.of(0, 4))
+        .findByIdNotOrderByCreatedAtDesc(productId, PageRequest.of(0, 4))
         .stream()
         .map(this::toResponse)
         .toList();

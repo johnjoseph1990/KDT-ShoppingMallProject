@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.product.Product;
@@ -233,14 +234,39 @@ class ProductServiceTest {
     assertThat(result.get(0).name()).isEqualTo("러닝화");
   }
 
+  // [추천 폴백] 태그가 없으면 최신 상품 4개를 폴백으로 반환한다 (빈 리스트 대신).
   @Test
-  void getRecommendations_태그없는상품_빈리스트반환() {
+  void getRecommendations_태그없는상품_최신상품폴백() {
     Product product = new Product("태그없는상품", "설명", 10000, 10, null);
+    setField(product, "id", 1L);
+    Product latest = new Product("최신상품", "설명", 20000, 5, null);
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(productRepository.findByIdNotOrderByCreatedAtDesc(eq(1L), any()))
+        .willReturn(new PageImpl<>(List.of(latest)));
 
     List<ProductResponse> result = productService.getRecommendations(1L);
 
-    assertThat(result).isEmpty();
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).name()).isEqualTo("최신상품");
+  }
+
+  // [추천 폴백] 태그는 있지만 같은 태그 상품이 없으면 최신 상품 폴백.
+  @Test
+  void getRecommendations_같은태그상품없으면_최신상품폴백() {
+    Product product = new Product("희귀태그상품", "설명", 10000, 10, null);
+    product.addTag(new ProductTag("희귀태그"));
+    setField(product, "id", 1L);
+    Product latest = new Product("최신상품", "설명", 20000, 5, null);
+
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(productRepository.findByTagNamesExcludingProduct(any(), any(), any()))
+        .willReturn(List.of()); // 태그 매칭 결과 없음
+    given(productRepository.findByIdNotOrderByCreatedAtDesc(eq(1L), any()))
+        .willReturn(new PageImpl<>(List.of(latest)));
+
+    List<ProductResponse> result = productService.getRecommendations(1L);
+
+    assertThat(result.get(0).name()).isEqualTo("최신상품");
   }
 
   @Test
