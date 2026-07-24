@@ -15,8 +15,10 @@ import com.kdt.shoppingmall.domain.product.ProductTag;
 import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
+import com.kdt.shoppingmall.dto.review.KeywordResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
+import com.kdt.shoppingmall.repository.ReviewKeywordRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,7 @@ class ProductServiceTest {
 
   @Mock private ProductRepository productRepository;
   @Mock private ReviewRepository reviewRepository;
+  @Mock private ReviewKeywordRepository reviewKeywordRepository;
 
   @InjectMocks private ProductService productService;
 
@@ -267,6 +270,31 @@ class ProductServiceTest {
     List<ProductResponse> result = productService.getRecommendations(1L);
 
     assertThat(result.get(0).name()).isEqualTo("최신상품");
+  }
+
+  // 상품의 키워드를 빈도 내림차순으로 조회한다.
+  @Test
+  void getKeywords_상품_키워드_상위N개_반환() {
+    Product product = new Product("상품A", "설명", 10000, 100, null);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    java.util.ArrayList<Object[]> rows = new java.util.ArrayList<>();
+    rows.add(new Object[] {"신선", 5L});
+    rows.add(new Object[] {"맛있", 3L});
+    given(reviewKeywordRepository.findTopKeywordsByProductId(any(), any())).willReturn(rows);
+
+    List<KeywordResponse> result = productService.getKeywords(1L, 10);
+
+    assertThat(result).hasSize(2);
+    assertThat(result.get(0).keyword()).isEqualTo("신선");
+    assertThat(result.get(0).count()).isEqualTo(5L);
+  }
+
+  @Test
+  void getKeywords_존재하지않는상품_예외발생() {
+    given(productRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> productService.getKeywords(99L, 10))
+        .isInstanceOf(ResourceNotFoundException.class);
   }
 
   @Test

@@ -1,6 +1,7 @@
 package com.kdt.shoppingmall.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -12,6 +13,7 @@ import com.kdt.shoppingmall.config.SecurityConfig;
 import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
+import com.kdt.shoppingmall.dto.review.KeywordResponse;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
@@ -178,6 +180,21 @@ class ProductControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("수정상품"));
+  }
+
+  // 상품 키워드 조회 — 빈도 내림차순으로 반환되어야 한다.
+  @Test
+  void 상품키워드조회_인증없이_성공() throws Exception {
+    // limit은 int 프리미티브라 anyInt()를 사용한다.
+    given(productService.getKeywords(eq(1L), anyInt()))
+        .willReturn(List.of(new KeywordResponse("신선", 5L), new KeywordResponse("맛있", 3L)));
+
+    mockMvc
+        .perform(get("/api/products/1/keywords"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].keyword").value("신선"))
+        .andExpect(jsonPath("$[0].count").value(5))
+        .andExpect(jsonPath("$[1].keyword").value("맛있"));
   }
 
   @Test

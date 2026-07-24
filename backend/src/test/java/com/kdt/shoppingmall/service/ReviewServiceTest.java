@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.kdt.shoppingmall.domain.member.Member;
 import com.kdt.shoppingmall.domain.member.MemberRole;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.domain.review.Review;
+import com.kdt.shoppingmall.domain.review.ReviewKeyword;
 import com.kdt.shoppingmall.dto.review.ReviewRequest;
 import com.kdt.shoppingmall.dto.review.ReviewResponse;
 import com.kdt.shoppingmall.exception.DuplicateReviewException;
@@ -18,9 +20,11 @@ import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.OrderItemRepository;
 import com.kdt.shoppingmall.repository.ProductRepository;
+import com.kdt.shoppingmall.repository.ReviewKeywordRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,13 +44,15 @@ class ReviewServiceTest {
   @Mock private ReviewRepository reviewRepository;
   @Mock private MemberRepository memberRepository;
   @Mock private ProductRepository productRepository;
-  // [P0-1] 구매자 검증에 사용하는 레포지토리 Mock
   @Mock private OrderItemRepository orderItemRepository;
+  @Mock private ReviewKeywordRepository reviewKeywordRepository;
+  @Mock private KeywordExtractor keywordExtractor;
 
   @InjectMocks private ReviewService reviewService;
 
   private Member member;
   private Product product;
+  private Review review;
 
   @BeforeEach
   void setUp() {
@@ -55,23 +61,25 @@ class ReviewServiceTest {
 
     product = new Product("상품A", "설명", 10000, 100, null);
     ReflectionTestUtils.setField(product, "id", 1L);
+
+    review = new Review(member, product, 5, "정말 좋아요!");
+    ReflectionTestUtils.setField(review, "id", 1L);
   }
 
   @Test
   void createReview_성공() {
     ReviewRequest request = new ReviewRequest(5, "정말 좋아요!");
-    Review review = new Review(member, product, 5, "정말 좋아요!");
-    ReflectionTestUtils.setField(review, "id", 1L);
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
-    // [P0-1] 구매자로 인정되는 케이스 — PAID 이상 주문 이력 있음
     given(
             orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
                 eq(1L), eq(1L), any()))
         .willReturn(true);
     given(reviewRepository.existsByMemberIdAndProductId(1L, 1L)).willReturn(false);
     given(reviewRepository.save(any(Review.class))).willReturn(review);
+    // 키워드 추출 결과가 비어있으면 save가 호출되지 않는다.
+    given(keywordExtractor.extract(any())).willReturn(Set.of());
 
     ReviewResponse response = reviewService.createReview(1L, 1L, request);
 
@@ -80,14 +88,34 @@ class ReviewServiceTest {
     assertThat(response.memberName()).isEqualTo("테스터");
   }
 
-  // [P0-1] 미구매자가 리뷰를 쓰려 하면 403 AccessDeniedException이 발생해야 한다.
+  // 리뷰 저장 시 추출된 키워드 수만큼 ReviewKeyword가 저장되어야 한다.
+  @Test
+  void createReview_키워드_추출해서_저장한다() {
+    ReviewRequest request = new ReviewRequest(5, "신선하고 맛있어요!");
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    given(
+            orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
+                eq(1L), eq(1L), any()))
+        .willReturn(true);
+    given(reviewRepository.existsByMemberIdAndProductId(1L, 1L)).willReturn(false);
+    given(reviewRepository.save(any(Review.class))).willReturn(review);
+    // 2개의 키워드가 추출된 경우를 가정한다.
+    given(keywordExtractor.extract("신선하고 맛있어요!")).willReturn(Set.of("신선", "맛있"));
+
+    reviewService.createReview(1L, 1L, request);
+
+    // 추출된 키워드 수(2개)만큼 ReviewKeyword가 저장되었는지 검증한다.
+    verify(reviewKeywordRepository, times(2)).save(any(ReviewKeyword.class));
+  }
+
   @Test
   void createReview_미구매자_접근금지() {
     ReviewRequest request = new ReviewRequest(5, "좋아요!");
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
-    // 결제 완료 이상의 주문 이력이 없음
     given(
             orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
                 eq(1L), eq(1L), any()))
@@ -104,7 +132,6 @@ class ReviewServiceTest {
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
-    // 구매자 검증은 통과시키고, 중복 검증에서 걸리도록 설정
     given(
             orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
                 eq(1L), eq(1L), any()))
@@ -122,18 +149,15 @@ class ReviewServiceTest {
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(99L)).willReturn(Optional.empty());
-    // 상품 조회에서 먼저 실패하므로 구매자 검증까지 도달하지 않는다.
 
     assertThatThrownBy(() -> reviewService.createReview(1L, 99L, request))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 
-  // [P1-5] getReviews가 List → Page로 변경됨 — 페이징 결과를 검증한다.
   @Test
   void getReviews_성공() {
-    Review review = new Review(member, product, 4, "좋아요");
     Pageable pageable = PageRequest.of(0, 20);
-    Page<Review> page = new PageImpl<>(List.of(review));
+    Page<Review> page = new PageImpl<>(List.of(new Review(member, product, 4, "좋아요")));
 
     given(productRepository.existsById(1L)).willReturn(true);
     given(reviewRepository.findByProductIdOrderByCreatedAtDesc(1L, pageable)).willReturn(page);
@@ -154,13 +178,12 @@ class ReviewServiceTest {
 
   @Test
   void deleteReview_성공() {
-    Review review = new Review(member, product, 5, "좋아요");
-    ReflectionTestUtils.setField(review, "id", 1L);
-
     given(reviewRepository.findById(1L)).willReturn(Optional.of(review));
 
     reviewService.deleteReview(1L, 1L);
 
+    // 리뷰 삭제 전에 연결된 키워드도 삭제되어야 한다.
+    verify(reviewKeywordRepository).deleteByReviewId(1L);
     verify(reviewRepository).delete(review);
   }
 
@@ -168,10 +191,10 @@ class ReviewServiceTest {
   void deleteReview_다른회원_접근금지() {
     Member other = new Member("other@test.com", "encoded", "다른사람", MemberRole.USER);
     ReflectionTestUtils.setField(other, "id", 2L);
-    Review review = new Review(other, product, 5, "리뷰");
-    ReflectionTestUtils.setField(review, "id", 1L);
+    Review otherReview = new Review(other, product, 5, "리뷰");
+    ReflectionTestUtils.setField(otherReview, "id", 1L);
 
-    given(reviewRepository.findById(1L)).willReturn(Optional.of(review));
+    given(reviewRepository.findById(1L)).willReturn(Optional.of(otherReview));
 
     assertThatThrownBy(() -> reviewService.deleteReview(1L, 1L))
         .isInstanceOf(AccessDeniedException.class);

@@ -6,8 +6,10 @@ import com.kdt.shoppingmall.domain.product.ProductTag;
 import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
+import com.kdt.shoppingmall.dto.review.KeywordResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
+import com.kdt.shoppingmall.repository.ReviewKeywordRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -23,14 +25,18 @@ public class ProductService {
 
   private final ProductRepository productRepository;
   private final ReviewRepository reviewRepository;
+  private final ReviewKeywordRepository reviewKeywordRepository;
 
-  // PAID 이상의 주문만 판매량 집계에 포함한다 (ORDERED·CANCELED 제외).
   private static final List<OrderStatus> PAID_STATUSES =
       List.of(OrderStatus.PAID, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
 
-  public ProductService(ProductRepository productRepository, ReviewRepository reviewRepository) {
+  public ProductService(
+      ProductRepository productRepository,
+      ReviewRepository reviewRepository,
+      ReviewKeywordRepository reviewKeywordRepository) {
     this.productRepository = productRepository;
     this.reviewRepository = reviewRepository;
+    this.reviewKeywordRepository = reviewKeywordRepository;
   }
 
   @Transactional
@@ -91,6 +97,17 @@ public class ProductService {
               Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
               return BestProductResponse.from(p, avg != null ? avg : 0.0, "LATEST");
             });
+  }
+
+  // 상품에 달린 리뷰에서 추출된 키워드를 빈도 내림차순으로 반환한다.
+  // limit: 반환할 최대 키워드 수 (기본값은 컨트롤러에서 10으로 설정).
+  public List<KeywordResponse> getKeywords(Long productId, int limit) {
+    getProductOrThrow(productId); // 상품 존재 확인 — 없으면 404
+    return reviewKeywordRepository
+        .findTopKeywordsByProductId(productId, PageRequest.of(0, limit))
+        .stream()
+        .map(row -> new KeywordResponse((String) row[0], (Long) row[1]))
+        .toList();
   }
 
   public ProductResponse findById(Long id) {

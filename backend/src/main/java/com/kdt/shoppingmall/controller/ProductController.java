@@ -3,6 +3,7 @@ package com.kdt.shoppingmall.controller;
 import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
+import com.kdt.shoppingmall.dto.review.KeywordResponse;
 import com.kdt.shoppingmall.service.ProductService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -63,6 +64,14 @@ public class ProductController {
   @GetMapping("/{id}/recommendations")
   public List<ProductResponse> getRecommendations(@PathVariable Long id) {
     return productService.getRecommendations(id);
+  }
+
+  // [키워드 추천] 상품에 달린 리뷰 본문에서 자주 나온 키워드 상위 limit개를 반환한다.
+  // 프론트에서 상품 상세 페이지에 "이 상품의 키워드: 신선 · 맛있 · 재구매"처럼 표시할 수 있다.
+  @GetMapping("/{id}/keywords")
+  public List<KeywordResponse> getKeywords(
+      @PathVariable Long id, @RequestParam(defaultValue = "10") int limit) {
+    return productService.getKeywords(id, limit);
   }
 
   @PutMapping("/{id}")
