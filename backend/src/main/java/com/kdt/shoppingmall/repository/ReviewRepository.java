@@ -28,4 +28,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
   // 특정 상품의 리뷰 수를 반환한다.
   // 베스트 상품 5개 컷오프 판정에 사용한다.
   long countByProductId(Long productId);
+
+  // 회원 탈퇴 시 해당 회원의 리뷰를 일괄 삭제한다.
+  // review_keyword가 먼저 삭제된 후 호출되어야 FK 제약 위반이 발생하지 않는다.
+  void deleteAllByMemberId(Long memberId);
 }

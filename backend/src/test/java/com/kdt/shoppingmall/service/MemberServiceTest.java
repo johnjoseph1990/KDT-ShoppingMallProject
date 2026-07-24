@@ -17,6 +17,8 @@ import com.kdt.shoppingmall.exception.PasswordMismatchException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.AddressRepository;
 import com.kdt.shoppingmall.repository.MemberRepository;
+import com.kdt.shoppingmall.repository.ReviewKeywordRepository;
+import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,10 +32,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 class MemberServiceTest {
 
   @Mock private MemberRepository memberRepository;
-
   @Mock private PasswordEncoder passwordEncoder;
-
   @Mock private AddressRepository addressRepository;
+  @Mock private ReviewKeywordRepository reviewKeywordRepository;
+  @Mock private ReviewRepository reviewRepository;
 
   @InjectMocks private MemberService memberService;
 
@@ -115,9 +117,16 @@ class MemberServiceTest {
 
     memberService.delete(1L);
 
-    // 배송지가 회원보다 먼저 삭제되어야 FK 제약 위반이 발생하지 않는다
-    verify(addressRepository).deleteAllByMemberId(1L);
-    verify(memberRepository).delete(member);
+    // FK 제약 고려 삭제 순서:
+    //   review_keyword → review → address → member
+    // 각 단계가 실제로 호출되는지 검증한다.
+    org.mockito.InOrder order =
+        org.mockito.Mockito.inOrder(
+            reviewKeywordRepository, reviewRepository, addressRepository, memberRepository);
+    order.verify(reviewKeywordRepository).deleteByReviewMemberId(1L);
+    order.verify(reviewRepository).deleteAllByMemberId(1L);
+    order.verify(addressRepository).deleteAllByMemberId(1L);
+    order.verify(memberRepository).delete(member);
   }
 
   @Test

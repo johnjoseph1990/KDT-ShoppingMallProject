@@ -26,4 +26,9 @@ public interface ReviewKeywordRepository extends JpaRepository<ReviewKeyword, Lo
   // 리뷰 삭제 시 해당 리뷰의 키워드를 먼저 삭제하는 데 사용한다.
   // Spring Data JPA가 메서드 이름으로 DELETE ... WHERE review_id = ? 를 자동 생성한다.
   void deleteByReviewId(Long reviewId);
+
+  // 회원 탈퇴 시 해당 회원의 모든 리뷰에 연결된 키워드를 일괄 삭제한다.
+  // 삭제 순서: review_keyword → review → member (FK 제약 준수).
+  // Spring Data JPA가 review.member.id = ? 를 따라가서 DELETE를 생성한다.
+  void deleteByReviewMemberId(Long memberId);
 }
