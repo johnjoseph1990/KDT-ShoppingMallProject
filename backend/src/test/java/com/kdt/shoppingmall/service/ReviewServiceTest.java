@@ -15,6 +15,7 @@ import com.kdt.shoppingmall.domain.review.Review;
 import com.kdt.shoppingmall.domain.review.ReviewKeyword;
 import com.kdt.shoppingmall.dto.review.ReviewRequest;
 import com.kdt.shoppingmall.dto.review.ReviewResponse;
+import com.kdt.shoppingmall.dto.review.ReviewUpdateRequest;
 import com.kdt.shoppingmall.exception.DuplicateReviewException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.MemberRepository;
@@ -206,5 +207,48 @@ class ReviewServiceTest {
 
     assertThatThrownBy(() -> reviewService.deleteReview(1L, 99L))
         .isInstanceOf(ResourceNotFoundException.class);
+  }
+
+  // 수정 성공 — rating과 content가 새 값으로 바뀌어야 한다.
+  @Test
+  void updateReview_성공() {
+    ReviewUpdateRequest request = new ReviewUpdateRequest(4, "수정된 리뷰 내용입니다.");
+    given(reviewRepository.findById(1L)).willReturn(Optional.of(review));
+    given(keywordExtractor.extract("수정된 리뷰 내용입니다.")).willReturn(Set.of());
+
+    ReviewResponse response = reviewService.updateReview(1L, 1L, request);
+
+    assertThat(review.getRating()).isEqualTo(4);
+    assertThat(review.getContent()).isEqualTo("수정된 리뷰 내용입니다.");
+    assertThat(response.rating()).isEqualTo(4);
+  }
+
+  // 본인이 아닌 다른 회원의 리뷰를 수정하려 하면 403이어야 한다.
+  @Test
+  void updateReview_타인수정_403() {
+    ReviewUpdateRequest request = new ReviewUpdateRequest(3, "몰래 수정");
+    Member other = new Member("other@test.com", "encoded", "다른사람", MemberRole.USER);
+    ReflectionTestUtils.setField(other, "id", 2L);
+    Review otherReview = new Review(other, product, 5, "원래 리뷰");
+    ReflectionTestUtils.setField(otherReview, "id", 1L);
+    given(reviewRepository.findById(1L)).willReturn(Optional.of(otherReview));
+
+    assertThatThrownBy(() -> reviewService.updateReview(1L, 1L, request))
+        .isInstanceOf(AccessDeniedException.class)
+        .hasMessageContaining("본인");
+  }
+
+  // 수정 시 기존 키워드를 삭제하고 새 내용 기준으로 재추출해야 한다.
+  @Test
+  void updateReview_키워드_재추출() {
+    ReviewUpdateRequest request = new ReviewUpdateRequest(5, "신선하고 만족스러워요");
+    given(reviewRepository.findById(1L)).willReturn(Optional.of(review));
+    given(keywordExtractor.extract("신선하고 만족스러워요")).willReturn(Set.of("신선", "만족"));
+
+    reviewService.updateReview(1L, 1L, request);
+
+    // 기존 키워드 먼저 삭제 후 새 키워드 2개 저장
+    verify(reviewKeywordRepository).deleteByReviewId(1L);
+    verify(reviewKeywordRepository, times(2)).save(any(ReviewKeyword.class));
   }
 }

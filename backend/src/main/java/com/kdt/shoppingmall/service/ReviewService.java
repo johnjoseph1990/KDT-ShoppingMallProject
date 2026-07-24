@@ -7,6 +7,7 @@ import com.kdt.shoppingmall.domain.review.Review;
 import com.kdt.shoppingmall.domain.review.ReviewKeyword;
 import com.kdt.shoppingmall.dto.review.ReviewRequest;
 import com.kdt.shoppingmall.dto.review.ReviewResponse;
+import com.kdt.shoppingmall.dto.review.ReviewUpdateRequest;
 import com.kdt.shoppingmall.exception.DuplicateReviewException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.MemberRepository;
@@ -91,6 +92,24 @@ public class ReviewService {
     return reviewRepository
         .findByProductIdOrderByCreatedAtDesc(productId, pageable)
         .map(ReviewResponse::from);
+  }
+
+  // 리뷰 수정: 별점·내용 변경 후 키워드를 재추출한다.
+  // 내용이 바뀌면 키워드 빈도 집계도 최신 내용을 반영해야 하므로 기존 키워드를 먼저 삭제한다.
+  @Transactional
+  public ReviewResponse updateReview(Long memberId, Long reviewId, ReviewUpdateRequest request) {
+    Review review =
+        reviewRepository
+            .findById(reviewId)
+            .orElseThrow(() -> new ResourceNotFoundException("리뷰를 찾을 수 없습니다. id=" + reviewId));
+    if (!review.getMember().getId().equals(memberId)) {
+      throw new AccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
+    }
+    review.update(request.rating(), request.content());
+    reviewKeywordRepository.deleteByReviewId(reviewId);
+    Set<String> keywords = keywordExtractor.extract(request.content());
+    keywords.forEach(kw -> reviewKeywordRepository.save(new ReviewKeyword(review, kw)));
+    return ReviewResponse.from(review);
   }
 
   @Transactional

@@ -90,8 +90,12 @@ public class SecurityConfig {
                     // 상품 목록/상세 조회(GET)는 로그인 안 해도 볼 수 있어야 하는 화면이라 허용
                     .requestMatchers(HttpMethod.GET, "/api/products/**")
                     .permitAll()
-                    // 리뷰 작성/삭제는 로그인한 회원이면 누구나 가능 (ADMIN 권한까지는 필요 없음)
+                    // 리뷰 작성/수정/삭제는 로그인한 회원이면 누구나 가능 (ADMIN 권한까지는 필요 없음)
+                    // PUT 리뷰 규칙은 반드시 PUT 상품(hasRole ADMIN) 규칙보다 앞에 위치해야 한다.
+                    // 스프링 시큐리티는 위에서부터 첫 매칭 규칙을 적용하므로 순서가 결과를 결정한다.
                     .requestMatchers(HttpMethod.POST, "/api/products/*/reviews")
+                    .authenticated()
+                    .requestMatchers(HttpMethod.PUT, "/api/products/*/reviews/*")
                     .authenticated()
                     .requestMatchers(HttpMethod.DELETE, "/api/products/*/reviews/*")
                     .authenticated()

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kdt.shoppingmall.config.SecurityConfig;
 import com.kdt.shoppingmall.dto.review.ReviewRequest;
 import com.kdt.shoppingmall.dto.review.ReviewResponse;
+import com.kdt.shoppingmall.dto.review.ReviewUpdateRequest;
 import com.kdt.shoppingmall.exception.DuplicateReviewException;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
@@ -135,5 +136,34 @@ class ReviewControllerTest {
   @WithMockMemberPrincipal
   void 리뷰삭제_성공_204() throws Exception {
     mockMvc.perform(delete("/api/products/1/reviews/1")).andExpect(status().isNoContent());
+  }
+
+  // 본인이 로그인 상태에서 수정 요청하면 200 응답.
+  @Test
+  @WithMockMemberPrincipal
+  void 리뷰수정_본인_200() throws Exception {
+    ReviewUpdateRequest request = new ReviewUpdateRequest(4, "수정된 리뷰 내용입니다.");
+    given(reviewService.updateReview(any(), eq(1L), any())).willReturn(sampleResponse());
+
+    mockMvc
+        .perform(
+            put("/api/products/1/reviews/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.rating").value(5));
+  }
+
+  // 로그인 없이 수정 요청하면 401.
+  @Test
+  void 리뷰수정_미인증_401() throws Exception {
+    ReviewUpdateRequest request = new ReviewUpdateRequest(3, "무단 수정 시도");
+
+    mockMvc
+        .perform(
+            put("/api/products/1/reviews/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
   }
 }

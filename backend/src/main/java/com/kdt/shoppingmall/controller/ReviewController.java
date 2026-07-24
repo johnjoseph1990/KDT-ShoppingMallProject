@@ -2,6 +2,7 @@ package com.kdt.shoppingmall.controller;
 
 import com.kdt.shoppingmall.dto.review.ReviewRequest;
 import com.kdt.shoppingmall.dto.review.ReviewResponse;
+import com.kdt.shoppingmall.dto.review.ReviewUpdateRequest;
 import com.kdt.shoppingmall.security.MemberPrincipal;
 import com.kdt.shoppingmall.service.ReviewService;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,6 +51,16 @@ public class ReviewController {
       @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
           Pageable pageable) {
     return reviewService.getReviews(productId, pageable);
+  }
+
+  @PutMapping("/{reviewId}")
+  public ResponseEntity<ReviewResponse> update(
+      @PathVariable Long productId,
+      @PathVariable Long reviewId,
+      @Valid @RequestBody ReviewUpdateRequest request,
+      @AuthenticationPrincipal MemberPrincipal principal) {
+    return ResponseEntity.ok(
+        reviewService.updateReview(principal.getMember().getId(), reviewId, request));
   }
 
   @DeleteMapping("/{reviewId}")

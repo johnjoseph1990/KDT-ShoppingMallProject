@@ -63,4 +63,10 @@ public class Review {
   protected void onCreate() {
     this.createdAt = LocalDateTime.now();
   }
+
+  // 리뷰 내용 수정 메서드. @Version이 있으므로 동시 수정 충돌은 DB가 감지한다.
+  public void update(int rating, String content) {
+    this.rating = rating;
+    this.content = content;
+  }
 }
