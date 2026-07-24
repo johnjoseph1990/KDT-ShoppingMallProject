@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+// 컨트롤러는 HTTP 요청을 받는 첫 번째 문지기 역할이다.
+// 자바 관점에서 보면 '클래스(설계도)' 안의 메서드가 실제 행동을 담당하고,
+// 스프링에서는 이 메서드가 요청을 처리하는 '핸들러'가 된다.
 // 로그인한 회원 자신의 정보를 수정·삭제하는 컨트롤러.
 // 인증(로그인 여부)은 SecurityConfig의 anyRequest().authenticated()가 처리하므로
 // 여기서는 @AuthenticationPrincipal로 현재 로그인 회원 ID만 꺼내서 쓴다.
@@ -29,6 +32,8 @@ public class MemberController {
   }
 
   // PUT /api/members/me — 이름·비밀번호 수정 (변경할 항목만 요청 바디에 포함)
+  // 스프링은 @PutMapping으로 이 메서드가 PUT 요청을 처리하는지 알려준다.
+  // 여기서는 컨트롤러가 요청을 받아 서비스로 넘기고, 결과를 다시 응답으로 돌려준다.
   @PutMapping("/me")
   public MemberResponse update(
       @AuthenticationPrincipal MemberPrincipal principal,
@@ -37,6 +42,8 @@ public class MemberController {
   }
 
   // DELETE /api/members/me — 회원 탈퇴. DB에서 삭제 후 세션도 즉시 무효화한다.
+  // 스프링은 @DeleteMapping으로 이 메서드가 DELETE 요청을 처리하는지 알려준다.
+  // 절차적으로 보면 '요청 받기 → 서비스 호출 → 세션 정리 → 응답' 순서로 진행된다.
   @DeleteMapping("/me")
   public ResponseEntity<Void> delete(
       @AuthenticationPrincipal MemberPrincipal principal, HttpServletRequest httpRequest) {
