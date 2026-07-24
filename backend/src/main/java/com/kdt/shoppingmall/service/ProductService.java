@@ -110,13 +110,19 @@ public class ProductService {
         .toList();
   }
 
+  // 상품 상세 조회 + 조회수 1 증가.
+  // @Transactional: readOnly = false (클래스 기본값 true를 메서드 수준에서 덮어씀).
+  // JPA dirty checking으로 viewCount 변경이 트랜잭션 커밋 시 자동으로 DB에 반영된다.
+  @Transactional
   public ProductResponse findById(Long id) {
-    return toResponse(getProductOrThrow(id));
+    Product product = getProductOrThrow(id);
+    product.increaseViewCount();
+    return toResponse(product);
   }
 
-  // [추천 폴백] 태그 기반 추천이 없을 때 최신 등록 상품으로 대체 (4부 리스크 해소).
+  // [추천 폴백] 태그 기반 추천이 없을 때 조회수 높은 상품으로 대체.
   // 1순위: 같은 태그를 가진 상품 (연관 추천)
-  // 2순위: 최신 등록 상품 — 태그가 없거나 결과가 비었을 때 (콜드스타트 폴백)
+  // 2순위: 조회수 높은 상품 — 태그가 없거나 결과가 비었을 때 (인기 기반 폴백)
   public List<ProductResponse> getRecommendations(Long productId) {
     Product product = getProductOrThrow(productId);
     List<String> tagNames = product.getTags().stream().map(ProductTag::getName).toList();
@@ -133,9 +139,9 @@ public class ProductService {
       }
     }
 
-    // 태그가 없거나 같은 태그 상품이 0개이면 최신 상품 4개를 폴백으로 반환한다.
+    // 태그가 없거나 같은 태그 상품이 0개이면 조회수 높은 상품 4개를 폴백으로 반환한다.
     return productRepository
-        .findByIdNotOrderByCreatedAtDesc(productId, PageRequest.of(0, 4))
+        .findByIdNotOrderByViewCountDesc(productId, PageRequest.of(0, 4))
         .stream()
         .map(this::toResponse)
         .toList();

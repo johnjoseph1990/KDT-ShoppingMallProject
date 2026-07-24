@@ -61,7 +61,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   // [P1-3] 콜드스타트 2순위: 결제 완료(PAID) 이상 주문에서 판매량이 가장 많은 상품.
   // Object[0]=Product, Object[1]=Long(판매 수량 합계)
-  // excludedIds: 이미 1순위에서 반환된 상품이 있을 때 중복 방지용 (현재 REVIEW_BEST가 0개일 때만 호출).
+  // tie-break: 같은 판매량이면 조회수(viewCount) 높은 쪽을 먼저.
   @Query(
       value =
           """
@@ -69,7 +69,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             FROM OrderItem oi
             WHERE oi.order.status IN :statuses
             GROUP BY oi.product
-            ORDER BY COUNT(oi) DESC
+            ORDER BY COUNT(oi) DESC, oi.product.viewCount DESC
             """,
       countQuery =
           """
@@ -79,10 +79,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
   Page<Object[]> findTopBySales(@Param("statuses") List<OrderStatus> statuses, Pageable pageable);
 
-  // [추천 폴백] 태그가 없거나 같은 태그 상품이 없을 때 최신 등록 상품을 폴백으로 반환한다.
+  // [추천 폴백] 태그가 없거나 같은 태그 상품이 없을 때 조회수 높은 상품을 폴백으로 반환한다.
   // excludeId: 현재 보고 있는 상품은 추천 목록에서 제외한다.
-  // Spring Data JPA 메서드 이름으로 "WHERE id <> ? ORDER BY createdAt DESC" 쿼리가 생성된다.
-  Page<Product> findByIdNotOrderByCreatedAtDesc(Long excludeId, Pageable pageable);
+  // Spring Data JPA 메서드 이름으로 "WHERE id <> ? ORDER BY viewCount DESC" 쿼리가 생성된다.
+  Page<Product> findByIdNotOrderByViewCountDesc(Long excludeId, Pageable pageable);
 
   // 같은 태그(tagNames)를 하나라도 가진 다른 상품(excludeId 제외)을 찾는다.
   // DISTINCT: 한 상품이 tagNames 중 여러 개를 동시에 가지고 있어도 한 번만 나오게 함.

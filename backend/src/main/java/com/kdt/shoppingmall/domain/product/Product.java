@@ -42,6 +42,11 @@ public class Product {
 
   private String imageUrl;
 
+  // 상품 상세 페이지 조회 횟수. findById() 호출마다 1씩 증가한다.
+  // 실무에서는 Redis 카운터로 처리하지만, 학습 규모에서는 DB UPDATE로 단순 구현한다.
+  @Column(nullable = false)
+  private int viewCount = 0;
+
   @Version private Long version;
 
   @Column(nullable = false, updatable = false)
@@ -86,6 +91,10 @@ public class Product {
 
   public void increaseStock(int quantity) {
     this.stockQuantity += quantity;
+  }
+
+  public void increaseViewCount() {
+    this.viewCount++;
   }
 
   public void addTag(ProductTag tag) {

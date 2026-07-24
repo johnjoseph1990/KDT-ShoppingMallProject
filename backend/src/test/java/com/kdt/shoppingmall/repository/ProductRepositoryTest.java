@@ -176,6 +176,30 @@ class ProductRepositoryTest {
     assertThat(result.isEmpty()).isTrue();
   }
 
+  // ── [viewCount] findByIdNotOrderByViewCountDesc 검증 ─────────────────────────
+
+  // 조회수 높은 상품이 먼저 반환되어야 한다 (추천 폴백 2순위).
+  @Test
+  void findByIdNotOrderByViewCountDesc_조회수_내림차순_정렬한다() {
+    Product highView = productRepository.findById(productId).orElseThrow();
+    Product lowView = em.persistAndFlush(new Product("상품B", "설명", 5000, 5, null));
+    em.clear();
+
+    // 상품A: 조회수 5회 누적 — increaseViewCount()를 5번 호출 후 flush
+    highView = productRepository.findById(productId).orElseThrow();
+    for (int i = 0; i < 5; i++) highView.increaseViewCount();
+    productRepository.saveAndFlush(highView);
+    em.clear();
+
+    Page<Product> result =
+        productRepository.findByIdNotOrderByViewCountDesc(-1L, PageRequest.of(0, 10));
+
+    assertThat(result.getTotalElements()).isEqualTo(2);
+    assertThat(result.getContent().get(0).getName()).isEqualTo("상품A"); // 조회수 5 → 먼저
+    assertThat(result.getContent().get(1).getName()).isEqualTo("상품B"); // 조회수 0 → 나중
+    assertThat(result.getContent().get(0).getViewCount()).isEqualTo(5);
+  }
+
   // ── 헬퍼 메서드 ──────────────────────────────────────────────────────────────
 
   // 동일 상품에 리뷰는 회원 1명당 1개만 가능(유니크 제약)하므로, 회원을 count명 생성한다.

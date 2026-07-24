@@ -65,6 +65,19 @@ class ProductServiceTest {
     assertThat(response.name()).isEqualTo("상품A");
   }
 
+  // findById()는 조회 후 viewCount를 1 증가시켜야 한다.
+  // @Transactional이 적용되면 JPA dirty checking이 DB에 반영하지만,
+  // 단위 테스트에서는 영속성 컨텍스트가 없으므로 객체 상태로만 검증한다.
+  @Test
+  void findById_조회수가_증가한다() {
+    Product product = new Product("상품A", "설명", 10000, 100, null);
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+
+    productService.findById(1L);
+
+    assertThat(product.getViewCount()).isEqualTo(1);
+  }
+
   @Test
   void findById_리뷰있으면_평균별점반환() {
     Product product = new Product("상품A", "설명", 10000, 100, null);
@@ -237,39 +250,39 @@ class ProductServiceTest {
     assertThat(result.get(0).name()).isEqualTo("러닝화");
   }
 
-  // [추천 폴백] 태그가 없으면 최신 상품 4개를 폴백으로 반환한다 (빈 리스트 대신).
+  // [추천 폴백] 태그가 없으면 조회수 높은 상품 4개를 폴백으로 반환한다.
   @Test
-  void getRecommendations_태그없는상품_최신상품폴백() {
+  void getRecommendations_태그없는상품_조회수폴백() {
     Product product = new Product("태그없는상품", "설명", 10000, 10, null);
     setField(product, "id", 1L);
-    Product latest = new Product("최신상품", "설명", 20000, 5, null);
+    Product popular = new Product("인기상품", "설명", 20000, 5, null);
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
-    given(productRepository.findByIdNotOrderByCreatedAtDesc(eq(1L), any()))
-        .willReturn(new PageImpl<>(List.of(latest)));
+    given(productRepository.findByIdNotOrderByViewCountDesc(eq(1L), any()))
+        .willReturn(new PageImpl<>(List.of(popular)));
 
     List<ProductResponse> result = productService.getRecommendations(1L);
 
     assertThat(result).hasSize(1);
-    assertThat(result.get(0).name()).isEqualTo("최신상품");
+    assertThat(result.get(0).name()).isEqualTo("인기상품");
   }
 
-  // [추천 폴백] 태그는 있지만 같은 태그 상품이 없으면 최신 상품 폴백.
+  // [추천 폴백] 태그는 있지만 같은 태그 상품이 없으면 조회수 폴백.
   @Test
-  void getRecommendations_같은태그상품없으면_최신상품폴백() {
+  void getRecommendations_같은태그상품없으면_조회수폴백() {
     Product product = new Product("희귀태그상품", "설명", 10000, 10, null);
     product.addTag(new ProductTag("희귀태그"));
     setField(product, "id", 1L);
-    Product latest = new Product("최신상품", "설명", 20000, 5, null);
+    Product popular = new Product("인기상품", "설명", 20000, 5, null);
 
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
     given(productRepository.findByTagNamesExcludingProduct(any(), any(), any()))
         .willReturn(List.of()); // 태그 매칭 결과 없음
-    given(productRepository.findByIdNotOrderByCreatedAtDesc(eq(1L), any()))
-        .willReturn(new PageImpl<>(List.of(latest)));
+    given(productRepository.findByIdNotOrderByViewCountDesc(eq(1L), any()))
+        .willReturn(new PageImpl<>(List.of(popular)));
 
     List<ProductResponse> result = productService.getRecommendations(1L);
 
-    assertThat(result.get(0).name()).isEqualTo("최신상품");
+    assertThat(result.get(0).name()).isEqualTo("인기상품");
   }
 
   // 상품의 키워드를 빈도 내림차순으로 조회한다.

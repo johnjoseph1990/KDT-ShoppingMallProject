@@ -17,6 +17,8 @@ public record BestProductResponse(
     String imageUrl,
     List<String> tags,
     double averageRating,
+    // 상품 상세 페이지 조회 횟수
+    int viewCount,
     LocalDateTime createdAt,
     // "REVIEW_BEST": 리뷰 5개 이상·평균 별점순 | "SALES": 판매량 폴백 | "LATEST": 최신 폴백
     String source) {
@@ -31,6 +33,7 @@ public record BestProductResponse(
         product.getImageUrl(),
         product.getTags().stream().map(ProductTag::getName).toList(),
         averageRating,
+        product.getViewCount(),
         product.getCreatedAt(),
         source);
   }

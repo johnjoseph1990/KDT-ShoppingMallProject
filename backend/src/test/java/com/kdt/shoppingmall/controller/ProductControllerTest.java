@@ -45,8 +45,9 @@ class ProductControllerTest {
   @MockitoBean private MemberUserDetailsService memberUserDetailsService;
 
   private ProductResponse sampleResponse() {
+    // viewCount(0)가 추가되어 10번째 인자 추가됨
     return new ProductResponse(
-        1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now());
+        1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, 0, LocalDateTime.now());
   }
 
   @Test
@@ -88,7 +89,17 @@ class ProductControllerTest {
   void 베스트상품조회_인증없이_성공() throws Exception {
     BestProductResponse bestResponse =
         new BestProductResponse(
-            1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now(), "REVIEW_BEST");
+            1L,
+            "상품A",
+            "설명",
+            10000,
+            100,
+            null,
+            List.of(),
+            0.0,
+            0,
+            LocalDateTime.now(),
+            "REVIEW_BEST");
     Page<BestProductResponse> page = new PageImpl<>(List.of(bestResponse));
     given(productService.findBestProducts(any(Pageable.class))).willReturn(page);
 
@@ -170,7 +181,7 @@ class ProductControllerTest {
     ProductRequest request = new ProductRequest("수정상품", "수정설명", 9000, 50, null, null);
     ProductResponse updated =
         new ProductResponse(
-            1L, "수정상품", "수정설명", 9000, 50, null, List.of(), 0.0, LocalDateTime.now());
+            1L, "수정상품", "수정설명", 9000, 50, null, List.of(), 0.0, 0, LocalDateTime.now());
     given(productService.update(eq(1L), any())).willReturn(updated);
 
     mockMvc

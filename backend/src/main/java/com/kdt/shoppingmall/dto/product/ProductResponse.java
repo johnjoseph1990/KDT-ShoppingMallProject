@@ -13,6 +13,8 @@ public record ProductResponse(
     String imageUrl,
     List<String> tags,
     double averageRating,
+    // 상품 상세 페이지 조회 횟수
+    int viewCount,
     LocalDateTime createdAt) {
 
   public static ProductResponse from(Product product, Double averageRating) {
@@ -26,6 +28,7 @@ public record ProductResponse(
         product.getTags().stream().map(tag -> tag.getName()).toList(),
         // 리뷰가 없으면 AVG 쿼리 결과가 null이라, 화면에는 0.0으로 표시
         averageRating == null ? 0.0 : averageRating,
+        product.getViewCount(),
         product.getCreatedAt());
   }
 }
