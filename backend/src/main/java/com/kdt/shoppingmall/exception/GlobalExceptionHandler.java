@@ -3,6 +3,7 @@ package com.kdt.shoppingmall.exception;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +82,17 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(DuplicateReviewException.class)
   public ResponseEntity<Map<String, String>> handleDuplicateReview(DuplicateReviewException e) {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
+  }
+
+  // [P1-4] 동시 요청에서 서비스 레이어의 중복 선검증(existsBy...)을 동시에 통과한 뒤
+  // DB 유니크 제약이 충돌하면 여기서 잡아 409를 내려준다.
+  // 서비스 단에서 DuplicateXxxException이 먼저 잡히는 게 정상이지만,
+  // 경쟁 조건(race condition)에서만 이 경로로 온다.
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Map<String, String>> handleDataIntegrity(
+      DataIntegrityViolationException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(Map.of("message", "이미 처리된 요청입니다. 잠시 후 다시 시도해주세요."));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

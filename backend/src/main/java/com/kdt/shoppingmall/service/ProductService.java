@@ -1,7 +1,9 @@
 package com.kdt.shoppingmall.service;
 
+import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.domain.product.ProductTag;
+import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
@@ -11,6 +13,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,10 @@ public class ProductService {
 
   private final ProductRepository productRepository;
   private final ReviewRepository reviewRepository;
+
+  // PAID 이상의 주문만 판매량 집계에 포함한다 (ORDERED·CANCELED 제외).
+  private static final List<OrderStatus> PAID_STATUSES =
+      List.of(OrderStatus.PAID, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
 
   public ProductService(ProductRepository productRepository, ReviewRepository reviewRepository) {
     this.productRepository = productRepository;
@@ -43,8 +50,47 @@ public class ProductService {
     return productRepository.searchProducts(keyword, tag, pageable).map(this::toResponse);
   }
 
-  public Page<ProductResponse> findBestProducts(Pageable pageable) {
-    return productRepository.findAllOrderByAverageRatingDesc(pageable).map(this::toResponse);
+  // [P1-2 + P1-3] 베스트 상품 3단계 폴백:
+  //   1순위 REVIEW_BEST — 리뷰 5개 이상 + 평균 별점 내림차순 (N+1도 동시에 해결)
+  //   2순위 SALES       — 결제 완료 주문에서 판매량 순 (리뷰 데이터 부족 시)
+  //   3순위 LATEST      — 최신 등록 상품 (판매 데이터도 없을 때)
+  //
+  // 각 단계는 앞 단계가 결과를 하나도 못 낼 때만 실행한다 (배타적 전환).
+  // source 필드로 클라이언트가 어느 단계 결과인지 구분할 수 있다.
+  public Page<BestProductResponse> findBestProducts(Pageable pageable) {
+    // 1순위: 리뷰 기반
+    Page<Object[]> best = productRepository.findBestProductsWithAvgRating(pageable);
+    if (best.getTotalElements() > 0) {
+      // Object[0]=Product, Object[1]=AVG(rating) — 쿼리에서 함께 반환해 N+1 제거
+      return best.map(
+          row -> BestProductResponse.from((Product) row[0], (Double) row[1], "REVIEW_BEST"));
+    }
+
+    // 2순위: 판매량 기반
+    Page<Object[]> sales = productRepository.findTopBySales(PAID_STATUSES, pageable);
+    if (sales.getTotalElements() > 0) {
+      return sales.map(
+          row -> {
+            Product p = (Product) row[0];
+            // 폴백 상태에서는 상품 수가 적어 N+1의 실질적 영향이 작다.
+            Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
+            return BestProductResponse.from(p, avg != null ? avg : 0.0, "SALES");
+          });
+    }
+
+    // 3순위: 최신 등록 순 — pageable의 정렬을 createdAt DESC로 고정한다.
+    Pageable latestSort =
+        PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt"));
+    return productRepository
+        .findAll(latestSort)
+        .map(
+            p -> {
+              Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
+              return BestProductResponse.from(p, avg != null ? avg : 0.0, "LATEST");
+            });
   }
 
   public ProductResponse findById(Long id) {

@@ -3,12 +3,22 @@ package com.kdt.shoppingmall.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.kdt.shoppingmall.domain.member.Member;
+import com.kdt.shoppingmall.domain.member.MemberRole;
+import com.kdt.shoppingmall.domain.order.Order;
+import com.kdt.shoppingmall.domain.order.OrderItem;
+import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.product.Product;
+import com.kdt.shoppingmall.domain.review.Review;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 // @DataJpaTest: 실제 H2 DB로 Product의 @Version(낙관적 락)이 진짜로 동작하는지 검증한다.
@@ -19,8 +29,10 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 class ProductRepositoryTest {
 
   @Autowired private TestEntityManager em;
-
   @Autowired private ProductRepository productRepository;
+  @Autowired private ReviewRepository reviewRepository;
+  @Autowired private MemberRepository memberRepository;
+  @Autowired private OrderRepository orderRepository;
 
   private Long productId;
 
@@ -64,5 +76,126 @@ class ProductRepositoryTest {
     // setUp에서 "상품A"를 저장했으므로 true, 없는 이름은 false 여야 한다.
     assertThat(productRepository.existsByName("상품A")).isTrue();
     assertThat(productRepository.existsByName("존재하지_않는_상품")).isFalse();
+  }
+
+  // ── [P1-2] findBestProductsWithAvgRating 검증 ──────────────────────────────
+
+  // 리뷰가 정확히 5개(경계값)인 상품은 베스트 후보에 포함되어야 한다 (>= 5 는 포함).
+  @Test
+  void findBestProductsWithAvgRating_리뷰5개이상인_상품만_반환한다() {
+    Product best = productRepository.findById(productId).orElseThrow(); // setUp의 상품A
+    Product notEnough = em.persistAndFlush(new Product("상품B", "설명", 5000, 5, null));
+    em.clear();
+
+    // 상품A: 리뷰 5개 (컷오프 통과)
+    saveReviews(best, 5, 4); // 5명의 회원이 별점 4점씩
+    // 상품B: 리뷰 4개 (컷오프 미달)
+    saveReviews(notEnough, 4, 5);
+    em.flush();
+    em.clear();
+
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 10));
+
+    assertThat(result.getTotalElements()).isEqualTo(1);
+    Product returned = (Product) result.getContent().get(0)[0];
+    assertThat(returned.getName()).isEqualTo("상품A");
+  }
+
+  // 두 상품 모두 5개 이상일 때 평균 별점 내림차순으로 정렬한다.
+  @Test
+  void findBestProductsWithAvgRating_평균별점_내림차순_정렬한다() {
+    Product high = productRepository.findById(productId).orElseThrow(); // 상품A
+    Product low = em.persistAndFlush(new Product("상품B", "설명", 5000, 5, null));
+    em.clear();
+
+    saveReviews(high, 5, 5); // 평균 5.0
+    saveReviews(low, 5, 2); // 평균 2.0
+    em.flush();
+    em.clear();
+
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(PageRequest.of(0, 10));
+
+    assertThat(result.getTotalElements()).isEqualTo(2);
+    Product first = (Product) result.getContent().get(0)[0];
+    assertThat(first.getName()).isEqualTo("상품A"); // 높은 평점이 먼저
+  }
+
+  // 리뷰가 전혀 없을 때 빈 페이지를 반환한다 (폴백 전환 트리거 조건).
+  @Test
+  void findBestProductsWithAvgRating_리뷰없으면_빈페이지반환() {
+    // setUp의 상품A에 리뷰 없음
+    Page<Object[]> result = productRepository.findBestProductsWithAvgRating(Pageable.unpaged());
+
+    assertThat(result.isEmpty()).isTrue();
+  }
+
+  // ── [P1-3] findTopBySales 검증 ──────────────────────────────────────────────
+
+  // PAID 이상 주문에서 판매 수량이 많은 상품이 먼저 반환된다.
+  @Test
+  void findTopBySales_판매량_내림차순_정렬한다() {
+    Product high = productRepository.findById(productId).orElseThrow(); // 상품A
+    Product low = em.persistAndFlush(new Product("상품B", "설명", 5000, 5, null));
+    em.clear();
+
+    Member buyer = saveMember("buyer@test.com");
+
+    // 상품A: 3번 주문 (PAID)
+    saveOrder(buyer, high, 3);
+    // 상품B: 1번 주문 (PAID)
+    saveOrder(buyer, low, 1);
+    em.flush();
+    em.clear();
+
+    List<OrderStatus> statuses =
+        List.of(OrderStatus.PAID, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
+    Page<Object[]> result = productRepository.findTopBySales(statuses, PageRequest.of(0, 10));
+
+    assertThat(result.getTotalElements()).isEqualTo(2);
+    Product first = (Product) result.getContent().get(0)[0];
+    assertThat(first.getName()).isEqualTo("상품A");
+  }
+
+  // ORDERED(결제 전) 상태의 주문은 판매량에 집계되지 않는다.
+  @Test
+  void findTopBySales_ORDERED상태는_집계_제외() {
+    Product product = productRepository.findById(productId).orElseThrow();
+    em.clear();
+
+    Member buyer = saveMember("buyer2@test.com");
+    // ORDERED(결제 전) 상태로만 주문
+    Order order = orderRepository.save(new Order(buyer));
+    order.addItem(new OrderItem(product, product.getPrice(), 1));
+    orderRepository.saveAndFlush(order);
+    em.clear();
+
+    List<OrderStatus> statuses =
+        List.of(OrderStatus.PAID, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
+    Page<Object[]> result = productRepository.findTopBySales(statuses, PageRequest.of(0, 10));
+
+    assertThat(result.isEmpty()).isTrue();
+  }
+
+  // ── 헬퍼 메서드 ──────────────────────────────────────────────────────────────
+
+  // 동일 상품에 리뷰는 회원 1명당 1개만 가능(유니크 제약)하므로, 회원을 count명 생성한다.
+  private void saveReviews(Product product, int count, int rating) {
+    for (int i = 0; i < count; i++) {
+      // prefix로 상품ID를 써서 서로 다른 테스트 간 이메일 충돌을 방지한다.
+      String email = "rev_" + product.getId() + "_" + i + "@test.com";
+      Member m = memberRepository.save(new Member(email, "pw", "이름" + i, MemberRole.USER));
+      reviewRepository.save(new Review(m, product, rating, "리뷰"));
+    }
+  }
+
+  private Member saveMember(String email) {
+    return memberRepository.save(new Member(email, "pw", "구매자", MemberRole.USER));
+  }
+
+  private void saveOrder(Member buyer, Product product, int quantity) {
+    Order order = orderRepository.save(new Order(buyer));
+    order.addItem(new OrderItem(product, product.getPrice(), quantity));
+    order.changeStatus(OrderStatus.PAID);
+    orderRepository.save(order);
   }
 }

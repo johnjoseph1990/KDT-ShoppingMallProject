@@ -3,12 +3,15 @@ package com.kdt.shoppingmall.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.domain.product.ProductTag;
+import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
@@ -30,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 class ProductServiceTest {
 
   @Mock private ProductRepository productRepository;
-
   @Mock private ReviewRepository reviewRepository;
 
   @InjectMocks private ProductService productService;
@@ -147,17 +149,60 @@ class ProductServiceTest {
     assertThat(result.getContent().get(0).name()).isEqualTo("나이키 운동화");
   }
 
+  // [P1-2 + P1-3] 리뷰 5개 이상인 상품이 있으면 REVIEW_BEST를 반환한다.
   @Test
-  void findBestProducts_평점순으로_조회() {
+  void findBestProducts_리뷰기반_REVIEW_BEST_반환() {
     Product product = new Product("상품A", "설명", 10000, 100, null);
     Pageable pageable = PageRequest.of(0, 5);
-    Page<Product> page = new PageImpl<>(List.of(product));
-    given(productRepository.findAllOrderByAverageRatingDesc(pageable)).willReturn(page);
-    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(4.5);
+    // Object[0]=Product, Object[1]=avgRating — DB 쿼리가 함께 반환하는 구조
+    // List.of(Object[])는 컴파일러가 varargs와 혼동해 타입 추론에 실패하므로 ArrayList를 사용한다.
+    java.util.ArrayList<Object[]> rows = new java.util.ArrayList<>();
+    rows.add(new Object[] {product, 4.5});
+    given(productRepository.findBestProductsWithAvgRating(pageable))
+        .willReturn(new PageImpl<>(rows));
 
-    Page<ProductResponse> result = productService.findBestProducts(pageable);
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
 
     assertThat(result.getContent().get(0).averageRating()).isEqualTo(4.5);
+    assertThat(result.getContent().get(0).source()).isEqualTo("REVIEW_BEST");
+  }
+
+  // [P1-3] 리뷰 기반 결과가 없으면 판매량 폴백(SALES)으로 전환한다.
+  @Test
+  void findBestProducts_리뷰없으면_판매량_SALES_폴백() {
+    Product product = new Product("판매왕상품", "설명", 15000, 50, null);
+    Pageable pageable = PageRequest.of(0, 5);
+    List<OrderStatus> paidStatuses =
+        List.of(OrderStatus.PAID, OrderStatus.SHIPPING, OrderStatus.DELIVERED);
+
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    java.util.ArrayList<Object[]> salesRows = new java.util.ArrayList<>();
+    salesRows.add(new Object[] {product, 100L});
+    given(productRepository.findTopBySales(any(), eq(pageable)))
+        .willReturn(new PageImpl<>(salesRows));
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(null);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent().get(0).source()).isEqualTo("SALES");
+  }
+
+  // [P1-3] 리뷰·판매 데이터가 모두 없으면 최신 등록 상품(LATEST)을 반환한다.
+  @Test
+  void findBestProducts_판매없으면_최신_LATEST_폴백() {
+    Product product = new Product("신상품", "설명", 20000, 10, null);
+    Pageable pageable = PageRequest.of(0, 5);
+
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    given(productRepository.findTopBySales(any(), any())).willReturn(Page.empty());
+    // 최신 폴백: findAll(Pageable) 호출 — 정렬이 바뀐 Pageable이 전달됨
+    given(productRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of(product)));
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(null);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent().get(0).source()).isEqualTo("LATEST");
   }
 
   @Test
@@ -173,7 +218,6 @@ class ProductServiceTest {
 
   @Test
   void getRecommendations_태그기반_추천상품_반환() {
-    // 태그가 있는 상품 → 같은 태그를 가진 다른 상품 목록 반환
     Product product = new Product("운동화", "설명", 89000, 50, null);
     product.addTag(new ProductTag("스포츠"));
     product.addTag(new ProductTag("신발"));
@@ -191,7 +235,6 @@ class ProductServiceTest {
 
   @Test
   void getRecommendations_태그없는상품_빈리스트반환() {
-    // 태그가 없으면 추천 근거가 없으므로 빈 리스트
     Product product = new Product("태그없는상품", "설명", 10000, 10, null);
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
 

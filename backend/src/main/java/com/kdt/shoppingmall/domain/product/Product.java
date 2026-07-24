@@ -47,7 +47,11 @@ public class Product {
   @Column(nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  // [P1-1] @BatchSize: 상품 목록을 불러올 때 각 상품의 tags를 N번 개별 SELECT하는 대신,
+  // 최대 50개씩 IN 절로 묶어서 조회한다. N+1 문제를 완전히 없애지는 않지만
+  // 쿼리 수를 ceil(N/50)으로 대폭 줄인다.
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  @org.hibernate.annotations.BatchSize(size = 50)
   private List<ProductTag> tags = new ArrayList<>();
 
   public Product(String name, String description, int price, int stockQuantity, String imageUrl) {

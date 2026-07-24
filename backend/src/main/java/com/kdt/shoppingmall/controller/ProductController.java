@@ -1,5 +1,6 @@
 package com.kdt.shoppingmall.controller;
 
+import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.service.ProductService;
@@ -45,8 +46,11 @@ public class ProductController {
     return productService.search(keyword, tag, pageable);
   }
 
+  // [P1-3] 반환 타입을 BestProductResponse로 변경 — source 필드로 폴백 단계를 구분한다.
+  // 응답의 나머지 필드(id, name, price ...)는 ProductResponse와 동일하므로
+  // 프론트엔드 코드 변경 없이 호환된다.
   @GetMapping("/best")
-  public Page<ProductResponse> getBestProducts(@PageableDefault(size = 5) Pageable pageable) {
+  public Page<BestProductResponse> getBestProducts(@PageableDefault(size = 5) Pageable pageable) {
     return productService.findBestProducts(pageable);
   }
 

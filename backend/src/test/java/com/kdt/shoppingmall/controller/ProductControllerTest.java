@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kdt.shoppingmall.config.SecurityConfig;
+import com.kdt.shoppingmall.dto.product.BestProductResponse;
 import com.kdt.shoppingmall.dto.product.ProductRequest;
 import com.kdt.shoppingmall.dto.product.ProductResponse;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
@@ -80,15 +81,21 @@ class ProductControllerTest {
         .andExpect(jsonPath("$.content[0].name").value("상품A"));
   }
 
+  // [P1-3] findBestProducts가 BestProductResponse를 반환하므로 목 타입을 맞춘다.
   @Test
   void 베스트상품조회_인증없이_성공() throws Exception {
-    Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+    BestProductResponse bestResponse =
+        new BestProductResponse(
+            1L, "상품A", "설명", 10000, 100, null, List.of(), 0.0, LocalDateTime.now(),
+            "REVIEW_BEST");
+    Page<BestProductResponse> page = new PageImpl<>(List.of(bestResponse));
     given(productService.findBestProducts(any(Pageable.class))).willReturn(page);
 
     mockMvc
         .perform(get("/api/products/best"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.content[0].name").value("상품A"));
+        .andExpect(jsonPath("$.content[0].name").value("상품A"))
+        .andExpect(jsonPath("$.content[0].source").value("REVIEW_BEST"));
   }
 
   @Test

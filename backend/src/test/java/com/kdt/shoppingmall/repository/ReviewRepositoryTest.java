@@ -6,12 +6,13 @@ import com.kdt.shoppingmall.domain.member.Member;
 import com.kdt.shoppingmall.domain.member.MemberRole;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.domain.review.Review;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @DataJpaTest
 class ReviewRepositoryTest {
@@ -39,9 +40,11 @@ class ReviewRepositoryTest {
             3,
             "보통"));
 
-    List<Review> reviews = reviewRepository.findByProductIdOrderByCreatedAtDesc(product.getId());
+    // [P1-5] 페이징 API로 변경 — Page<Review>를 반환한다.
+    Page<Review> reviews =
+        reviewRepository.findByProductIdOrderByCreatedAtDesc(product.getId(), Pageable.unpaged());
 
-    assertThat(reviews).hasSize(2);
+    assertThat(reviews.getTotalElements()).isEqualTo(2);
   }
 
   @Test

@@ -3,6 +3,7 @@ package com.kdt.shoppingmall.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -15,6 +16,7 @@ import com.kdt.shoppingmall.dto.review.ReviewResponse;
 import com.kdt.shoppingmall.exception.DuplicateReviewException;
 import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.MemberRepository;
+import com.kdt.shoppingmall.repository.OrderItemRepository;
 import com.kdt.shoppingmall.repository.ProductRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
 import java.util.List;
@@ -25,6 +27,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -34,6 +40,8 @@ class ReviewServiceTest {
   @Mock private ReviewRepository reviewRepository;
   @Mock private MemberRepository memberRepository;
   @Mock private ProductRepository productRepository;
+  // [P0-1] 구매자 검증에 사용하는 레포지토리 Mock
+  @Mock private OrderItemRepository orderItemRepository;
 
   @InjectMocks private ReviewService reviewService;
 
@@ -57,6 +65,11 @@ class ReviewServiceTest {
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    // [P0-1] 구매자로 인정되는 케이스 — PAID 이상 주문 이력 있음
+    given(
+            orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
+                eq(1L), eq(1L), any()))
+        .willReturn(true);
     given(reviewRepository.existsByMemberIdAndProductId(1L, 1L)).willReturn(false);
     given(reviewRepository.save(any(Review.class))).willReturn(review);
 
@@ -67,12 +80,35 @@ class ReviewServiceTest {
     assertThat(response.memberName()).isEqualTo("테스터");
   }
 
+  // [P0-1] 미구매자가 리뷰를 쓰려 하면 403 AccessDeniedException이 발생해야 한다.
+  @Test
+  void createReview_미구매자_접근금지() {
+    ReviewRequest request = new ReviewRequest(5, "좋아요!");
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    // 결제 완료 이상의 주문 이력이 없음
+    given(
+            orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
+                eq(1L), eq(1L), any()))
+        .willReturn(false);
+
+    assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
+        .isInstanceOf(AccessDeniedException.class)
+        .hasMessageContaining("구매자만");
+  }
+
   @Test
   void createReview_중복리뷰_예외발생() {
     ReviewRequest request = new ReviewRequest(3, "두 번째 리뷰");
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(1L)).willReturn(Optional.of(product));
+    // 구매자 검증은 통과시키고, 중복 검증에서 걸리도록 설정
+    given(
+            orderItemRepository.existsByOrderMemberIdAndProductIdAndOrderStatusIn(
+                eq(1L), eq(1L), any()))
+        .willReturn(true);
     given(reviewRepository.existsByMemberIdAndProductId(1L, 1L)).willReturn(true);
 
     assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
@@ -86,28 +122,33 @@ class ReviewServiceTest {
 
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(productRepository.findById(99L)).willReturn(Optional.empty());
+    // 상품 조회에서 먼저 실패하므로 구매자 검증까지 도달하지 않는다.
 
     assertThatThrownBy(() -> reviewService.createReview(1L, 99L, request))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 
+  // [P1-5] getReviews가 List → Page로 변경됨 — 페이징 결과를 검증한다.
   @Test
   void getReviews_성공() {
     Review review = new Review(member, product, 4, "좋아요");
+    Pageable pageable = PageRequest.of(0, 20);
+    Page<Review> page = new PageImpl<>(List.of(review));
+
     given(productRepository.existsById(1L)).willReturn(true);
-    given(reviewRepository.findByProductIdOrderByCreatedAtDesc(1L)).willReturn(List.of(review));
+    given(reviewRepository.findByProductIdOrderByCreatedAtDesc(1L, pageable)).willReturn(page);
 
-    List<ReviewResponse> responses = reviewService.getReviews(1L);
+    Page<ReviewResponse> responses = reviewService.getReviews(1L, pageable);
 
-    assertThat(responses).hasSize(1);
-    assertThat(responses.get(0).rating()).isEqualTo(4);
+    assertThat(responses.getTotalElements()).isEqualTo(1);
+    assertThat(responses.getContent().get(0).rating()).isEqualTo(4);
   }
 
   @Test
   void getReviews_존재하지않는상품_예외발생() {
     given(productRepository.existsById(99L)).willReturn(false);
 
-    assertThatThrownBy(() -> reviewService.getReviews(99L))
+    assertThatThrownBy(() -> reviewService.getReviews(99L, Pageable.unpaged()))
         .isInstanceOf(ResourceNotFoundException.class);
   }
 

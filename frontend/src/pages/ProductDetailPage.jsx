@@ -21,6 +21,8 @@ export default function ProductDetailPage() {
   const [recommendations, setRecommendations] = useState([])
   const [quantity, setQuantity] = useState(1)
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' })
+  // [P1-5] Page 응답의 totalElements로 실제 리뷰 총 수를 보여준다.
+  const [reviewTotal, setReviewTotal] = useState(0)
 
   useEffect(() => {
     getProduct(id).then((res) => setProduct(res.data))
@@ -32,8 +34,12 @@ export default function ProductDetailPage() {
   }, [id])
 
   const loadReviews = () => {
-    getReviews(id)
-      .then((res) => setReviews(res.data))
+    // [P1-5] Page 응답: content(목록)와 totalElements(전체 수)를 분리해서 사용한다.
+    getReviews(id, { page: 0, size: 20 })
+      .then((res) => {
+        setReviews(res.data.content)
+        setReviewTotal(res.data.totalElements)
+      })
       .catch(() => {})
   }
 
@@ -306,7 +312,7 @@ export default function ProductDetailPage() {
             fontSize: 24,
           }}
         >
-          리뷰 ({reviews.length})
+          리뷰 ({reviewTotal})
         </h2>
 
         {reviews.length === 0 ? (
