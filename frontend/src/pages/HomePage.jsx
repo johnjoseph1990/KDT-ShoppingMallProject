@@ -7,17 +7,35 @@ import { useCart } from '../context/CartContext'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 
+/* 백엔드 /api/products/best 의 source 값(REVIEW_BEST/SALES/LATEST)을
+   화면 문구로 바꿔주는 매핑. 콜드스타트 폴백 단계마다 사용자에게
+   "이게 왜 베스트인지"를 정직하게 알려주기 위함 (P0-1 대응) */
+const BEST_SOURCE_LABEL = {
+  REVIEW_BEST: '리뷰 평점 기준 베스트',
+  SALES: '판매량 기준 인기 상품',
+  LATEST: '새로 들어온 상품',
+}
+
 export default function HomePage() {
   const [featured, setFeatured] = useState([])
+  // 이번 응답이 3단계 폴백 중 어느 단계에서 나왔는지 (뱃지 문구 결정용)
+  const [bestSource, setBestSource] = useState(null)
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { refreshCart, showToast } = useCart()
 
-  /* 베스트 상품 상위 4개를 홈 히어로 그리드에 표시 */
+  /* 베스트 상품 상위 4개를 홈 히어로 그리드에 표시.
+     같은 페이지 안의 상품들은 항상 같은 폴백 단계에서 나오므로
+     (ProductService.findBestProducts가 단계별로 배타적으로 조회),
+     첫 번째 상품의 source만 대표값으로 써도 된다. */
   useEffect(() => {
     getBestProducts()
-      .then((res) => setFeatured((res.data.content || []).slice(0, 4)))
+      .then((res) => {
+        const content = res.data.content || []
+        setFeatured(content.slice(0, 4))
+        setBestSource(content[0]?.source ?? null)
+      })
       .catch(() => {})
   }, [])
 
@@ -135,16 +153,32 @@ export default function HomePage() {
             marginBottom: 40,
           }}
         >
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: "'Noto Serif KR', serif",
-              fontWeight: 300,
-              fontSize: 26,
-            }}
-          >
-            이번 주의 수확
-          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: "'Noto Serif KR', serif",
+                fontWeight: 300,
+                fontSize: 26,
+              }}
+            >
+              이번 주의 수확
+            </h2>
+            {/* 폴백 단계 안내 — 데이터가 없어 감출 필요는 없고,
+                오히려 근거를 밝히는 게 신뢰를 준다 */}
+            {bestSource && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  letterSpacing: '0.08em',
+                  color: '#75775e',
+                }}
+              >
+                {BEST_SOURCE_LABEL[bestSource]}
+              </p>
+            )}
+          </div>
           <span
             onClick={() => navigate('/shop')}
             style={{
