@@ -32,14 +32,10 @@ const RATINGS = [
    "몇 개 남았을 때부터 재촉할지"는 정답이 없는 비즈니스 판단이라 이 함수 한 곳에 모아둔다.
    카드의 배지 텍스트/색이 모두 이 결과를 쓰므로, 여기만 고치면 표시 규칙이 일괄로 바뀐다. */
 function stockBadge(stockQuantity) {
-  // 검사 순서 주의: 0은 "5 이하"에도 해당하므로 품절을 반드시 먼저 걸러낸다.
-  // 순서를 바꾸면 품절 상품이 '마감임박'으로 잘못 표시된다.
-  // 색상은 상세 페이지의 품절 경고색(#e63946)과 통일
-  if (stockQuantity === 0) return { text: '품절', color: '#e63946' }
-  // 5개 이하면 재촉 배지 — 품절만큼 급하진 않으므로 빨강 대신 기본 먹색을 쓴다
-  if (stockQuantity <= 5) return { text: '마감임박', color: '#333330' }
-  // 재고가 넉넉하면 배지를 그리지 않는다 (null이면 카드에서 렌더링 자체를 생략)
-  return null
+  // 재고가 남아있으면 배지를 그리지 않는다 (null이면 렌더링 자체를 생략)
+  if (stockQuantity > 0) return null
+  // 품절일 때만 배지 표시 — 색상은 상세 페이지의 품절 경고색(#e63946)과 통일
+  return { text: '품절', color: '#e63946' }
 }
 
 export default function ProductListPage() {
