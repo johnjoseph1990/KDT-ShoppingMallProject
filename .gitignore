@@ -28,7 +28,9 @@ Thumbs.db
 *.log
 
 # Claude Code 로컬 설정
-.claude/
+# .claude/ 내용물은 무시하되(개인 설정·캐시), 팀이 공유할 에이전트 정의만 예외로 추적
+.claude/*
+!.claude/agents/
 .agents/
 
 # 학습 슬라이드 (발표 확정 시에만 생성, 평소엔 추적 제외)
