@@ -83,6 +83,13 @@ public class Product {
     this.imageUrl = imageUrl;
   }
 
+  // 이미지 주소만 바꾸는 메서드. update()는 이름·가격·재고까지 전부 덮어쓰기 때문에,
+  // 시드가 이미지만 다시 맞춰줄 때 관리자가 고쳐둔 가격·재고까지 되돌려버린다.
+  // 그래서 바꿔야 하는 필드 하나만 바꾸는 좁은 메서드를 따로 둔다.
+  public void changeImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
+  }
+
   public void decreaseStock(int quantity) {
     if (this.stockQuantity < quantity) {
       throw new InsufficientStockException(
