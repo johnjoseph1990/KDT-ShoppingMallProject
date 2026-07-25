@@ -44,7 +44,9 @@ public class Product {
 
   // 상품 상세 페이지 조회 횟수. findById() 호출마다 1씩 증가한다.
   // 실무에서는 Redis 카운터로 처리하지만, 학습 규모에서는 DB UPDATE로 단순 구현한다.
-  @Column(nullable = false)
+  // columnDefinition에 DEFAULT 0을 줘야 기존 row가 있는 테이블에 컬럼을 추가할 때
+  // (ddl-auto=update가 ALTER TABLE ADD COLUMN을 실행) 기존 row도 0으로 채워지며 NOT NULL 제약을 통과한다.
+  @Column(nullable = false, columnDefinition = "integer default 0")
   private int viewCount = 0;
 
   @Version private Long version;
