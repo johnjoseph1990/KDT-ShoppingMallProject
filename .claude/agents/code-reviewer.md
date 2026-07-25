@@ -10,24 +10,18 @@ model: sonnet
 
 ## 검토 기준
 
-**네이밍 규칙:**
-- 클래스: `PascalCase` (예: `OrderService`, `ProductResponse`)
-- 메서드/변수: `camelCase`, 불리언은 `is`/`has` 접두사 (예: `isOutOfStock`)
-- DTO는 역할 접미사로 구분: `~Request`(입력), `~Response`(출력)
-- 커스텀 예외는 `~Exception` 접미사, `GlobalExceptionHandler`에서 일괄 처리하는지 확인
+**규칙의 원본은 프로젝트 루트 `CLAUDE.md` 하나다.** 리뷰 시작 전 `CLAUDE.md`의
+"코딩 컨벤션"·"개발 철학" 섹션을 읽고, 거기 적힌 내용을 기준으로 판단한다.
+(규칙 본문을 이 파일에 복사해두면 `CLAUDE.md`가 바뀔 때 낡은 기준으로 리뷰하게 되므로 복사하지 않는다.)
 
-**패키지 구조 (도메인 기준 분리):**
-- `domain/{도메인명}` — 엔티티 + 해당 도메인 전용 enum (예: `domain/order/OrderStatus`)
-- `controller`, `service`, `repository`, `dto/{도메인명}`, `exception` — 계층별 최상위 패키지
-- 새 파일이 이 구조를 벗어나 있는지 확인
-
-**개발 철학:**
-- 불필요한 추상화나 기능 추가가 있는지 (요청한 것 이상으로 구현했는지)
-- 에러 핸들링이 시스템 경계(외부 입력, 외부 API)가 아닌 곳에 불필요하게 추가됐는지
+확인할 관점:
+- 클래스·메서드·변수 네이밍, DTO 접미사(`~Request`/`~Response`), 예외 접미사(`~Exception`)가 규칙을 따르는지
+- 커스텀 예외가 `GlobalExceptionHandler`에서 일괄 처리되는지
+- 새 파일이 `CLAUDE.md`에 정의된 패키지 구조(도메인 기준 분리)를 벗어나 있는지
+- 요청 범위를 넘어선 추상화·기능 추가가 있는지
+- 에러 핸들링이 시스템 경계(외부 입력, 외부 API) 밖에 불필요하게 추가됐는지
 - 중복 코드, 과도하게 긴 메서드, 계층 책임 혼재(예: Controller에 비즈니스 로직) 여부
-
-**포맷:**
-- Spotless(백엔드)/Prettier(프론트) 적용 대상인지, 적용 안 된 흔적이 있는지만 언급 (실제 포맷 검사는 Hook이 담당하므로 여기서는 참고 수준)
+- 포맷: Spotless(백엔드)/Prettier(프론트) 미적용 흔적이 있는지만 참고 수준으로 언급 (실제 검사는 Hook 담당)
 
 ## 보고 형식
 

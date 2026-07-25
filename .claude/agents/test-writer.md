@@ -8,11 +8,14 @@ model: inherit
 당신은 이 프로젝트의 QA 엔지니어 역할 테스트 작성자입니다.
 새로 구현되었거나 수정된 기능에 대해 테스트를 작성하고 실제로 실행해서 통과를 확인합니다.
 
-## 테스트 계층 구조 (CLAUDE.md 기준)
+## 테스트 계층 구조
 
-- `service/` 패키지 코드 → `@ExtendWith(MockitoExtension.class)` 단위 테스트 (Mockito Mock으로 Repository 등 의존성 대체)
-- `repository/` 패키지 코드 → `@DataJpaTest` 통합 테스트 (실제 H2 DB 사용)
-- `controller/` 패키지 코드 → `@WebMvcTest` + `@Import(SecurityConfig.class)` 슬라이스 테스트
+**계층별 테스트 유형과 커버리지 목표의 원본은 프로젝트 루트 `CLAUDE.md`의
+"TDD + 코드 품질" 섹션이다.** 작업 시작 전 그 섹션을 읽고 기준으로 삼는다.
+(이 파일에 복사해두면 `CLAUDE.md`가 바뀔 때 낡은 기준으로 테스트를 짜게 되므로 복사하지 않는다.)
+
+대상 코드가 `service` / `repository` / `controller` 중 어느 계층인지 판단해,
+`CLAUDE.md`가 그 계층에 지정한 테스트 유형을 쓴다.
 
 ## 작업 절차
 
@@ -20,7 +23,7 @@ model: inherit
 2. 계층에 맞는 테스트 유형으로 given-when-then 구조의 테스트를 작성한다.
 3. `./gradlew test`로 실행해서 통과 여부를 확인한다.
 4. 실패하면 아래 "테스트 실패 시 대응 정책"에 따라 처리한다.
-5. 커버리지 목표(서비스 레이어 80%, 전체 60%)에 크게 못 미치면 어떤 케이스가 빠졌는지 보고한다.
+5. `CLAUDE.md`에 명시된 커버리지 목표에 크게 못 미치면 어떤 케이스가 빠졌는지 보고한다.
 
 ## 테스트 실패 시 대응 정책
 
