@@ -7,6 +7,7 @@ import com.kdt.shoppingmall.domain.product.ProductTag;
 import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.ProductRepository;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -69,7 +70,15 @@ public class DevDataInitializer {
   public ApplicationRunner seedProducts(ProductRepository productRepository) {
     return (ApplicationArguments args) -> {
       // 상품명, 설명, 가격, 재고, 이미지, 태그 순서로 정의
-      // 이미지는 Unsplash 무료 라이선스 사진(실제 농가 사진 아님, 상품 구분용 임시 대체)
+      //
+      // [이미지 규칙] 이미지는 반드시 저장소 안(frontend/public/uploads)의 파일을 가리킨다.
+      // 예전에는 Unsplash 주소를 직접 연결(핫링크)했는데 두 가지 사고가 났다:
+      //   1) '논산 무항생제 목살'에 사람 얼굴 사진이 걸려 있었다 — 사진 ID(photo-1600180...)가
+      //      사람이 읽을 수 없는 값이라 상품명과 맞는지 아무도 확인할 수 없었다.
+      //   2) '홍성 한우 국거리' 사진이 외부에서 사라져 우리 화면만 깨졌다.
+      // 이제 검증한 사진을 내려받아 저장소에 두므로 클론만 하면 같은 화면이 뜬다.
+      // (출처: Unsplash 무료 라이선스. 실제 농가 사진이 아닌 상품 구분용 대체 이미지)
+      // 이 규칙은 DevDataInitializerTest 가 자동 검증한다.
       List<Object[]> data =
           List.of(
               new Object[] {
@@ -77,7 +86,7 @@ public class DevDataInitializer {
                 "삼십 년째 같은 밭에서 직접 만든 퇴비로 기른 당근. 주문 후 수확합니다.",
                 8_500,
                 50,
-                "https://images.unsplash.com/photo-1605712776391-47f283ad1423?w=800&q=80&auto=format&fit=crop",
+                "/uploads/geumsan-carrot.jpg",
                 List.of("채소")
               },
               new Object[] {
@@ -85,7 +94,7 @@ public class DevDataInitializer {
                 "새벽 네 시에 완전히 익은 것만 골라 딴 딸기. 향이 진하고 당도가 높습니다.",
                 18_000,
                 30,
-                "https://images.unsplash.com/photo-1560691023-ca1f295a5173?w=800&q=80&auto=format&fit=crop",
+                "/uploads/nonsan-strawberry.jpg",
                 List.of("과일")
               },
               new Object[] {
@@ -93,7 +102,7 @@ public class DevDataInitializer {
                 "바닷바람이 닿는 노지에서 천천히 자란 잎채소. 조직이 단단해 쉽게 무르지 않습니다.",
                 6_500,
                 40,
-                "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&q=80&auto=format&fit=crop",
+                "/uploads/seocheon-salad-greens.jpg",
                 List.of("채소")
               },
               new Object[] {
@@ -101,7 +110,7 @@ public class DevDataInitializer {
                 "당근, 우엉, 연근을 계절에 맞게 구성한 꾸러미. 매주 화요일 수확 후 발송합니다.",
                 24_000,
                 20,
-                "https://images.unsplash.com/photo-1518843875459-f738682238a6?w=800&q=80&auto=format&fit=crop",
+                "/uploads/geumsan-root-vegetable-box.jpg",
                 List.of("꾸러미")
               },
               new Object[] {
@@ -109,7 +118,7 @@ public class DevDataInitializer {
                 "과즙이 풍부하고 아삭한 충남산 신고배. 박스 단위 판매합니다.",
                 35_000,
                 15,
-                "https://images.unsplash.com/photo-1543363136-314062964bef?w=800&q=80&auto=format&fit=crop",
+                "/uploads/chungnam-pear.jpg",
                 List.of("과일")
               },
               new Object[] {
@@ -133,7 +142,7 @@ public class DevDataInitializer {
                 "4년근 금산 인삼을 매달 한 박스씩 보내드립니다. 첫 달 10% 할인.",
                 45_000,
                 10,
-                "https://images.unsplash.com/photo-1695798790639-c3c4294373ab?w=800&q=80&auto=format&fit=crop",
+                "/uploads/geumsan-ginseng.jpg",
                 List.of("꾸러미")
               },
               // 정육 카테고리 상품 10개 — 기존에는 관리자 UI로 실행 중 DB에만 넣어
@@ -144,7 +153,7 @@ public class DevDataInitializer {
                 "충남 홍성에서 자란 1++ 암소 한우 등심. 마블링이 촘촘해 구이용으로 좋습니다.",
                 39_000,
                 20,
-                "https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=800&q=80&auto=format&fit=crop",
+                "/uploads/hongseong-hanwoo-sirloin.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -152,7 +161,7 @@ public class DevDataInitializer {
                 "앞다리·설도를 얇게 저민 불고기용. 양념 없이도 육향이 진합니다.",
                 21_000,
                 25,
-                "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&auto=format&fit=crop",
+                "/uploads/hongseong-hanwoo-bulgogi.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -160,7 +169,7 @@ public class DevDataInitializer {
                 "무항생제 인증 농가의 국내산 삼겹살. 두툼하게 썰어 구워 먹기 좋습니다.",
                 16_500,
                 30,
-                "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=800&q=80&auto=format&fit=crop",
+                "/uploads/nonsan-pork-belly.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -168,7 +177,7 @@ public class DevDataInitializer {
                 "지방이 적고 담백한 국내산 목살. 수육·스테이크 어디에나 무난합니다.",
                 15_000,
                 30,
-                "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=800&q=80&auto=format&fit=crop",
+                "/uploads/nonsan-pork-shoulder.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -176,7 +185,7 @@ public class DevDataInitializer {
                 "노지에서 방목해 키운 토종닭 한 마리. 백숙·닭볶음탕용으로 씹는 맛이 좋습니다.",
                 13_000,
                 20,
-                "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&auto=format&fit=crop",
+                "/uploads/seocheon-free-range-chicken.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -184,7 +193,7 @@ public class DevDataInitializer {
                 "당일 손질한 국내산 닭가슴살 1kg. 냉장 진공 포장으로 신선하게 보내드립니다.",
                 11_000,
                 40,
-                "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80&auto=format&fit=crop",
+                "/uploads/seocheon-chicken-breast.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -192,7 +201,7 @@ public class DevDataInitializer {
                 "참나무 장작으로 천천히 훈제한 오리 슬라이스. 데워서 바로 먹을 수 있습니다.",
                 17_500,
                 18,
-                "https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=800&q=80&auto=format&fit=crop",
+                "/uploads/yesan-smoked-duck.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -200,7 +209,7 @@ public class DevDataInitializer {
                 "금산 흑돼지 생갈비. 잔칼집을 넣어 양념이 잘 배도록 손질했습니다.",
                 23_000,
                 15,
-                "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80&auto=format&fit=crop",
+                "/uploads/geumsan-black-pork-ribs.jpg",
                 List.of("정육")
               },
               new Object[] {
@@ -208,26 +217,58 @@ public class DevDataInitializer {
                 "양지·사태를 섞은 국거리용. 오래 끓여도 질기지 않고 국물이 깊습니다.",
                 18_000,
                 22,
-                "https://images.unsplash.com/photo-1588347818133-38c4106ca7f6?w=800&q=80&auto=format&fit=crop",
+                "/uploads/hongseong-hanwoo-soup-beef.jpg",
                 List.of("정육")
               },
               new Object[] {
-                "청양 양념 돼지불고기",
-                "청양고추를 더한 매콤 양념 돼지불고기. 팬에 볶기만 하면 되는 밀키트형 상품입니다.",
+                // 관리자 화면에서 '돼지불고기' → '닭발'로 바꾼 상품. 시드도 같은 이름으로 맞춰야
+                // 재시작할 때 시드가 이 상품을 이름으로 찾아낸다. 이름이 어긋나 있으면
+                // 시드가 '없는 상품'으로 보고 돼지불고기를 새로 넣어 비슷한 상품이 2개가 된다.
+                "청양 양념 닭발",
+                "청양고추를 더한 매콤 양념 닭발. 팬에 볶기만 하면 되는 밀키트형 상품입니다.",
                 14_000,
                 28,
-                "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80&auto=format&fit=crop",
+                "/uploads/cheongyang-chicken-feet.jpg",
                 List.of("정육")
               });
 
       for (Object[] row : data) {
-        // 같은 이름의 상품이 이미 있으면 건너뛴다(멱등). 예전의 count()>0 방식은
-        // 상품이 하나라도 있으면 새 상품(정육)을 아예 못 넣어서, 이름 기준 체크로 바꿨다.
         String name = (String) row[0];
-        if (productRepository.existsByName(name)) continue;
+        String imageUrl = (String) row[4];
 
-        Product product =
-            new Product(name, (String) row[1], (int) row[2], (int) row[3], (String) row[4]);
+        // 같은 이름의 상품이 이미 있는지 이름으로 확인한다(멱등). 예전의 count()>0 방식은
+        // 상품이 하나라도 있으면 새 상품(정육)을 아예 못 넣어서, 이름 기준 체크로 바꿨다.
+        //
+        // Optional<Product>: "값이 있을 수도, 없을 수도 있는 상자"다. isPresent()로 열어보고 쓴다.
+        Optional<Product> existing = productRepository.findByName(name);
+        if (existing.isPresent()) {
+          Product saved = existing.get();
+
+          // 여기가 이번에 새로 필요해진 부분이다.
+          // 위에서 시드의 이미지 주소를 전부 /uploads/... 로 고쳤지만, 이미 DB에 저장돼 있는
+          // 상품은 그냥 continue 로 건너뛰면 예전의 잘못된 이미지를 계속 들고 있다.
+          // (= 코드는 고쳐서 push 했는데 내 PC 화면은 그대로인 상황)
+          //
+          // 이미지가 시드 값과 다를 때만 맞춘다. 무조건 save() 하면 서버를 켤 때마다
+          // 상품 수만큼 쓸모없는 UPDATE 문이 나가므로, 먼저 비교해서 걸러낸다.
+          //
+          // equals 를 imageUrl(시드 값) 쪽에서 호출하는 이유:
+          // saved.getImageUrl() 은 null 일 수 있어서 saved.getImageUrl().equals(...) 로 쓰면
+          // NullPointerException 이 난다. 절대 null 이 아닌 값을 왼쪽에 두는 게 안전한 습관이다.
+          if (!imageUrl.equals(saved.getImageUrl())) {
+            // 이미지 주소만 바꾼다. update(...)를 쓰면 관리자가 화면에서 고쳐둔
+            // 가격·재고까지 시드 값으로 되돌아가 버린다.
+            saved.changeImageUrl(imageUrl);
+
+            // ApplicationRunner 는 트랜잭션 밖에서 실행되므로 JPA 더티 체킹이 동작하지 않는다.
+            // save()를 직접 불러야 UPDATE 문이 DB로 나간다.
+            productRepository.save(saved);
+          }
+
+          continue;
+        }
+
+        Product product = new Product(name, (String) row[1], (int) row[2], (int) row[3], imageUrl);
 
         @SuppressWarnings("unchecked")
         List<String> tagNames = (List<String>) row[5];
