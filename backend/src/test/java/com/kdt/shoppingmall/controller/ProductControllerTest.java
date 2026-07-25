@@ -53,7 +53,8 @@ class ProductControllerTest {
   @Test
   void 상품목록조회_인증없이_성공() throws Exception {
     Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
-    given(productService.search(isNull(), isNull(), any(Pageable.class))).willReturn(page);
+    given(productService.search(isNull(), isNull(), isNull(), any(Pageable.class)))
+        .willReturn(page);
 
     mockMvc
         .perform(get("/api/products"))
@@ -65,7 +66,8 @@ class ProductControllerTest {
   @Test
   void 상품목록조회_키워드검색() throws Exception {
     Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
-    given(productService.search(eq("상품"), isNull(), any(Pageable.class))).willReturn(page);
+    given(productService.search(eq("상품"), isNull(), isNull(), any(Pageable.class)))
+        .willReturn(page);
 
     mockMvc
         .perform(get("/api/products").param("keyword", "상품"))
@@ -76,10 +78,24 @@ class ProductControllerTest {
   @Test
   void 상품목록조회_태그필터() throws Exception {
     Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
-    given(productService.search(isNull(), eq("신발"), any(Pageable.class))).willReturn(page);
+    given(productService.search(isNull(), eq("신발"), isNull(), any(Pageable.class)))
+        .willReturn(page);
 
     mockMvc
         .perform(get("/api/products").param("tag", "신발"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].name").value("상품A"));
+  }
+
+  // [별점 필터] 쿼리스트링 "minRating=4"가 Double 4.0으로 변환돼 서비스에 전달되는지 검증한다.
+  // 컨트롤러 슬라이스 테스트의 역할은 "HTTP 요청 → 자바 파라미터 변환"이 맞는지 확인하는 것.
+  @Test
+  void 상품목록조회_최소별점필터() throws Exception {
+    Page<ProductResponse> page = new PageImpl<>(List.of(sampleResponse()));
+    given(productService.search(isNull(), isNull(), eq(4.0), any(Pageable.class))).willReturn(page);
+
+    mockMvc
+        .perform(get("/api/products").param("minRating", "4"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].name").value("상품A"));
   }

@@ -38,13 +38,18 @@ public class ProductController {
     return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(request));
   }
 
+  // GET /api/products?keyword=사과&tag=과일&minRating=4
+  // @RequestParam(required = false): 쿼리 파라미터가 없어도 400이 아니라 null이 들어온다.
+  // minRating을 원시 타입 double이 아니라 래퍼 타입 Double로 받는 이유 —
+  // 원시 타입은 null을 담을 수 없어서 "필터 미적용"과 "0점 이상"을 구분할 수 없다.
   @GetMapping
   public Page<ProductResponse> search(
       @RequestParam(required = false) String keyword,
       @RequestParam(required = false) String tag,
+      @RequestParam(required = false) Double minRating,
       @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
           Pageable pageable) {
-    return productService.search(keyword, tag, pageable);
+    return productService.search(keyword, tag, minRating, pageable);
   }
 
   // [P1-3] 반환 타입을 BestProductResponse로 변경 — source 필드로 폴백 단계를 구분한다.
