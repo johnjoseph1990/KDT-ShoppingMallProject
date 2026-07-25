@@ -148,7 +148,7 @@ class ProductServiceTest {
     given(productRepository.searchProducts(isNull(), isNull(), any(Pageable.class)))
         .willReturn(page);
 
-    Page<ProductResponse> result = productService.search(null, null, pageable);
+    Page<ProductResponse> result = productService.search(null, null, null, pageable);
 
     assertThat(result.getTotalElements()).isEqualTo(1);
     assertThat(result.getContent().get(0).name()).isEqualTo("상품A");
@@ -161,9 +161,26 @@ class ProductServiceTest {
     Page<Product> page = new PageImpl<>(List.of(product));
     given(productRepository.searchProducts(any(), isNull(), any(Pageable.class))).willReturn(page);
 
-    Page<ProductResponse> result = productService.search("나이키", null, pageable);
+    Page<ProductResponse> result = productService.search("나이키", null, null, pageable);
 
     assertThat(result.getContent().get(0).name()).isEqualTo("나이키 운동화");
+  }
+
+  // [별점 필터] minRating이 있으면 서비스가 searchProductsWithMinRating(전용 메서드)으로
+  // 분기해 호출한다. searchProducts(별점 조건 없는 쪽)이 아니라 이 메서드가 불려야
+  // "값이 새지 않고 올바른 쿼리로 전달되는지"가 검증된다.
+  @Test
+  void search_최소별점을_리포지토리로_그대로_전달() {
+    Product product = new Product("고평점 상품", "설명", 30000, 10, null);
+    Pageable pageable = PageRequest.of(0, 10);
+    given(
+            productRepository.searchProductsWithMinRating(
+                isNull(), isNull(), eq(4.0), any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of(product)));
+
+    Page<ProductResponse> result = productService.search(null, null, 4.0, pageable);
+
+    assertThat(result.getContent().get(0).name()).isEqualTo("고평점 상품");
   }
 
   // [P1-2 + P1-3] 리뷰 5개 이상인 상품이 있으면 REVIEW_BEST를 반환한다.
@@ -228,7 +245,7 @@ class ProductServiceTest {
     given(productRepository.searchProducts(any(), any(), any(Pageable.class)))
         .willReturn(Page.empty());
 
-    Page<ProductResponse> result = productService.search("없는상품", null, pageable);
+    Page<ProductResponse> result = productService.search("없는상품", null, null, pageable);
 
     assertThat(result.isEmpty()).isTrue();
   }

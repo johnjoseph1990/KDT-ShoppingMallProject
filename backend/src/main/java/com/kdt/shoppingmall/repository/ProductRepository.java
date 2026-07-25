@@ -3,6 +3,7 @@ package com.kdt.shoppingmall.repository;
 import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,9 +17,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
   // 메서드 이름만으로 SELECT ... WHERE name = ? 쿼리를 Spring Data JPA가 자동 생성한다.
   boolean existsByName(String name);
 
+  // 이름으로 상품 한 건을 찾아온다. 시드가 "이미 있는 상품"의 이미지를 다시 맞출 때 쓴다.
+  // Optional<Product>: 없을 수도 있다는 걸 반환 타입으로 드러내 NullPointerException을 막는다.
+  Optional<Product> findByName(String name);
+
   // CAST(:keyword AS string): keyword/tag가 null일 때 PostgreSQL이 파라미터 타입을
   // bytea로 잘못 추론해서 LOWER(bytea) 같은 함수 호출이 실패하는 문제를 막기 위해,
   // JPQL 단계에서 명시적으로 문자열 타입임을 알려준다.
+  //
+  // [별점 필터] minRating은 이 쿼리에 아예 파라미터로 넘기지 않는다 (검색 기준 없음 = 전체 조회).
+  // null Double을 넘기면 String과 달리 CAST(:minRating AS double)에서도 여전히
+  // "cannot cast type bytea to double precision" 에러가 난다 — Postgres가 이 파라미터를
+  // bytea로 추론하는 문제라 JPQL 쪽에서 캐스트 위치를 바꿔도 해결되지 않았다.
+  // 그래서 minRating이 null일 때는 이 메서드(별점 조건 없음)를, 값이 있을 때는
+  // searchProductsWithMinRating(아래, primitive double이라 null이 될 수 없음)을 쓰도록
+  // ProductService에서 분기한다.
   @Query(
       """
             SELECT p FROM Product p
@@ -30,6 +43,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
   Page<Product> searchProducts(
       @Param("keyword") String keyword, @Param("tag") String tag, Pageable pageable);
+
+  // [별점 필터] minRating을 primitive double로 받는다 — Double(래퍼 타입)과 달리
+  // null이 될 수 없으므로, 위 searchProducts()에서 겪은 "null 파라미터 타입 오추론" 문제 자체가
+  // 생기지 않는다. 리뷰가 없는 상품은 AVG가 NULL이라 `NULL >= minRating`이 거짓이 되어 자동 제외된다.
+  @Query(
+      """
+            SELECT p FROM Product p
+            WHERE (:keyword IS NULL
+                   OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%'))
+                   OR LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')))
+            AND (:tag IS NULL
+                 OR EXISTS (SELECT t FROM ProductTag t WHERE t.product = p AND t.name = CAST(:tag AS string)))
+            AND (SELECT AVG(r.rating) FROM Review r WHERE r.product = p) >= :minRating
+            """)
+  Page<Product> searchProductsWithMinRating(
+      @Param("keyword") String keyword,
+      @Param("tag") String tag,
+      @Param("minRating") double minRating,
+      Pageable pageable);
 
   // [P1-2 + P1-1] 베스트 상품 쿼리 — 5개 컷오프 + N+1 제거.
   //

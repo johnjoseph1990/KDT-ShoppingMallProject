@@ -52,8 +52,16 @@ public class ProductService {
     return toResponse(productRepository.save(product));
   }
 
-  public Page<ProductResponse> search(String keyword, String tag, Pageable pageable) {
-    return productRepository.searchProducts(keyword, tag, pageable).map(this::toResponse);
+  // minRating: 평균 별점 하한선. null이면 별점 조건 없이 조회한다.
+  // minRating이 null이면 별점 조건이 아예 없는 쿼리를, 값이 있으면 별점 조건이 있는
+  // 쿼리를 호출한다 (repository의 minRating 파라미터 관련 주석 참고).
+  public Page<ProductResponse> search(
+      String keyword, String tag, Double minRating, Pageable pageable) {
+    Page<Product> products =
+        minRating == null
+            ? productRepository.searchProducts(keyword, tag, pageable)
+            : productRepository.searchProductsWithMinRating(keyword, tag, minRating, pageable);
+    return products.map(this::toResponse);
   }
 
   // [P1-2 + P1-3] 베스트 상품 3단계 폴백:
