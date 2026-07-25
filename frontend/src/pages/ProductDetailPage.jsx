@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { getProduct, getRecommendations } from '../api/products'
 import { addToCart } from '../api/cart'
-import { getReviews, createReview, deleteReview } from '../api/reviews'
+import { getReviews, createReview, updateReview, deleteReview } from '../api/reviews'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 
@@ -21,6 +21,10 @@ export default function ProductDetailPage() {
   const [recommendations, setRecommendations] = useState([])
   const [quantity, setQuantity] = useState(1)
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' })
+  // 리뷰 수정 상태 — null이면 아무것도 편집 중이 아니고,
+  // { id, rating, content } 형태면 그 id의 리뷰가 인라인 편집 중이라는 뜻이다.
+  // 상태 하나로 "편집 여부 + 대상 + 입력값"을 모두 표현하므로 여러 폼이 동시에 열릴 수 없다.
+  const [editing, setEditing] = useState(null)
   // [P1-5] Page 응답의 totalElements로 실제 리뷰 총 수를 보여준다.
   const [reviewTotal, setReviewTotal] = useState(0)
 
@@ -66,6 +70,29 @@ export default function ProductDetailPage() {
       loadReviews()
     } catch (err) {
       alert(err.response?.data?.message || '리뷰 작성 실패')
+    }
+  }
+
+  // 수정 시작: 서버에서 받은 리뷰 값을 editing으로 "복사"해 온다.
+  // reviews 배열을 직접 건드리지 않기 때문에 취소하면 원본이 그대로 남는다.
+  const startEdit = (r) => setEditing({ id: r.id, rating: r.rating, content: r.content })
+
+  // 수정 취소: 편집 상태를 비우면 화면은 원래 리뷰 본문으로 되돌아간다.
+  const cancelEdit = () => setEditing(null)
+
+  const handleUpdateReview = async (e) => {
+    // form의 기본 동작(페이지 새로고침)을 막는다. SPA에서는 필수.
+    e.preventDefault()
+    try {
+      // editing에는 서버가 쓰지 않는 id도 들어있으므로 rating·content만 골라 보낸다.
+      await updateReview(id, editing.id, { rating: editing.rating, content: editing.content })
+      // 성공했을 때만 편집 폼을 닫고, 목록을 서버에서 다시 읽어온다.
+      // (작성·삭제와 같은 방식 — 화면에 보이는 값의 출처를 항상 서버로 통일한다)
+      cancelEdit()
+      loadReviews()
+    } catch (err) {
+      // 실패 시에는 편집 폼을 열어둔다. 닫아버리면 방금 입력한 내용이 사라진다.
+      alert(err.response?.data?.message || '리뷰 수정 실패')
     }
   }
 
@@ -338,32 +365,122 @@ export default function ProductDetailPage() {
                       {new Date(r.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  {user && user.id === r.memberId && (
-                    <button
-                      onClick={() => handleDeleteReview(r.id)}
-                      style={{
-                        cursor: 'pointer',
-                        border: 'none',
-                        background: 'transparent',
-                        fontSize: 12,
-                        color: '#6d6c61',
-                      }}
-                    >
-                      삭제
-                    </button>
+                  {/* 본인 리뷰에만 수정·삭제 버튼을 보여준다.
+                      (실제 권한 검증은 백엔드 ReviewService에서 하므로 이건 UX용 숨김일 뿐이다) */}
+                  {user && user.id === r.memberId && editing?.id !== r.id && (
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <button
+                        onClick={() => startEdit(r)}
+                        style={{
+                          cursor: 'pointer',
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: 12,
+                          color: '#6d6c61',
+                        }}
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReview(r.id)}
+                        style={{
+                          cursor: 'pointer',
+                          border: 'none',
+                          background: 'transparent',
+                          fontSize: 12,
+                          color: '#6d6c61',
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </div>
                   )}
                 </div>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 14,
-                    lineHeight: 1.8,
-                    fontWeight: 300,
-                    color: '#4a4a3a',
-                  }}
-                >
-                  {r.content}
-                </p>
+                {/* 편집 중인 리뷰는 본문 대신 수정 폼을 렌더링한다 (인라인 편집) */}
+                {editing?.id === r.id ? (
+                  <form
+                    onSubmit={handleUpdateReview}
+                    style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480 }}
+                  >
+                    <select
+                      value={editing.rating}
+                      // 기존 editing 객체를 펼치고(...) rating만 새 값으로 덮어쓴다.
+                      // 객체를 새로 만들어야 React가 상태 변경을 감지해 다시 그린다.
+                      onChange={(e) => setEditing({ ...editing, rating: Number(e.target.value) })}
+                      style={{
+                        border: '1px solid #dddaca',
+                        background: 'transparent',
+                        padding: '8px 12px',
+                        fontSize: 14,
+                        outline: 'none',
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      {[5, 4, 3, 2, 1].map((v) => (
+                        <option key={v} value={v}>
+                          {v}점
+                        </option>
+                      ))}
+                    </select>
+                    <textarea
+                      value={editing.content}
+                      onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+                      rows={3}
+                      required
+                      style={{
+                        border: '1px solid #dddaca',
+                        background: 'transparent',
+                        padding: 12,
+                        fontSize: 14,
+                        outline: 'none',
+                        resize: 'vertical',
+                        fontWeight: 300,
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        type="submit"
+                        style={{
+                          cursor: 'pointer',
+                          border: '1px solid #333330',
+                          background: '#333330',
+                          color: '#fffef2',
+                          padding: '10px 18px',
+                          fontSize: 13,
+                        }}
+                      >
+                        저장
+                      </button>
+                      {/* type="button": 기본값 submit이라 명시하지 않으면 취소 버튼이 폼을 제출해버린다 */}
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        style={{
+                          cursor: 'pointer',
+                          border: '1px solid #dddaca',
+                          background: 'transparent',
+                          padding: '10px 18px',
+                          fontSize: 13,
+                          color: '#6d6c61',
+                        }}
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 14,
+                      lineHeight: 1.8,
+                      fontWeight: 300,
+                      color: '#4a4a3a',
+                    }}
+                  >
+                    {r.content}
+                  </p>
+                )}
               </div>
             ))}
           </div>
