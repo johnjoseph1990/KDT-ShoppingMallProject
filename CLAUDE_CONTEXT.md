@@ -34,9 +34,14 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `<div>`/`<span onClick={...}>` → `<Link>`/`NavLink` 교체
 - 설계 포인트: 상품 카드처럼 내부에 `<button>`(장바구니 담기)이 있으면 `<Link>`로 전체를 감쌀 때 `<button>`이 `<a>` 안에 중첩되어 HTML 스펙 위반 → `<article>` + 부분 `<Link>`, 또는 버튼에 `preventDefault`+`stopPropagation` 중 택1 필요
 
-### 3-3. 서브에이전트 설계 — 5개 중 4개 완성, 1개 TODO(human) 미완성
-`.claude/agents/`: `spec-reviewer`, `security-reviewer`, `code-reviewer`, `learning-annotator`는 완성. **`test-writer.md`에 TODO(human) 미완성** — "테스트 실패 시 대응 정책"(프로덕션 코드 수정 허용 범위, 재시도 횟수, 원인 불명확 시 보고 방식)을 아직 채워야 함.
-- Hook(커밋 전 포맷 강제)은 아직 미구축 (하네스 Layer 3, 남은 작업)
+### 3-3. 서브에이전트 설계 — ✅ 6종 완성 (2026-07-25)
+`.claude/agents/`: `spec-reviewer`, `security-reviewer`, `code-reviewer`, `learning-annotator`, `test-writer`, `reliability-reviewer`(신규) 모두 완성. **미완 TODO(human) 없음.**
+- 목표 상향("부트캠프 제출물 → 실서비스 운영 수준")에 맞춰 `reliability-reviewer` 신규 추가 — 결제·주문의 멱등성/트랜잭션 경계/부분 실패/재시도/동시성 검토. 게이팅: "돈 걸린 결제·주문 🔴만 무조건 차단".
+- `.gitignore`를 `.claude/*` + `!.claude/agents/`로 바꿔 에이전트 6종을 git 추적 등록(개인 설정 `settings.local.json`은 계속 무시).
+- 배치 전략: 읽기전용 5종 병렬 + 쓰기 권한 `test-writer`만 단독 선행. 변경 규모별로 조합 스케일.
+- 설계 회고·발표 메모: `document/2026-07-25_에이전트_설계_회고.md` (뼈대만, 나중에 확장 예정).
+
+**남은 작업(운영 업그레이드 다음 층):** 데이터 안전성(`ddl-auto=update` → Flyway 전환), 관측성(로깅·메트릭·헬스체크), 성능(N+1·인덱스). Hook(커밋 전 포맷 강제)도 미구축(하네스 Layer 3).
 
 ## 4. 새 PC / 새 작업자가 이어받을 때 체크리스트
 
