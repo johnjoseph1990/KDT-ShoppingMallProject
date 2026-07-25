@@ -18,7 +18,7 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 
 ## 2. 현재 상태 (2026-07-25 기준)
 
-- **로컬이 origin보다 1커밋 앞서 있음** (`e830af8`, viewCount DEFAULT 0 수정) — 아직 `push` 안 됨. 다른 PC에서 이어받으려면 이 커밋을 먼저 push해야 함.
+- **로컬 `master`와 `origin/master`가 완전히 동기화됨** (`e830af8` viewCount DEFAULT 0 수정 포함, 그 뒤 docs 커밋 2개까지 모두 push 완료). 별도로 push할 것 없음.
 - `git status`에 계속 뜨는 untracked 파일(`document/*.pdf`, `curriculum/`, `document/*.md` 학습노트 등)은 **의도적으로 커밋 안 하는 로컬 학습자료**임 — 삭제하거나 커밋 대상으로 제안할 필요 없음. 단, 인수인계용 학습노트는 예외적으로 커밋하기도 함(아래 6번 참고).
 
 ## 3. 진행 중 / 보류 작업
@@ -45,9 +45,9 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 
 ## 4. 새 PC / 새 작업자가 이어받을 때 체크리스트
 
-1. `git pull origin master` (2번 항목의 미push 커밋이 이미 push되어 있다면 문제 없음)
+1. `git pull origin master`
 2. `docker compose up -d` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
-3. 이 문서의 3번 섹션에서 이어할 작업 선택 (우선순위 낮은 순: 3-1 선택적 확인 < 3-2 P2-7 < 3-3 test-writer TODO)
+3. 이 문서의 3번 섹션에서 이어할 작업 선택 (우선순위 낮은 순: 3-1 선택적 확인 < 3-2 P2-7 < 3-3 운영 업그레이드 다음 층)
 4. Claude에게 "CLAUDE_CONTEXT.md 읽고 [작업명] 이어서 해줘"라고 지시하면 됨
 
 ## 5. 이 문서 유지보수 원칙
