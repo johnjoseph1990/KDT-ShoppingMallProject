@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { getProduct, getRecommendations } from '../api/products'
+import { getProduct, getRecommendations, getKeywords } from '../api/products'
 import { addToCart } from '../api/cart'
 import { getReviews, createReview, updateReview, deleteReview } from '../api/reviews'
 import { useAuth } from '../context/AuthContext'
@@ -19,6 +19,8 @@ export default function ProductDetailPage() {
   const [reviews, setReviews] = useState([])
   // 같은 태그를 가진 다른 상품 추천 목록 (R-6)
   const [recommendations, setRecommendations] = useState([])
+  // 이 상품의 리뷰에서 추출된 키워드 목록 (count 내림차순으로 서버가 정렬해서 줌)
+  const [keywords, setKeywords] = useState([])
   const [quantity, setQuantity] = useState(1)
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' })
   // 리뷰 수정 상태 — null이면 아무것도 편집 중이 아니고,
@@ -34,6 +36,7 @@ export default function ProductDetailPage() {
     getRecommendations(id)
       .then((res) => setRecommendations(res.data))
       .catch(() => {})
+    loadKeywords()
     loadReviews()
   }, [id])
 
@@ -44,6 +47,14 @@ export default function ProductDetailPage() {
         setReviews(res.data.content)
         setReviewTotal(res.data.totalElements)
       })
+      .catch(() => {})
+  }
+
+  // 리뷰 키워드 조회 (리뷰가 없으면 빈 배열이 돌아옴). 리뷰가 작성·수정·삭제될 때마다
+  // 서버가 재추출한 키워드로 다시 맞춰야 하므로 loadReviews와 항상 같이 호출한다.
+  const loadKeywords = () => {
+    getKeywords(id)
+      .then((res) => setKeywords(res.data))
       .catch(() => {})
   }
 
@@ -68,6 +79,7 @@ export default function ProductDetailPage() {
       await createReview(id, reviewForm)
       setReviewForm({ rating: 5, content: '' })
       loadReviews()
+      loadKeywords()
     } catch (err) {
       alert(err.response?.data?.message || '리뷰 작성 실패')
     }
@@ -90,6 +102,7 @@ export default function ProductDetailPage() {
       // (작성·삭제와 같은 방식 — 화면에 보이는 값의 출처를 항상 서버로 통일한다)
       cancelEdit()
       loadReviews()
+      loadKeywords()
     } catch (err) {
       // 실패 시에는 편집 폼을 열어둔다. 닫아버리면 방금 입력한 내용이 사라진다.
       alert(err.response?.data?.message || '리뷰 수정 실패')
@@ -101,6 +114,7 @@ export default function ProductDetailPage() {
     try {
       await deleteReview(id, reviewId)
       loadReviews()
+      loadKeywords()
     } catch {
       alert('삭제 권한이 없습니다.')
     }
@@ -341,6 +355,13 @@ export default function ProductDetailPage() {
         >
           리뷰 ({reviewTotal})
         </h2>
+
+        {/* 리뷰 본문에서 추출된 키워드 배지. 리뷰가 없으면 keywords도 빈 배열이라 자동으로 숨겨짐 */}
+        {keywords.length > 0 && (
+          <p style={{ margin: '-16px 0 32px', fontSize: 13, color: '#75775e' }}>
+            자주 언급된 키워드 · {keywords.map((k) => `${k.keyword}(${k.count})`).join(' · ')}
+          </p>
+        )}
 
         {reviews.length === 0 ? (
           <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>첫 리뷰를 작성해보세요.</p>
