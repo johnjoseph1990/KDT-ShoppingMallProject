@@ -34,14 +34,17 @@ export default function OrderDetailPage() {
           ? `${order.items[0].productName} 외 ${order.items.length - 1}건`
           : order.items[0].productName
 
+      // customerEmail/customerName은 Toss SDK 내부에서 문자열 여부를 검사한다.
+      // undefined를 넘기면 SDK가 .startsWith() 호출 시 TypeError를 던지므로
+      // 값이 있을 때만 포함한다.
       await tossPayments.requestPayment('카드', {
         amount: order.totalPrice,
         orderId: buildTossOrderId(order.id),
         orderName,
         successUrl: `${window.location.origin}/payments/success`,
         failUrl: `${window.location.origin}/payments/fail`,
-        customerEmail: user?.email,
-        customerName: user?.name,
+        ...(user?.email && { customerEmail: user.email }),
+        ...(user?.name && { customerName: user.name }),
       })
     } catch (err) {
       // 사용자가 결제창을 직접 닫은 경우(USER_CANCEL)는 굳이 에러로 알릴 필요 없다.
