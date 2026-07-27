@@ -328,7 +328,6 @@ export default function HomePage() {
   )
 }
 
-
 /* 호버 시 색상 반전되는 버튼 */
 function HoverBtn({ onClick, children, light = false }) {
   const [hovered, setHovered] = useState(false)

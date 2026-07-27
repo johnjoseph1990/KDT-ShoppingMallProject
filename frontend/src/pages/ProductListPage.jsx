@@ -28,7 +28,6 @@ const RATINGS = [
   { key: 'r45', label: '★ 4.5 이상', value: 4.5 },
 ]
 
-
 export default function ProductListPage() {
   const [products, setProducts] = useState([])
   const [totalElements, setTotalElements] = useState(0)
@@ -301,7 +300,6 @@ function CatBtn({ active, onClick, children }) {
     </button>
   )
 }
-
 
 function PageBtn({ onClick, disabled, children }) {
   return (

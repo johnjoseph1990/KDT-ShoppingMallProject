@@ -40,19 +40,27 @@ export default function ProductDetailPage() {
     setLoadError(false)
 
     getProduct(id)
-      .then((res) => { if (!ignore) setProduct(res.data) })
-      .catch(() => { if (!ignore) setLoadError(true) })
+      .then((res) => {
+        if (!ignore) setProduct(res.data)
+      })
+      .catch(() => {
+        if (!ignore) setLoadError(true)
+      })
 
     // 추천 상품은 부가 데이터 — 실패해도 화면이 깨지지 않으므로 조용히 무시
     getRecommendations(id)
-      .then((res) => { if (!ignore) setRecommendations(res.data) })
+      .then((res) => {
+        if (!ignore) setRecommendations(res.data)
+      })
       .catch(() => {})
 
     loadKeywords()
     loadReviews()
 
     // 클린업 함수: 이 effect가 재실행되거나 컴포넌트가 언마운트될 때 실행
-    return () => { ignore = true }
+    return () => {
+      ignore = true
+    }
   }, [id])
 
   const loadReviews = () => {
