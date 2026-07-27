@@ -32,6 +32,8 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
       # 운영 배포 시 DDL_AUTO=validate 로 설정해 자동 스키마 변경 방지
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update}
+      # 운영 배포 시 SPRING_PROFILES_ACTIVE=prod 로 설정 → DevDataInitializer 비활성화
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
     depends_on:
       db:
         # DB 헬스체크 통과 후 백엔드가 기동되도록 순서 보장
