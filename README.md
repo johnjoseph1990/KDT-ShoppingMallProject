@@ -115,7 +115,7 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 | **DDL 자동 변경** | `ddl-auto=update` — 엔티티 변경 시 스키마 자동 ALTER (`application.properties:14`) | `ddl-auto=validate` 로 변경 + Flyway 마이그레이션(`V1__`, `V2__`...)으로 스키마 이력 관리 |
 | **SQL 로그 출력** | `show-sql=true` — 모든 쿼리가 콘솔에 출력 (`application.properties:15`) | `show-sql=false` 로 변경. 쿼리 분석이 필요하면 운영 로그 레벨 조정으로 대체 |
 | **토스 시크릿 키** | 미설정 시 부팅은 되지만 결제 승인 호출 시 401 반환 (`application.properties:25`) | `TOSS_SECRET_KEY` 환경변수에 운영 발급 키 주입 (테스트 키 ↔ 운영 키 구분 필수) |
-| **DevDataInitializer** | `@Profile` 미설정 — 운영 서버에서도 시드 데이터가 삽입됨 (`DevDataInitializer.java`) | `@Profile("dev")` 추가하거나 운영 프로파일에서 빈 등록을 막아 실 서버에 데모 데이터 삽입 방지 |
+| ~~**DevDataInitializer**~~ ✅ | ~~`@Profile` 미설정 — 운영 서버에서도 시드 데이터가 삽입됨~~ | `@Profile("dev")` 추가 완료. `SPRING_PROFILES_ACTIVE=prod` 시 빈 등록 안 됨 |
 | **CORS** | 별도 CORS 설정 없음 — Spring Boot 기본값(동일 출처만 허용) | 프론트 배포 도메인을 `allowedOrigins`에 명시. `*` 와일드카드 사용 금지 |
 | **HTTPS / 쿠키 보안** | 로컬 HTTP 전제 — 세션 쿠키에 `Secure`, `SameSite` 미설정 | HTTPS 적용 후 `server.servlet.session.cookie.secure=true`, `same-site=Strict` 설정 추가 |
 
