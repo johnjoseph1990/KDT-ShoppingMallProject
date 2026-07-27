@@ -38,7 +38,14 @@ export default function OrderListPage() {
       >
         주문 내역
       </h1>
-      <p style={{ margin: '0 0 40px', fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+      <p
+        style={{
+          margin: '0 0 40px',
+          fontSize: 14,
+          color: 'var(--color-fg-muted)',
+          fontWeight: 300,
+        }}
+      >
         {orders.length}건의 주문
       </p>
 
@@ -46,12 +53,14 @@ export default function OrderListPage() {
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}
         >
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>주문 내역이 없습니다.</p>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+            주문 내역이 없습니다.
+          </p>
           <Link
             to="/shop"
             style={{
               fontSize: 13,
-              borderBottom: '1px solid #333330',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 1,
             }}
           >
@@ -63,7 +72,7 @@ export default function OrderListPage() {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            borderTop: '1px solid #dddaca',
+            borderTop: '1px solid var(--color-border)',
             maxWidth: 640,
           }}
         >
@@ -73,12 +82,14 @@ export default function OrderListPage() {
               to={`/orders/${order.id}`}
               style={{
                 padding: '24px 0',
-                borderBottom: '1px solid #dddaca',
+                borderBottom: '1px solid var(--color-border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f6f4e6')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--color-bg-hover-light)')
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = '')}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -91,7 +102,14 @@ export default function OrderListPage() {
                 >
                   주문 #{order.id}
                 </p>
-                <p style={{ margin: 0, fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: 'var(--color-fg-muted)',
+                    fontWeight: 300,
+                  }}
+                >
                   {new Date(order.createdAt).toLocaleString()}
                 </p>
               </div>
@@ -99,7 +117,14 @@ export default function OrderListPage() {
                 style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}
               >
                 <p style={{ margin: 0, fontSize: 14 }}>{fmt(order.totalPrice)}</p>
-                <p style={{ margin: 0, fontSize: 12, color: '#75775e', fontWeight: 300 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: 'var(--color-fg-accent)',
+                    fontWeight: 300,
+                  }}
+                >
                   {STATUS_LABEL[order.status] ?? order.status}
                 </p>
               </div>

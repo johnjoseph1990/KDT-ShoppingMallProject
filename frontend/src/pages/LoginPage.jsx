@@ -27,7 +27,7 @@ export default function LoginPage() {
   }
 
   const inputStyle = {
-    border: '1px solid #dddaca',
+    border: '1px solid var(--color-border)',
     background: 'transparent',
     padding: '14px',
     fontSize: 14,
@@ -59,7 +59,12 @@ export default function LoginPage() {
       >
         <div style={{ textAlign: 'center' }}>
           <p
-            style={{ margin: '0 0 12px', fontSize: 12, letterSpacing: '0.14em', color: '#75775e' }}
+            style={{
+              margin: '0 0 12px',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              color: 'var(--color-fg-accent)',
+            }}
           >
             계정
           </p>
@@ -77,7 +82,7 @@ export default function LoginPage() {
           {/* from이 있다는 건 클릭이 아니라 보호된 페이지 접근 시도로 인해
               자동으로 이 페이지에 오게 됐다는 뜻 — 이유를 알려준다 */}
           {from && (
-            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#75775e' }}>
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--color-fg-accent)' }}>
               계속하려면 로그인이 필요합니다.
             </p>
           )}
@@ -100,14 +105,16 @@ export default function LoginPage() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             style={inputStyle}
           />
-          {error && <p style={{ margin: 0, fontSize: 13, color: '#e63946' }}>{error}</p>}
+          {error && (
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-danger)' }}>{error}</p>
+          )}
           <button
             type="submit"
             style={{
               cursor: 'pointer',
-              border: '1px solid #333330',
-              background: '#333330',
-              color: '#fffef2',
+              border: '1px solid var(--color-fg)',
+              background: 'var(--color-fg)',
+              color: 'var(--color-bg)',
               padding: '16px',
               fontSize: 14,
               letterSpacing: '0.04em',
@@ -123,7 +130,7 @@ export default function LoginPage() {
             margin: 0,
             textAlign: 'center',
             fontSize: 13,
-            color: '#6d6c61',
+            color: 'var(--color-fg-muted)',
             fontWeight: 300,
           }}
         >
@@ -131,8 +138,8 @@ export default function LoginPage() {
           <Link
             to="/signup"
             style={{
-              color: '#333330',
-              borderBottom: '1px solid #333330',
+              color: 'var(--color-fg)',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 1,
             }}
           >

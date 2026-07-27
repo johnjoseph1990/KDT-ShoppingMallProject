@@ -12,14 +12,14 @@ export default function PaymentFailPage() {
 
   return (
     <div style={{ textAlign: 'center', padding: 60 }}>
-      <p style={{ fontSize: 14, color: '#6d6c61', marginBottom: 24 }}>{message}</p>
+      <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', marginBottom: 24 }}>{message}</p>
       <button
         onClick={() => navigate(orderId ? `/orders/${orderId}` : '/orders')}
         style={{
           cursor: 'pointer',
-          border: '1px solid #333330',
-          background: '#333330',
-          color: '#fffef2',
+          border: '1px solid var(--color-fg)',
+          background: 'var(--color-fg)',
+          color: 'var(--color-bg)',
           padding: '12px 22px',
           fontSize: 14,
         }}

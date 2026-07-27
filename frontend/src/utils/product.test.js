@@ -20,12 +20,12 @@ describe('fmt', () => {
 describe('stockBadge', () => {
   it('재고 0개면 품절 배지를 반환한다', () => {
     // toEqual: 객체의 내용이 같은지 비교 (toBe는 참조 비교라 객체에 부적합)
-    expect(stockBadge(0)).toEqual({ text: '품절', color: '#e63946' })
+    expect(stockBadge(0)).toEqual({ text: '품절', color: 'var(--color-danger)' })
   })
 
   it('재고 1~5개면 마감임박 배지를 반환한다', () => {
-    expect(stockBadge(1)).toEqual({ text: '마감임박', color: '#333330' })
-    expect(stockBadge(5)).toEqual({ text: '마감임박', color: '#333330' })
+    expect(stockBadge(1)).toEqual({ text: '마감임박', color: 'var(--color-fg)' })
+    expect(stockBadge(5)).toEqual({ text: '마감임박', color: 'var(--color-fg)' })
   })
 
   it('재고 6개 이상이면 null을 반환한다 (배지 미표시)', () => {
@@ -36,7 +36,7 @@ describe('stockBadge', () => {
 
   // 경계값 테스트(boundary value): 5/6 경계를 명시적으로 검증한다.
   // 이 테스트가 없으면 조건식 부등호 방향 실수(< vs <=)를 발견하기 어렵다.
-  it('경계값: 재고 5개는 마감임박, 6개는 배지 없음', () => {
+  it('경계값: 재고 5개는 마감임박(var 참조), 6개는 배지 없음', () => {
     expect(stockBadge(5)?.text).toBe('마감임박')
     expect(stockBadge(6)).toBeNull()
   })

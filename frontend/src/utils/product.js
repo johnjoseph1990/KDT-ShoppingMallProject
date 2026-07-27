@@ -13,9 +13,10 @@ export function fmt(n) {
 export function stockBadge(stockQuantity) {
   // 검사 순서 주의: 0은 "5 이하"에도 해당하므로 품절을 반드시 먼저 걸러낸다.
   // 순서를 바꾸면 품절 상품이 '마감임박'으로 잘못 표시된다.
-  if (stockQuantity === 0) return { text: '품절', color: '#e63946' }
+  // CSS 변수를 문자열로 반환해도 JSX inline style에서 브라우저가 정상 해석한다.
+  if (stockQuantity === 0) return { text: '품절', color: 'var(--color-danger)' }
   // 5개 이하면 재촉 배지 — 품절만큼 급하진 않으므로 빨강 대신 기본 먹색을 쓴다
-  if (stockQuantity <= 5) return { text: '마감임박', color: '#333330' }
+  if (stockQuantity <= 5) return { text: '마감임박', color: 'var(--color-fg)' }
   // 재고가 넉넉하면 배지를 그리지 않는다 (null이면 렌더링 자체를 생략)
   return null
 }

@@ -15,7 +15,14 @@ export default function NotFoundPage() {
       }}
     >
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
-        <p style={{ margin: '0 0 12px', fontSize: 12, letterSpacing: '0.14em', color: '#75775e' }}>
+        <p
+          style={{
+            margin: '0 0 12px',
+            fontSize: 12,
+            letterSpacing: '0.14em',
+            color: 'var(--color-fg-accent)',
+          }}
+        >
           404
         </p>
         <h1
@@ -33,7 +40,7 @@ export default function NotFoundPage() {
           style={{
             margin: '0 0 32px',
             fontSize: 14,
-            color: '#6d6c61',
+            color: 'var(--color-fg-muted)',
             fontWeight: 300,
             lineHeight: 1.8,
           }}
@@ -43,13 +50,21 @@ export default function NotFoundPage() {
         <div style={{ display: 'flex', gap: 24, justifyContent: 'center', fontSize: 13 }}>
           <Link
             to="/"
-            style={{ color: '#333330', borderBottom: '1px solid #333330', paddingBottom: 1 }}
+            style={{
+              color: 'var(--color-fg)',
+              borderBottom: '1px solid var(--color-fg)',
+              paddingBottom: 1,
+            }}
           >
             홈으로
           </Link>
           <Link
             to="/shop"
-            style={{ color: '#333330', borderBottom: '1px solid #333330', paddingBottom: 1 }}
+            style={{
+              color: 'var(--color-fg)',
+              borderBottom: '1px solid var(--color-fg)',
+              paddingBottom: 1,
+            }}
           >
             쇼핑하기
           </Link>

@@ -28,19 +28,20 @@ describe('Toast', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('error 타입이면 붉은 배경색(#6b2d2d)으로 렌더링된다', () => {
+  it('error 타입이면 에러 토스트 배경 변수로 렌더링된다', () => {
     useCart.mockReturnValue({ toast: { text: '오류 발생', type: 'error' } })
     render(<Toast />)
     const el = screen.getByText('오류 발생')
-    // toHaveStyle: 인라인 스타일 값을 검증한다.
-    expect(el).toHaveStyle({ background: '#6b2d2d' })
+    // CSS 변수는 jsdom에서 실제 값으로 resolve되지 않으므로 var() 문자열로 검증한다.
+    // 실제 렌더링 색상은 브라우저 확인으로 검증한다.
+    expect(el).toHaveStyle({ background: 'var(--color-danger-dark)' })
   })
 
-  it('success 타입이면 다크 배경색(#333326)으로 렌더링된다', () => {
+  it('success 타입이면 다크 배경 변수로 렌더링된다', () => {
     useCart.mockReturnValue({ toast: { text: '장바구니에 담겼습니다', type: 'success' } })
     render(<Toast />)
     const el = screen.getByText('장바구니에 담겼습니다')
-    expect(el).toHaveStyle({ background: '#333326' })
+    expect(el).toHaveStyle({ background: 'var(--color-bg-dark)' })
   })
 
   it('toast 텍스트가 화면에 표시된다', () => {

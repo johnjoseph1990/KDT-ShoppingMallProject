@@ -13,6 +13,46 @@
 }
 
 /* ========================================
+   🎨 CSS 디자인 토큰 (색상 변수 — 모든 컴포넌트가 이 값을 참조)
+   ======================================== */
+
+/* :root는 HTML 문서 최상위 요소다.
+   여기에 선언한 변수는 --name 형태로 어디서든 var(--name)으로 참조할 수 있다.
+   색상을 한 곳에서 관리하면, 나중에 테마를 바꿀 때 이 블록만 수정하면 된다. */
+:root {
+  /* 기본 배경·텍스트 */
+  --color-bg: #fffef2; /* 페이지 기본 배경 (연한 베이지) */
+  --color-fg: #333330; /* 기본 텍스트·버튼 */
+  --color-fg-muted: #6d6c61; /* 보조 텍스트 (설명, 가격 등) */
+  --color-fg-accent: #75775e; /* 올리브 강조·호버 */
+  --color-fg-subtle: #4a4a3a; /* 더 어두운 본문 */
+
+  /* 라인·테두리 */
+  --color-border: #dddaca; /* 기본 구분선·테두리 */
+
+  /* 어두운 배경 (공지 배너, 푸터, 성공 토스트) */
+  --color-bg-dark: #333326;
+
+  /* 호버 배경 */
+  --color-bg-hover: #edeadb;
+  --color-bg-hover-light: #f6f4e6;
+  --color-bg-input: #f9f8f0;
+
+  /* 라이트 텍스트 (어두운 배경 위에서 사용) */
+  --color-text-on-dark: #e5e3d3;
+  --color-text-footer: #c9c7b2;
+  --color-text-disabled: #a9a98f;
+
+  /* 상태 색상 */
+  --color-danger: #e63946; /* 에러·품절 (빨간색) */
+  --color-danger-dark: #6b2d2d; /* 에러 토스트 배경 (어두운 빨간색) */
+  --color-success: #4a5e3a; /* 성공·결제완료 (초록 톤) */
+  --color-success-bg: #eef3e8;
+  --color-shipping: #2d5a8e; /* 배송중 (파란색) */
+  --color-shipping-bg: #e8eef6;
+}
+
+/* ========================================
    🎨 HTML, BODY 기본 스타일 (전체 페이지 배경, 폰트)
    ======================================== */
 
@@ -20,8 +60,8 @@ html,
 body {
   margin: 0; /* HTML 기본 margin 제거 (8px) */
   padding: 0; /* HTML 기본 padding 제거 */
-  background: #fffef2; /* 배경색: 아주 연한 베이지 (흰색에 가까움) */
-  color: #333330; /* 텍스트 기본색: 거의 검은색에 가까운 갈색 */
+  background: var(--color-bg); /* 배경색: 아주 연한 베이지 (흰색에 가까움) */
+  color: var(--color-fg); /* 텍스트 기본색: 거의 검은색에 가까운 갈색 */
   font-family:
     'Noto Sans KR', sans-serif; /* 한글 폰트 설정 (Noto Sans KR 없으면 sans-serif로 대체) */
   font-size: 15px; /* 기본 폰트 크기 */
@@ -37,11 +77,11 @@ body {
    ======================================== */
 
 a {
-  color: #333330; /* 링크색: 기본색과 동일 (밑줄 없음) */
+  color: var(--color-fg); /* 링크색: 기본색과 동일 (밑줄 없음) */
   text-decoration: none; /* 링크 밑줄 제거 */
 }
 a:hover {
-  color: #75775e; /* 마우스 올렸을 때: 올리브색으로 변경 */
+  color: var(--color-fg-accent); /* 마우스 올렸을 때: 올리브색으로 변경 */
 }
 
 /* ========================================
@@ -62,8 +102,8 @@ select {
    ======================================== */
 
 ::selection {
-  background: #75775e; /* 선택된 텍스트 배경: 올리브색 */
-  color: #fffef2; /* 선택된 텍스트 글씨색: 밝은 베이지 */
+  background: var(--color-fg-accent); /* 선택된 텍스트 배경: 올리브색 */
+  color: var(--color-bg); /* 선택된 텍스트 글씨색: 밝은 베이지 */
 }
 
 /* ========================================
@@ -142,7 +182,7 @@ h3 {
 .mypage-sidebar {
   width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid #dddaca;
+  border-right: 1px solid var(--color-border);
   padding: clamp(32px, 4vw, 56px) clamp(16px, 2.5vw, 32px);
   display: flex;
   flex-direction: column;
@@ -163,7 +203,7 @@ h3 {
   .mypage-sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #dddaca;
+    border-bottom: 1px solid var(--color-border);
     padding: 24px clamp(20px, 5vw, 72px);
   }
 

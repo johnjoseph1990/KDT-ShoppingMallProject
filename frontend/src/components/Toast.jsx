@@ -6,7 +6,7 @@ export default function Toast() {
   if (!toast) return null
 
   // 에러는 붉은 계열, 성공은 기존 다크 배경
-  const bg = toast.type === 'error' ? '#6b2d2d' : '#333326'
+  const bg = toast.type === 'error' ? 'var(--color-danger-dark)' : 'var(--color-bg-dark)'
 
   return (
     <div
@@ -16,7 +16,7 @@ export default function Toast() {
         left: '50%',
         transform: 'translateX(-50%)',
         background: bg,
-        color: '#e5e3d3',
+        color: 'var(--color-text-on-dark)',
         padding: '13px 26px',
         fontSize: 13,
         letterSpacing: '0.03em',

@@ -27,18 +27,18 @@ export default class ErrorBoundary extends Component {
             minHeight: '60vh',
           }}
         >
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
             예기치 않은 오류가 발생했습니다.
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
             style={{
               cursor: 'pointer',
-              border: '1px solid #333330',
+              border: '1px solid var(--color-fg)',
               background: 'transparent',
               padding: '10px 22px',
               fontSize: 13,
-              color: '#333330',
+              color: 'var(--color-fg)',
             }}
           >
             다시 시도

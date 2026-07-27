@@ -16,10 +16,10 @@ const STATUS_LABEL = {
 
 // 상태별 색상 정의
 const STATUS_STYLE = {
-  ORDERED: { color: '#6d6c61', bg: '#f0eedf' },
-  PAID: { color: '#4a5e3a', bg: '#eef3e8' },
-  SHIPPING: { color: '#2d5a8e', bg: '#e8eef6' },
-  DELIVERED: { color: '#333330', bg: '#e5e3d3' },
+  ORDERED: { color: 'var(--color-fg-muted)', bg: '#f0eedf' },
+  PAID: { color: 'var(--color-success)', bg: 'var(--color-success-bg)' },
+  SHIPPING: { color: 'var(--color-shipping)', bg: 'var(--color-shipping-bg)' },
+  DELIVERED: { color: 'var(--color-fg)', bg: 'var(--color-text-on-dark)' },
   CANCELED: { color: '#aaa', bg: '#f4f4f4' },
 }
 
@@ -27,7 +27,7 @@ const fmt = (n) => Number(n).toLocaleString('ko-KR') + '원'
 
 // 폼 입력 공통 스타일
 const inputStyle = {
-  border: '1px solid #dddaca',
+  border: '1px solid var(--color-border)',
   background: 'transparent',
   padding: '12px 14px',
   fontSize: 14,
@@ -83,13 +83,13 @@ export default function MyPage() {
                 width: 44,
                 height: 44,
                 borderRadius: '50%',
-                background: '#e5e3d3',
+                background: 'var(--color-text-on-dark)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontFamily: "'Noto Serif KR', serif",
                 fontSize: 17,
-                color: '#333330',
+                color: 'var(--color-fg)',
                 marginBottom: 14,
                 userSelect: 'none',
               }}
@@ -97,7 +97,7 @@ export default function MyPage() {
               {user?.name?.[0]}
             </div>
             <p style={{ fontSize: 15, fontWeight: 400, marginBottom: 3 }}>{user?.name}</p>
-            <p style={{ fontSize: 12, color: '#6d6c61' }}>{user?.email}</p>
+            <p style={{ fontSize: 12, color: 'var(--color-fg-muted)' }}>{user?.email}</p>
           </div>
 
           {/* 내비게이션 탭 */}
@@ -126,7 +126,7 @@ export default function MyPage() {
                 color: '#bbb',
                 fontFamily: "'Noto Sans KR', sans-serif",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#e63946')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-danger)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = '#bbb')}
             >
               회원 탈퇴
@@ -152,8 +152,8 @@ export default function MyPage() {
             bottom: 28,
             left: '50%',
             transform: 'translateX(-50%)',
-            background: notice.error ? '#c0392b' : '#333326',
-            color: '#e5e3d3',
+            background: notice.error ? '#c0392b' : 'var(--color-bg-dark)',
+            color: 'var(--color-text-on-dark)',
             padding: '13px 26px',
             fontSize: 13,
             letterSpacing: '0.03em',
@@ -183,10 +183,10 @@ function SidebarItem({ active, onClick, children }) {
       style={{
         background: 'none',
         border: 'none',
-        borderLeft: active ? '2px solid #333330' : '2px solid transparent',
+        borderLeft: active ? '2px solid var(--color-fg)' : '2px solid transparent',
         padding: '12px 0 12px 16px',
         fontSize: 14,
-        color: active ? '#333330' : '#6d6c61',
+        color: active ? 'var(--color-fg)' : 'var(--color-fg-muted)',
         fontWeight: active ? 400 : 300,
         fontFamily: "'Noto Sans KR', sans-serif",
         cursor: 'pointer',
@@ -194,10 +194,10 @@ function SidebarItem({ active, onClick, children }) {
         letterSpacing: '0.02em',
       }}
       onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.color = '#333330'
+        if (!active) e.currentTarget.style.color = 'var(--color-fg)'
       }}
       onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.color = '#6d6c61'
+        if (!active) e.currentTarget.style.color = 'var(--color-fg-muted)'
       }}
     >
       {children}
@@ -241,7 +241,7 @@ function OrdersPanel() {
         <div
           style={{
             display: 'flex',
-            border: '1px solid #dddaca',
+            border: '1px solid var(--color-border)',
             marginBottom: 36,
           }}
         >
@@ -260,7 +260,7 @@ function OrdersPanel() {
                 justifyContent: 'center',
                 padding: '20px 12px',
                 gap: 8,
-                borderRight: i < arr.length - 1 ? '1px solid #dddaca' : 'none',
+                borderRight: i < arr.length - 1 ? '1px solid var(--color-border)' : 'none',
               }}
             >
               <span
@@ -273,7 +273,9 @@ function OrdersPanel() {
               >
                 {counts[key] || 0}
               </span>
-              <span style={{ fontSize: 11, color: '#75775e', letterSpacing: '0.06em' }}>
+              <span
+                style={{ fontSize: 11, color: 'var(--color-fg-accent)', letterSpacing: '0.06em' }}
+              >
                 {label}
               </span>
             </div>
@@ -283,17 +285,19 @@ function OrdersPanel() {
 
       {/* 주문 목록 */}
       {loading ? (
-        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>불러오는 중...</p>
+        <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+          불러오는 중...
+        </p>
       ) : orders.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
             아직 주문 내역이 없습니다.
           </p>
           <Link
             to="/shop"
             style={{
               fontSize: 13,
-              borderBottom: '1px solid #333330',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 1,
               display: 'inline-block',
             }}
@@ -302,7 +306,7 @@ function OrdersPanel() {
           </Link>
         </div>
       ) : (
-        <div style={{ borderTop: '1px solid #dddaca' }}>
+        <div style={{ borderTop: '1px solid var(--color-border)' }}>
           {orders.map((order) => (
             <Link
               key={order.id}
@@ -312,16 +316,18 @@ function OrdersPanel() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '20px 0',
-                borderBottom: '1px solid #dddaca',
+                borderBottom: '1px solid var(--color-border)',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f6f4e6')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--color-bg-hover-light)')
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = '')}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <span style={{ fontSize: 14, fontFamily: "'Noto Serif KR', serif" }}>
                   주문 #{order.id}
                 </span>
-                <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
                   {new Date(order.createdAt).toLocaleDateString('ko-KR', {
                     year: 'numeric',
                     month: 'long',
@@ -375,7 +381,7 @@ function SettingsPanel({ user, setUser, showNotice }) {
         계정 설정
       </h2>
 
-      <div style={{ borderTop: '1px solid #dddaca' }}>
+      <div style={{ borderTop: '1px solid var(--color-border)' }}>
         {/* 이름 수정 행 */}
         <SettingRow
           label="이름"
@@ -409,7 +415,7 @@ function SettingsPanel({ user, setUser, showNotice }) {
 // 헤더를 클릭하면 하위 폼이 펼쳐지고, 다시 클릭하면 접힌다
 function SettingRow({ label, value, open, onToggle, children }) {
   return (
-    <div style={{ borderBottom: '1px solid #dddaca' }}>
+    <div style={{ borderBottom: '1px solid var(--color-border)' }}>
       <div
         onClick={onToggle}
         style={{
@@ -428,7 +434,7 @@ function SettingRow({ label, value, open, onToggle, children }) {
           <span
             style={{
               fontSize: 11,
-              color: '#75775e',
+              color: 'var(--color-fg-accent)',
               letterSpacing: '0.08em',
               minWidth: 64,
               textTransform: 'uppercase',
@@ -438,7 +444,7 @@ function SettingRow({ label, value, open, onToggle, children }) {
           </span>
           <span style={{ fontSize: 14, fontWeight: 300 }}>{value}</span>
         </div>
-        <span style={{ fontSize: 12, color: '#6d6c61', letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', letterSpacing: '0.04em' }}>
           {open ? '닫기' : '수정'}
         </span>
       </div>
@@ -567,9 +573,9 @@ function SmallBtn({ children, outline, ...props }) {
       {...props}
       style={{
         cursor: 'pointer',
-        border: '1px solid #333330',
-        background: outline ? 'transparent' : '#333330',
-        color: outline ? '#333330' : '#fffef2',
+        border: '1px solid var(--color-fg)',
+        background: outline ? 'transparent' : 'var(--color-fg)',
+        color: outline ? 'var(--color-fg)' : 'var(--color-bg)',
         padding: '10px 18px',
         fontSize: 13,
         letterSpacing: '0.04em',
@@ -653,8 +659,15 @@ function AddressesPanel({ showNotice }) {
 
       {/* 배송지 추가 폼 */}
       {editing === 'new' && (
-        <div style={{ border: '1px solid #dddaca', padding: '24px', marginBottom: 20 }}>
-          <p style={{ fontSize: 13, color: '#75775e', marginBottom: 18, letterSpacing: '0.04em' }}>
+        <div style={{ border: '1px solid var(--color-border)', padding: '24px', marginBottom: 20 }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: 'var(--color-fg-accent)',
+              marginBottom: 18,
+              letterSpacing: '0.04em',
+            }}
+          >
             새 배송지
           </p>
           <AddressForm
@@ -665,13 +678,17 @@ function AddressesPanel({ showNotice }) {
       )}
 
       {loading ? (
-        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>불러오는 중...</p>
+        <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+          불러오는 중...
+        </p>
       ) : sorted.length === 0 ? (
-        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>저장된 배송지가 없습니다.</p>
+        <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+          저장된 배송지가 없습니다.
+        </p>
       ) : (
-        <div style={{ borderTop: '1px solid #dddaca' }}>
+        <div style={{ borderTop: '1px solid var(--color-border)' }}>
           {sorted.map((addr) => (
-            <div key={addr.id} style={{ borderBottom: '1px solid #dddaca' }}>
+            <div key={addr.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
               {/* 배송지 정보 행 */}
               <div
                 style={{
@@ -684,7 +701,7 @@ function AddressesPanel({ showNotice }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 14 }}>{addr.recipientName}</span>
-                    <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                    <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
                       {addr.phone}
                     </span>
                     {addr.isDefault && (
@@ -692,8 +709,8 @@ function AddressesPanel({ showNotice }) {
                         style={{
                           fontSize: 10,
                           letterSpacing: '0.06em',
-                          color: '#4a5e3a',
-                          background: '#eef3e8',
+                          color: 'var(--color-success)',
+                          background: 'var(--color-success-bg)',
                           padding: '2px 7px',
                         }}
                       >
@@ -701,11 +718,11 @@ function AddressesPanel({ showNotice }) {
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 300, color: '#333330' }}>
+                  <span style={{ fontSize: 13, fontWeight: 300, color: 'var(--color-fg)' }}>
                     ({addr.zipCode}) {addr.address} {addr.addressDetail ?? ''}
                   </span>
                   {addr.note && (
-                    <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                    <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
                       배송 메모: {addr.note}
                     </span>
                   )}
@@ -829,7 +846,7 @@ function AddressForm({ initial, onSave, onCancel }) {
           required
           readOnly
           value={form.zipCode}
-          style={{ ...inputStyle, flex: '0 0 120px', background: '#f9f8f0' }}
+          style={{ ...inputStyle, flex: '0 0 120px', background: 'var(--color-bg-input)' }}
         />
         <SmallBtn
           type="button"
@@ -846,7 +863,7 @@ function AddressForm({ initial, onSave, onCancel }) {
         required
         readOnly
         value={form.address}
-        style={{ ...inputStyle, background: '#f9f8f0' }}
+        style={{ ...inputStyle, background: 'var(--color-bg-input)' }}
       />
       <input
         type="text"
@@ -911,7 +928,7 @@ function DeleteModal({ onClose, onConfirm }) {
     >
       <div
         style={{
-          background: '#fffef2',
+          background: 'var(--color-bg)',
           padding: 'clamp(32px,5vw,48px)',
           maxWidth: 420,
           width: '100%',
@@ -932,7 +949,14 @@ function DeleteModal({ onClose, onConfirm }) {
           >
             정말 탈퇴하시겠습니까?
           </h2>
-          <p style={{ fontSize: 14, color: '#6d6c61', lineHeight: 1.8, fontWeight: 300 }}>
+          <p
+            style={{
+              fontSize: 14,
+              color: 'var(--color-fg-muted)',
+              lineHeight: 1.8,
+              fontWeight: 300,
+            }}
+          >
             탈퇴하면 계정과 모든 주문 정보가 즉시 삭제됩니다.
             <br />이 작업은 되돌릴 수 없습니다.
           </p>
@@ -943,9 +967,9 @@ function DeleteModal({ onClose, onConfirm }) {
             style={{
               flex: 1,
               cursor: 'pointer',
-              border: '1px solid #dddaca',
+              border: '1px solid var(--color-border)',
               background: 'transparent',
-              color: '#333330',
+              color: 'var(--color-fg)',
               padding: '14px',
               fontSize: 14,
               letterSpacing: '0.03em',
@@ -959,8 +983,8 @@ function DeleteModal({ onClose, onConfirm }) {
             style={{
               flex: 1,
               cursor: 'pointer',
-              border: '1px solid #e63946',
-              background: '#e63946',
+              border: '1px solid var(--color-danger)',
+              background: 'var(--color-danger)',
               color: '#fff',
               padding: '14px',
               fontSize: 14,

@@ -28,7 +28,7 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
       // featured=false: 이미지/텍스트 div에만 각각 onClick을 달고, 버튼은 별도로 onAdd
       onClick={featured ? onOpen : undefined}
       style={{
-        background: hovered ? '#f6f4e6' : '#fffef2',
+        background: hovered ? 'var(--color-bg-hover-light)' : 'var(--color-bg)',
         cursor: featured ? 'pointer' : 'default',
         padding: 28,
         display: 'flex',
@@ -47,7 +47,7 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
         style={{
           cursor: !featured ? 'pointer' : undefined,
           aspectRatio: '4/5',
-          background: '#edeadb',
+          background: 'var(--color-bg-hover)',
           overflow: 'hidden',
           position: !featured ? 'relative' : undefined,
         }}
@@ -76,7 +76,7 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
               top: 10,
               left: 10,
               background: badge.color,
-              color: '#fffef2',
+              color: 'var(--color-bg)',
               fontSize: 11,
               letterSpacing: '0.06em',
               padding: '4px 9px',
@@ -112,14 +112,29 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
         >
           {product.name}
         </h3>
-        <p style={{ margin: 0, fontSize: 13, color: '#6d6c61', fontWeight: 300, lineHeight: 1.7 }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            color: 'var(--color-fg-muted)',
+            fontWeight: 300,
+            lineHeight: 1.7,
+          }}
+        >
           {product.description?.slice(0, descLimit)}
         </p>
 
         {/* 평균 별점: featured=false일 때만 표시.
             toFixed(1): 4.333... 같은 값을 소수점 한 자리로 반올림해 문자열로 만든다. */}
         {!featured && (
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+          <p
+            style={{
+              margin: '2px 0 0',
+              fontSize: 12,
+              color: 'var(--color-fg-muted)',
+              fontWeight: 300,
+            }}
+          >
             {product.averageRating > 0 ? `★ ${product.averageRating.toFixed(1)}` : '리뷰 없음'}
           </p>
         )}
@@ -137,9 +152,9 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
           aria-label={soldOut ? '품절된 상품' : '장바구니에 담기'}
           style={{
             cursor: soldOut ? 'not-allowed' : 'pointer',
-            border: `1px solid ${soldOut ? '#dddaca' : '#333330'}`,
+            border: `1px solid ${soldOut ? 'var(--color-border)' : 'var(--color-fg)'}`,
             background: 'transparent',
-            color: soldOut ? '#a8a495' : '#333330',
+            color: soldOut ? 'var(--color-text-disabled)' : 'var(--color-fg)',
             padding: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -147,13 +162,13 @@ export default function ProductCard({ product, onOpen, onAdd, featured = false }
           }}
           onMouseEnter={(e) => {
             if (soldOut) return // 품절 버튼은 hover 반전을 하지 않는다
-            e.currentTarget.style.background = '#333330'
-            e.currentTarget.style.color = '#fffef2'
+            e.currentTarget.style.background = 'var(--color-fg)'
+            e.currentTarget.style.color = 'var(--color-bg)'
           }}
           onMouseLeave={(e) => {
             if (soldOut) return
             e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.color = '#333330'
+            e.currentTarget.style.color = 'var(--color-fg)'
           }}
         >
           {/* 카트 아이콘: 바퀴 두 개(circle) + 카트 몸통(path) */}

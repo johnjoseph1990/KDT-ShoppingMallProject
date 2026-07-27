@@ -59,7 +59,7 @@ export default function HomePage() {
         style={{
           position: 'relative',
           minHeight: '88vh',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden',
           background: '#2a2a20',
         }}
@@ -113,7 +113,7 @@ export default function HomePage() {
               margin: 0,
               fontFamily: "'Noto Serif KR', serif",
               fontWeight: 300,
-              color: '#fffef2',
+              color: 'var(--color-bg)',
               fontSize: 'clamp(30px,3.8vw,50px)',
               lineHeight: 1.45,
               letterSpacing: '-0.01em',
@@ -129,7 +129,7 @@ export default function HomePage() {
               margin: 0,
               fontSize: 15,
               lineHeight: 1.9,
-              color: '#e5e3d3',
+              color: 'var(--color-text-on-dark)',
               fontWeight: 300,
               maxWidth: '44ch',
             }}
@@ -172,7 +172,7 @@ export default function HomePage() {
                   margin: 0,
                   fontSize: 12,
                   letterSpacing: '0.08em',
-                  color: '#75775e',
+                  color: 'var(--color-fg-accent)',
                 }}
               >
                 {BEST_SOURCE_LABEL[bestSource]}
@@ -185,7 +185,7 @@ export default function HomePage() {
               cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
-              borderBottom: '1px solid #333330',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 2,
             }}
           >
@@ -200,8 +200,8 @@ export default function HomePage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(4,1fr)',
             gap: 1,
-            background: '#dddaca',
-            border: '1px solid #dddaca',
+            background: 'var(--color-border)',
+            border: '1px solid var(--color-border)',
           }}
         >
           {featured.length > 0
@@ -215,8 +215,8 @@ export default function HomePage() {
                 />
               ))
             : Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ background: '#fffef2', padding: 28 }}>
-                  <div style={{ aspectRatio: '4/5', background: '#edeadb' }} />
+                <div key={i} style={{ background: 'var(--color-bg)', padding: 28 }}>
+                  <div style={{ aspectRatio: '4/5', background: 'var(--color-bg-hover)' }} />
                 </div>
               ))}
         </div>
@@ -227,8 +227,8 @@ export default function HomePage() {
       <section
         className="mobile-1col"
         style={{
-          background: '#333326',
-          color: '#e5e3d3',
+          background: 'var(--color-bg-dark)',
+          color: 'var(--color-text-on-dark)',
           padding: 'clamp(48px,8vw,110px) clamp(20px,5vw,72px)',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
@@ -237,7 +237,14 @@ export default function HomePage() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <p style={{ margin: 0, fontSize: 13, letterSpacing: '0.14em', color: '#a9a98f' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              letterSpacing: '0.14em',
+              color: 'var(--color-text-disabled)',
+            }}
+          >
             꾸러미 정기배송
           </p>
           <h2
@@ -259,7 +266,7 @@ export default function HomePage() {
               fontSize: 15,
               lineHeight: 1.9,
               fontWeight: 300,
-              color: '#c9c7b2',
+              color: 'var(--color-text-footer)',
               maxWidth: '46ch',
             }}
           >
@@ -277,7 +284,7 @@ export default function HomePage() {
       <section
         style={{
           padding: 'clamp(48px,7vw,100px) clamp(20px,5vw,72px)',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
         <div
@@ -291,7 +298,14 @@ export default function HomePage() {
             alignItems: 'center',
           }}
         >
-          <p style={{ margin: 0, fontSize: 13, letterSpacing: '0.14em', color: '#75775e' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              letterSpacing: '0.14em',
+              color: 'var(--color-fg-accent)',
+            }}
+          >
             생산자
           </p>
           <h2
@@ -307,7 +321,7 @@ export default function HomePage() {
             <br />
             기다리는 게 일의 절반입니다."
           </h2>
-          <p style={{ margin: 0, fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
             금산 · 흙내음농원 · 이정순 농부
           </p>
           <span
@@ -316,7 +330,7 @@ export default function HomePage() {
               cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
-              borderBottom: '1px solid #333330',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 2,
             }}
           >
@@ -331,10 +345,10 @@ export default function HomePage() {
 /* 호버 시 색상 반전되는 버튼 */
 function HoverBtn({ onClick, children, light = false }) {
   const [hovered, setHovered] = useState(false)
-  const border = light ? '#fffef2' : '#e5e3d3'
-  const textColor = light ? '#fffef2' : '#e5e3d3'
-  const hoverBg = light ? '#fffef2' : '#e5e3d3'
-  const hoverText = light ? '#333330' : '#333326'
+  const border = light ? 'var(--color-bg)' : 'var(--color-text-on-dark)'
+  const textColor = light ? 'var(--color-bg)' : 'var(--color-text-on-dark)'
+  const hoverBg = light ? 'var(--color-bg)' : 'var(--color-text-on-dark)'
+  const hoverText = light ? 'var(--color-fg)' : 'var(--color-bg-dark)'
 
   return (
     <span

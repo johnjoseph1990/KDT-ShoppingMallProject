@@ -119,7 +119,14 @@ export default function ProductListPage() {
       >
         쇼핑
       </h1>
-      <p style={{ margin: '0 0 28px', fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+      <p
+        style={{
+          margin: '0 0 28px',
+          fontSize: 14,
+          color: 'var(--color-fg-muted)',
+          fontWeight: 300,
+        }}
+      >
         {totalElements}개의 상품 · 매주 화·금 수확분 기준
       </p>
 
@@ -134,21 +141,21 @@ export default function ProductListPage() {
           style={{
             flex: '1 1 280px',
             maxWidth: 360,
-            border: '1px solid #dddaca',
+            border: '1px solid var(--color-border)',
             background: 'transparent',
             padding: '10px 14px',
             fontSize: 13,
             fontWeight: 300,
-            color: '#333330',
+            color: 'var(--color-fg)',
           }}
         />
         <button
           type="submit"
           style={{
             cursor: 'pointer',
-            border: '1px solid #333330',
-            background: '#333330',
-            color: '#fffef2',
+            border: '1px solid var(--color-fg)',
+            background: 'var(--color-fg)',
+            color: 'var(--color-bg)',
             padding: '10px 20px',
             fontSize: 13,
             fontWeight: 300,
@@ -167,9 +174,9 @@ export default function ProductListPage() {
             }}
             style={{
               cursor: 'pointer',
-              border: '1px solid #dddaca',
+              border: '1px solid var(--color-border)',
               background: 'transparent',
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
               padding: '10px 16px',
               fontSize: 13,
               fontWeight: 300,
@@ -207,7 +214,7 @@ export default function ProductListPage() {
           id="rating-filter-label"
           style={{
             fontSize: 12,
-            color: '#6d6c61',
+            color: 'var(--color-fg-muted)',
             fontWeight: 300,
             letterSpacing: '0.08em',
             marginRight: 2,
@@ -228,7 +235,7 @@ export default function ProductListPage() {
 
       {/* 3열 상품 그리드 */}
       {products.length === 0 ? (
-        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+        <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
           {keyword || ratingKey !== 'any'
             ? '조건에 맞는 상품이 없습니다. 검색어나 별점 조건을 바꿔보세요.'
             : '상품이 없습니다.'}
@@ -242,8 +249,8 @@ export default function ProductListPage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(3,1fr)',
             gap: 1,
-            background: '#dddaca',
-            border: '1px solid #dddaca',
+            background: 'var(--color-border)',
+            border: '1px solid var(--color-border)',
           }}
         >
           {products.map((p) => (
@@ -270,7 +277,9 @@ export default function ProductListPage() {
         <PageBtn onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
           ← 이전
         </PageBtn>
-        <span style={{ fontSize: 13, color: '#6d6c61', fontWeight: 300 }}>페이지 {page + 1}</span>
+        <span style={{ fontSize: 13, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+          페이지 {page + 1}
+        </span>
         {/* 전체 개수(totalElements) 기준으로 마지막 페이지를 판단한다.
             products.length < 10 으로 판단하면 "정확히 10개"일 때 빈 다음 페이지로 넘어간다 */}
         <PageBtn onClick={() => setPage((p) => p + 1)} disabled={(page + 1) * 10 >= totalElements}>
@@ -287,9 +296,9 @@ function CatBtn({ active, onClick, children }) {
       onClick={onClick}
       style={{
         cursor: 'pointer',
-        border: `1px solid ${active ? '#333330' : '#dddaca'}`,
-        background: active ? '#333330' : 'transparent',
-        color: active ? '#fffef2' : '#333330',
+        border: `1px solid ${active ? 'var(--color-fg)' : 'var(--color-border)'}`,
+        background: active ? 'var(--color-fg)' : 'transparent',
+        color: active ? 'var(--color-bg)' : 'var(--color-fg)',
         padding: '9px 18px',
         fontSize: 13,
         letterSpacing: '0.03em',
@@ -308,9 +317,9 @@ function PageBtn({ onClick, disabled, children }) {
       disabled={disabled}
       style={{
         cursor: disabled ? 'default' : 'pointer',
-        border: '1px solid #dddaca',
+        border: '1px solid var(--color-border)',
         background: 'transparent',
-        color: '#333330',
+        color: 'var(--color-fg)',
         padding: '8px 16px',
         fontSize: 13,
         opacity: disabled ? 0.4 : 1,
