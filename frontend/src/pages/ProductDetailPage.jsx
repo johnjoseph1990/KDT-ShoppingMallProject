@@ -279,6 +279,11 @@ export default function ProductDetailPage() {
             </p>
           </div>
 
+          {/* 조회수 — API 응답의 viewCount를 그대로 표시 */}
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-fg-muted)' }}>
+            조회 {product.viewCount.toLocaleString()}회
+          </p>
+
           {/* 재고 상태 */}
           <p
             style={{
