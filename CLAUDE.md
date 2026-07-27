@@ -16,12 +16,6 @@
 - 기존 코드를 수정할 때는 그 파일에 주석이 없다면 이번 기회에 같이 보강
 - 예외: 포맷터(Spotless/Prettier)가 자동 생성하는 코드, 테스트의 반복적인 given-when-then 블록처럼 자명한 부분까지 전부 달 필요는 없음
 
-## 개발 철학
-
-- 불필요한 추상화나 기능 추가 금지 — 요청한 것만 구현
-- 에러 핸들링은 시스템 경계(외부 입력, 외부 API)에서만 추가
-- 보안 취약점(SQL 인젝션, XSS 등) 주의하여 코드 작성
-
 ## 재현성 원칙 (필수) — "git에 없으면 없는 것"
 
 상태 변화는 손이 아니라 **재현 가능한 코드**로 남긴다. 클론 → `docker compose up -d` → `bootRun`만 하면 누구 PC에서나 동일한 화면/데이터가 떠야 한다.
@@ -43,12 +37,6 @@
 - **시드는 멱등하게(idempotent) 작성한다.** 넣기 전에 `existsBy...`로 중복을 확인해, 몇 번 실행해도 중복이 쌓이지 않게 한다. `count() > 0` 같은 전체 가드는 "새 데이터를 아예 못 넣는" 함정이 있으니 항목별로 체크한다.
 - **커밋 메시지 = 그 커밋의 diff.** diff에 없는 작업(수동 DB 조작 등)을 메시지에 적지 않는다. 코드 밖에서 한 작업이 꼭 필요하면 시드/마이그레이션으로 옮기거나 커밋 본문에 재현 절차를 남긴다.
 - 데이터·스키마 변경 이력 관리가 필요해지면 Flyway 마이그레이션(`V1__`, `V2__`...) 도입을 검토한다.
-
-## 프로젝트 개요
-KDT 교육과정 쇼핑몰 프로젝트. Spring Boot(백엔드) + React(프론트엔드) 풀스택 구성.
-
-- 백엔드: `backend/` — Spring Boot 3.5, Java 17, H2 인메모리 DB, Spring Security
-- 프론트엔드: `frontend/` — React + Vite, `/api` → `http://localhost:8080` 프록시
 
 ## GitHub 코드 관리 (필수)
 
@@ -114,35 +102,11 @@ docs: 문서
 
 **커버리지 목표:** 서비스 레이어 80% 이상 (JaCoCo 설정: 전체 60% 최소)
 
-**테스트 실행:**
-```
-./gradlew test                 # 테스트만
-./gradlew test jacocoTestReport # 테스트 + 커버리지 리포트
-```
-커버리지 리포트 위치: `backend/build/reports/jacoco/test/html/index.html`
-
-**CI/CD (GitHub Actions):**
-- `master` 브랜치 push/PR 시 자동 실행
-- 백엔드: Java 17 → Gradle test → JaCoCo 리포트
-- 프론트엔드: Node 20 → npm ci → build 검증
-- 실패 시 merge 불가
-
 ## 코딩 컨벤션
 
 **포맷터 (자동 적용, 수동 스타일 논쟁 금지):**
 - 백엔드: Gradle Spotless + Google Java Format
-  ```
-  cd backend
-  ./gradlew spotlessApply   # 포맷 자동 적용
-  ./gradlew spotlessCheck   # 포맷 위반 시 실패 (check 태스크에 포함되어 build 시 자동 검증)
-  ```
-- 프론트엔드: Prettier (`frontend/.prettierrc.json`, 세미콜론 없음·싱글쿼트·printWidth 100)
-  ```
-  cd frontend
-  npm run format         # 포맷 자동 적용
-  npm run format:check   # 포맷 위반 시 실패
-  npm run lint           # oxlint 정적 분석 (포맷과 별개)
-  ```
+- 프론트엔드: Prettier (`frontend/.prettierrc.json`)
 - 커밋 전 반드시 `spotlessApply` / `format` 실행 후 diff 확인
 
 **네이밍 규칙:**
