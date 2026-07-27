@@ -4,8 +4,7 @@ import { getBestProducts } from '../api/products'
 import { addToCart } from '../api/cart'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-
-const fmt = (n) => n.toLocaleString('ko-KR') + '원'
+import ProductCard from '../components/ProductCard'
 
 /* 백엔드 /api/products/best 의 source 값(REVIEW_BEST/SALES/LATEST)을
    화면 문구로 바꿔주는 매핑. 콜드스타트 폴백 단계마다 사용자에게
@@ -23,7 +22,7 @@ export default function HomePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
-  const { refreshCart, showToast } = useCart()
+  const { refreshCart, showToast, showMessage } = useCart()
 
   /* 베스트 상품 상위 4개를 홈 히어로 그리드에 표시.
      같은 페이지 안의 상품들은 항상 같은 폴백 단계에서 나오므로
@@ -36,12 +35,11 @@ export default function HomePage() {
         setFeatured(content.slice(0, 4))
         setBestSource(content[0]?.source ?? null)
       })
-      .catch(() => {})
+      .catch(() => showMessage('상품을 불러오지 못했습니다'))
   }, [])
 
   const handleAddToCart = async (product) => {
     if (!user) {
-      alert('로그인 후 담을 수 있어요')
       navigate('/login', { state: { from: location } })
       return
     }
@@ -49,7 +47,9 @@ export default function HomePage() {
       await addToCart({ productId: product.id, quantity: 1 })
       refreshCart()
       showToast(product.name)
-    } catch {}
+    } catch (err) {
+      showMessage(err.response?.data?.message || '장바구니 추가에 실패했습니다')
+    }
   }
 
   return (
@@ -206,11 +206,12 @@ export default function HomePage() {
         >
           {featured.length > 0
             ? featured.map((p) => (
-                <FeaturedCard
+                <ProductCard
                   key={p.id}
                   product={p}
                   onOpen={() => navigate(`/products/${p.id}`)}
                   onAdd={() => handleAddToCart(p)}
+                  featured
                 />
               ))
             : Array.from({ length: 4 }).map((_, i) => (
@@ -327,51 +328,6 @@ export default function HomePage() {
   )
 }
 
-/* 4열 그리드 상품 카드 */
-function FeaturedCard({ product, onOpen }) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <div
-      onClick={onOpen}
-      style={{
-        background: hovered ? '#f6f4e6' : '#fffef2',
-        cursor: 'pointer',
-        padding: 28,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div style={{ aspectRatio: '4/5', background: '#edeadb', overflow: 'hidden' }}>
-        {product.imageUrl && (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <h3
-          style={{
-            margin: 0,
-            fontFamily: "'Noto Serif KR', serif",
-            fontWeight: 400,
-            fontSize: 16,
-          }}
-        >
-          {product.name}
-        </h3>
-        <p style={{ margin: 0, fontSize: 13, color: '#6d6c61', fontWeight: 300 }}>
-          {product.description?.slice(0, 30)}
-        </p>
-        <p style={{ margin: '6px 0 0', fontSize: 14 }}>{fmt(product.price)}</p>
-      </div>
-    </div>
-  )
-}
 
 /* 호버 시 색상 반전되는 버튼 */
 function HoverBtn({ onClick, children, light = false }) {
