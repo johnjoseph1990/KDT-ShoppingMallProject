@@ -18,5 +18,32 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    container_name: mins-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # 컨테이너 내부 통신은 서비스명 'db'로 해소, 포트는 컨테이너 내부 5432
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/shoppingmall
+      SPRING_DATASOURCE_USERNAME: mins
+      # 운영 배포 시 .env 파일 또는 호스트 환경변수로 오버라이드
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-mins1234}
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+      # 운영 배포 시 DDL_AUTO=validate 로 설정해 자동 스키마 변경 방지
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update}
+    depends_on:
+      db:
+        # DB 헬스체크 통과 후 백엔드가 기동되도록 순서 보장
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: mins-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
