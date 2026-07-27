@@ -8,6 +8,12 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# Vite의 VITE_* 환경변수는 런타임이 아니라 빌드 시점에 번들에 박힌다.
+# ARG로 빌드 인자를 받아 ENV로 노출해야 npm run build 중에 값이 적용된다.
+ARG VITE_TOSS_CLIENT_KEY
+ENV VITE_TOSS_CLIENT_KEY=$VITE_TOSS_CLIENT_KEY
+
 # Vite 프로덕션 빌드 → dist/ 생성
 RUN npm run build
 
