@@ -64,8 +64,8 @@ export default function Navbar() {
       {/* 상단 공지 배너: 사이트 전체에서 공통으로 보이는 안내 문구다. */}
       <div
         style={{
-          background: '#333326',
-          color: '#e5e3d3',
+          background: 'var(--color-bg-dark)',
+          color: 'var(--color-text-on-dark)',
           textAlign: 'center',
           padding: '11px 20px',
           fontSize: 13,
@@ -82,8 +82,8 @@ export default function Navbar() {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          background: '#fffef2',
-          borderBottom: '1px solid #dddaca',
+          background: 'var(--color-bg)',
+          borderBottom: '1px solid var(--color-border)',
           padding: '0 clamp(20px,5vw,72px)',
           display: 'flex',
           alignItems: 'center',
@@ -129,7 +129,10 @@ export default function Navbar() {
           </div>
 
           {/* 두 그룹을 나누는 세로 구분선 */}
-          <span aria-hidden="true" style={{ width: 1, height: 18, background: '#dddaca' }} />
+          <span
+            aria-hidden="true"
+            style={{ width: 1, height: 18, background: 'var(--color-border)' }}
+          />
 
           {/* 계정/구매 메뉴 묶음: 로그인·회원가입·주문내역처럼 "내 계정" 성격의 링크들.
               색을 약간 옅게(#6d6c61) 둬서 탐색 메뉴보다 톤을 한 단계 낮춘다. */}
@@ -139,7 +142,7 @@ export default function Navbar() {
               gap: 20,
               alignItems: 'center',
               fontSize: 13,
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
             }}
           >
             {accountLinks.map((l) => (
@@ -198,8 +201,8 @@ export default function Navbar() {
               left: 0,
               right: 0,
               zIndex: 49,
-              background: '#fffef2',
-              borderBottom: '1px solid #dddaca',
+              background: 'var(--color-bg)',
+              borderBottom: '1px solid var(--color-border)',
               display: 'flex',
               flexDirection: 'column',
               padding: '12px clamp(20px,5vw,72px) 24px',
@@ -215,12 +218,14 @@ export default function Navbar() {
             ))}
 
             {/* 가로 구분선으로 탐색 메뉴와 계정 메뉴를 분리한다 */}
-            <div style={{ borderTop: '1px solid #dddaca', margin: '4px 0' }} />
+            <div style={{ borderTop: '1px solid var(--color-border)', margin: '4px 0' }} />
 
             {/* 계정/구매 메뉴 묶음. 톤을 옅게 둬서 위쪽 탐색 메뉴와 구분되게 한다. */}
             {accountLinks.map((l) => (
               <NavItem key={l.to} to={l.to} onClick={closeMenu} variant="bar">
-                <div style={{ padding: '12px 0', fontSize: 13, color: '#6d6c61' }}>{l.label}</div>
+                <div style={{ padding: '12px 0', fontSize: 13, color: 'var(--color-fg-muted)' }}>
+                  {l.label}
+                </div>
               </NavItem>
             ))}
 
@@ -231,7 +236,9 @@ export default function Navbar() {
 
             {/* 로그인 상태라면 사용자 이름을 아래쪽에 다시 보여준다. */}
             {user && (
-              <div style={{ padding: '12px 0', fontSize: 13, color: '#6d6c61' }}>{user.name}님</div>
+              <div style={{ padding: '12px 0', fontSize: 13, color: 'var(--color-fg-muted)' }}>
+                {user.name}님
+              </div>
             )}
             {/* 모바일에서 로그아웃하면 메뉴를 먼저 닫고 로그아웃 처리한다. */}
             {user && (
@@ -267,16 +274,16 @@ function NavItem({ to, onClick, variant = 'underline', children }) {
           ? {
               // 모바일: 활성 행 왼쪽에 세로 막대. 비활성은 투명 막대로 자리만 유지해 글자가 안 밀림.
               display: 'block',
-              borderLeft: isActive ? '2px solid #333330' : '2px solid transparent',
+              borderLeft: isActive ? '2px solid var(--color-fg)' : '2px solid transparent',
               paddingLeft: 12,
             }
           : {
               // 데스크톱: 활성 항목 글자 아래 밑줄.
-              borderBottom: isActive ? '1px solid #333330' : '1px solid transparent',
+              borderBottom: isActive ? '1px solid var(--color-fg)' : '1px solid transparent',
               paddingBottom: 3,
             }
       }
-      onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
+      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-fg-accent)')}
       onMouseLeave={(e) => (e.currentTarget.style.color = '')}
     >
       {children}
@@ -300,10 +307,10 @@ function SearchIconBtn() {
         // display:flex + 정렬로, 안의 svg가 버튼 높이에 딱 맞게 세로 가운데 정렬된다
         display: 'flex',
         alignItems: 'center',
-        color: '#333330',
+        color: 'var(--color-fg)',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
-      onMouseLeave={(e) => (e.currentTarget.style.color = '#333330')}
+      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-fg-accent)')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-fg)')}
     >
       {/* 인라인 SVG 돋보기 아이콘. 이모지와 달리 stroke 색/두께를 CSS로 제어할 수 있어
           사이트의 얇은 획·뉴트럴 톤과 통일된다. stroke="currentColor"로 두면 위 button의
@@ -332,7 +339,7 @@ function OutlineBtn({ onClick, children }) {
       onClick={onClick}
       style={{
         cursor: 'pointer',
-        border: '1px solid #333330',
+        border: '1px solid var(--color-fg)',
         background: 'transparent',
         color: 'inherit',
         fontFamily: 'inherit',
@@ -341,8 +348,8 @@ function OutlineBtn({ onClick, children }) {
         userSelect: 'none',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#333330'
-        e.currentTarget.style.color = '#fffef2'
+        e.currentTarget.style.background = 'var(--color-fg)'
+        e.currentTarget.style.color = 'var(--color-bg)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent'
@@ -371,10 +378,10 @@ function CartIconBtn({ count, onClick }) {
         padding: '7px 4px',
         display: 'flex',
         alignItems: 'center',
-        color: '#333330',
+        color: 'var(--color-fg)',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.color = '#75775e')}
-      onMouseLeave={(e) => (e.currentTarget.style.color = '#333330')}
+      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-fg-accent)')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-fg)')}
     >
       {/* 카트 아이콘: 바퀴 두 개(circle) + 카트 몸통(path) */}
       <svg
@@ -403,8 +410,8 @@ function CartIconBtn({ count, onClick }) {
             height: 16,
             padding: '0 4px',
             borderRadius: 8,
-            background: '#333330',
-            color: '#fffef2',
+            background: 'var(--color-fg)',
+            color: 'var(--color-bg)',
             fontSize: 10,
             fontWeight: 500,
             display: 'flex',

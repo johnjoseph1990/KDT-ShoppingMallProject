@@ -58,7 +58,7 @@ export default function StoryPage() {
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            borderBottom: '1px solid #dddaca',
+            borderBottom: '1px solid var(--color-border)',
             minHeight: '76vh',
           }}
         >
@@ -68,7 +68,7 @@ export default function StoryPage() {
           <div
             className="hero-sticky-image"
             style={{
-              background: '#edeadb',
+              background: 'var(--color-bg-hover)',
               position: 'sticky',
               top: 72,
               height: 'calc(100vh - 72px)',
@@ -93,11 +93,18 @@ export default function StoryPage() {
           >
             <span
               onClick={() => setSelectedIdx(null)}
-              style={{ cursor: 'pointer', fontSize: 13, color: '#6d6c61' }}
+              style={{ cursor: 'pointer', fontSize: 13, color: 'var(--color-fg-muted)' }}
             >
               ← 농부 이야기로 돌아가기
             </span>
-            <p style={{ margin: 0, fontSize: 12, letterSpacing: '0.14em', color: '#75775e' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                color: 'var(--color-fg-accent)',
+              }}
+            >
               {f.region}
             </p>
             <h1
@@ -118,7 +125,7 @@ export default function StoryPage() {
                 fontWeight: 300,
                 fontSize: 18,
                 lineHeight: 1.8,
-                color: '#4a4a3a',
+                color: 'var(--color-fg-subtle)',
               }}
             >
               "{f.quote}"
@@ -128,7 +135,7 @@ export default function StoryPage() {
                 margin: 0,
                 fontSize: 15,
                 lineHeight: 2,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
               }}
             >
@@ -139,7 +146,7 @@ export default function StoryPage() {
                 margin: 0,
                 fontSize: 15,
                 lineHeight: 2,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
               }}
             >
@@ -152,15 +159,15 @@ export default function StoryPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                border: '1px solid #333330',
+                border: '1px solid var(--color-fg)',
                 padding: '16px 22px',
                 maxWidth: 340,
                 fontSize: 14,
                 marginTop: 8,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#333330'
-                e.currentTarget.style.color = '#fffef2'
+                e.currentTarget.style.background = 'var(--color-fg)'
+                e.currentTarget.style.color = 'var(--color-bg)'
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = ''
@@ -181,11 +188,18 @@ export default function StoryPage() {
       <section
         style={{
           padding: 'clamp(48px,7vw,96px) clamp(20px,5vw,72px)',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
           maxWidth: 820,
         }}
       >
-        <p style={{ margin: '0 0 16px', fontSize: 13, letterSpacing: '0.14em', color: '#75775e' }}>
+        <p
+          style={{
+            margin: '0 0 16px',
+            fontSize: 13,
+            letterSpacing: '0.14em',
+            color: 'var(--color-fg-accent)',
+          }}
+        >
           생산자
         </p>
         <h1
@@ -199,7 +213,15 @@ export default function StoryPage() {
         >
           얼굴을 아는 사람의 농사
         </h1>
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 2, color: '#6d6c61', fontWeight: 300 }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 15,
+            lineHeight: 2,
+            color: 'var(--color-fg-muted)',
+            fontWeight: 300,
+          }}
+        >
           민스 파머스 마켓의 모든 상품에는 기른 사람의 이름이 적혀 있습니다. 우리는 대전과 충남의
           스물세 농가를 계절마다 직접 찾아가고, 밭의 상태와 농부의 원칙을 눈으로 확인한 뒤에야
           함께합니다.
@@ -214,11 +236,13 @@ export default function StoryPage() {
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            borderBottom: '1px solid #dddaca',
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
           {/* 이미지 자리 (사진 없으면 배경색만, 있으면 img가 덮음) */}
-          <div style={{ aspectRatio: '4/3', background: '#edeadb', overflow: 'hidden' }}>
+          <div
+            style={{ aspectRatio: '4/3', background: 'var(--color-bg-hover)', overflow: 'hidden' }}
+          >
             {f.imageUrl && (
               <img
                 src={f.imageUrl}
@@ -237,7 +261,14 @@ export default function StoryPage() {
               gap: 18,
             }}
           >
-            <p style={{ margin: 0, fontSize: 12, letterSpacing: '0.14em', color: '#75775e' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                color: 'var(--color-fg-accent)',
+              }}
+            >
               {f.region}
             </p>
             <h2
@@ -258,7 +289,7 @@ export default function StoryPage() {
                 fontWeight: 300,
                 fontSize: 17,
                 lineHeight: 1.8,
-                color: '#4a4a3a',
+                color: 'var(--color-fg-subtle)',
               }}
             >
               "{f.quote}"
@@ -268,7 +299,7 @@ export default function StoryPage() {
                 margin: 0,
                 fontSize: 14,
                 lineHeight: 1.9,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
               }}
             >
@@ -281,7 +312,7 @@ export default function StoryPage() {
                 alignSelf: 'flex-start',
                 fontSize: 13,
                 letterSpacing: '0.05em',
-                borderBottom: '1px solid #333330',
+                borderBottom: '1px solid var(--color-fg)',
                 paddingBottom: 2,
               }}
             >

@@ -86,7 +86,7 @@ export default function CartPage() {
   }
 
   const inputStyle = {
-    border: '1px solid #dddaca',
+    border: '1px solid var(--color-border)',
     background: 'transparent',
     padding: '14px',
     fontSize: 14,
@@ -109,7 +109,7 @@ export default function CartPage() {
           flex: 1,
           display: 'grid',
           gridTemplateColumns: '1.2fr 1fr',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
           alignItems: 'start',
         }}
       >
@@ -120,7 +120,7 @@ export default function CartPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: 32,
-            borderRight: '1px solid #dddaca',
+            borderRight: '1px solid var(--color-border)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
@@ -140,10 +140,10 @@ export default function CartPage() {
               onClick={() => setShowAddressPicker(true)}
               style={{
                 background: 'none',
-                border: '1px solid #dddaca',
+                border: '1px solid var(--color-border)',
                 padding: '7px 14px',
                 fontSize: 12,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 cursor: 'pointer',
                 fontFamily: "'Noto Sans KR', sans-serif",
                 letterSpacing: '0.03em',
@@ -193,9 +193,9 @@ export default function CartPage() {
                   onClick={openAddressSearch}
                   style={{
                     flexShrink: 0,
-                    border: '1px solid #333330',
-                    background: '#333330',
-                    color: '#fffef2',
+                    border: '1px solid var(--color-fg)',
+                    background: 'var(--color-fg)',
+                    color: 'var(--color-bg)',
                     padding: '0 16px',
                     fontSize: 13,
                     cursor: 'pointer',
@@ -238,7 +238,7 @@ export default function CartPage() {
         <div
           style={{
             padding: 'clamp(32px,5vw,72px)',
-            background: '#f6f4e6',
+            background: 'var(--color-bg-hover-light)',
             display: 'flex',
             flexDirection: 'column',
             gap: 24,
@@ -258,7 +258,7 @@ export default function CartPage() {
           </h2>
 
           {cartItems.length === 0 ? (
-            <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+            <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
               장바구니가 비어 있습니다.
             </p>
           ) : (
@@ -270,7 +270,7 @@ export default function CartPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     padding: '12px 0',
-                    borderBottom: '1px solid #dddaca',
+                    borderBottom: '1px solid var(--color-border)',
                     fontSize: 14,
                     gap: 12,
                   }}
@@ -289,7 +289,7 @@ export default function CartPage() {
               display: 'flex',
               justifyContent: 'space-between',
               fontSize: 14,
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
             }}
           >
             <span>배송비</span>
@@ -312,9 +312,9 @@ export default function CartPage() {
             disabled={cartItems.length === 0 || loading}
             style={{
               cursor: cartItems.length === 0 || loading ? 'default' : 'pointer',
-              border: '1px solid #333330',
-              background: '#333330',
-              color: '#fffef2',
+              border: '1px solid var(--color-fg)',
+              background: 'var(--color-fg)',
+              color: 'var(--color-bg)',
               padding: '16px 22px',
               fontSize: 14,
               letterSpacing: '0.04em',
@@ -328,7 +328,7 @@ export default function CartPage() {
             style={{
               cursor: 'pointer',
               fontSize: 13,
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
               textAlign: 'center',
             }}
           >
@@ -389,7 +389,7 @@ function AddressPickerModal({ onClose, onSelect }) {
     >
       <div
         style={{
-          background: '#fffef2',
+          background: 'var(--color-bg)',
           padding: 'clamp(24px,4vw,40px)',
           maxWidth: 480,
           width: '100%',
@@ -426,7 +426,7 @@ function AddressPickerModal({ onClose, onSelect }) {
               border: 'none',
               fontSize: 18,
               cursor: 'pointer',
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
             }}
           >
             ×
@@ -434,9 +434,11 @@ function AddressPickerModal({ onClose, onSelect }) {
         </div>
 
         {loading ? (
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>불러오는 중...</p>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+            불러오는 중...
+          </p>
         ) : sorted.length === 0 ? (
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
             저장된 배송지가 없습니다. 마이페이지에서 배송지를 추가하세요.
           </p>
         ) : (
@@ -446,18 +448,20 @@ function AddressPickerModal({ onClose, onSelect }) {
               onClick={() => onSelect(addr)}
               style={{
                 padding: '16px 0',
-                borderBottom: '1px solid #dddaca',
+                borderBottom: '1px solid var(--color-border)',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 5,
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f6f4e6')}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--color-bg-hover-light)')
+              }
               onMouseLeave={(e) => (e.currentTarget.style.background = '')}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 14 }}>{addr.recipientName}</span>
-                <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
                   {addr.phone}
                 </span>
                 {addr.isDefault && (
@@ -465,8 +469,8 @@ function AddressPickerModal({ onClose, onSelect }) {
                     style={{
                       fontSize: 10,
                       letterSpacing: '0.06em',
-                      color: '#4a5e3a',
-                      background: '#eef3e8',
+                      color: 'var(--color-success)',
+                      background: 'var(--color-success-bg)',
                       padding: '2px 7px',
                     }}
                   >
@@ -488,7 +492,13 @@ function AddressPickerModal({ onClose, onSelect }) {
 function FormLabel({ label, children }) {
   return (
     <label
-      style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#6d6c61' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        fontSize: 13,
+        color: 'var(--color-fg-muted)',
+      }}
     >
       {label}
       {children}

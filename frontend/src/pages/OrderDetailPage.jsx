@@ -40,14 +40,17 @@ export default function OrderDetailPage() {
           ? `${order.items[0].productName} 외 ${order.items.length - 1}건`
           : order.items[0].productName
 
+      // customerEmail/customerName은 Toss SDK 내부에서 문자열 여부를 검사한다.
+      // undefined를 넘기면 SDK가 .startsWith() 호출 시 TypeError를 던지므로
+      // 값이 있을 때만 포함한다.
       const commonOptions = {
         amount: order.totalPrice,
         orderId: buildTossOrderId(order.id),
         orderName,
         successUrl: `${window.location.origin}/payments/success`,
         failUrl: `${window.location.origin}/payments/fail`,
-        customerEmail: user?.email,
-        customerName: user?.name,
+        ...(user?.email && { customerEmail: user.email }),
+        ...(user?.name && { customerName: user.name }),
       }
 
       await tossPayments.requestPayment(
@@ -89,7 +92,7 @@ export default function OrderDetailPage() {
           justifyContent: 'center',
           minHeight: '60vh',
           fontSize: 14,
-          color: '#6d6c61',
+          color: 'var(--color-fg-muted)',
           fontWeight: 300,
         }}
       >
@@ -106,7 +109,7 @@ export default function OrderDetailPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 'clamp(48px,8vw,110px) 20px',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
         <div
@@ -119,7 +122,14 @@ export default function OrderDetailPage() {
             maxWidth: 520,
           }}
         >
-          <p style={{ margin: 0, fontSize: 13, letterSpacing: '0.14em', color: '#75775e' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              letterSpacing: '0.14em',
+              color: 'var(--color-fg-accent)',
+            }}
+          >
             주문 #{order.id} · {STATUS_LABEL[order.status] ?? order.status}
           </p>
           <h1
@@ -140,7 +150,7 @@ export default function OrderDetailPage() {
               margin: 0,
               fontSize: 14,
               lineHeight: 1.9,
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
               fontWeight: 300,
             }}
           >
@@ -154,7 +164,7 @@ export default function OrderDetailPage() {
               cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
-              borderBottom: '1px solid #333330',
+              borderBottom: '1px solid var(--color-fg)',
               paddingBottom: 2,
             }}
           >
@@ -180,7 +190,14 @@ export default function OrderDetailPage() {
         >
           주문 상세
         </h2>
-        <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6d6c61', fontWeight: 300 }}>
+        <p
+          style={{
+            margin: '0 0 20px',
+            fontSize: 13,
+            color: 'var(--color-fg-muted)',
+            fontWeight: 300,
+          }}
+        >
           주문일시: {new Date(order.createdAt).toLocaleString()}
         </p>
 
@@ -188,7 +205,7 @@ export default function OrderDetailPage() {
         {order.deliveryAddress && (
           <div
             style={{
-              background: '#f6f4e6',
+              background: 'var(--color-bg-hover-light)',
               padding: '16px 20px',
               marginBottom: 24,
               display: 'flex',
@@ -207,12 +224,20 @@ export default function OrderDetailPage() {
               ({order.deliveryZipCode}) {order.deliveryAddress} {order.deliveryAddressDetail}
             </p>
             {order.deliveryNote && (
-              <p style={{ margin: 0, color: '#6d6c61' }}>메모: {order.deliveryNote}</p>
+              <p style={{ margin: 0, color: 'var(--color-fg-muted)' }}>
+                메모: {order.deliveryNote}
+              </p>
             )}
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #dddaca' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            borderTop: '1px solid var(--color-border)',
+          }}
+        >
           {order.items?.map((item, i) => (
             <div
               key={i}
@@ -220,7 +245,7 @@ export default function OrderDetailPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 padding: '14px 0',
-                borderBottom: '1px solid #dddaca',
+                borderBottom: '1px solid var(--color-border)',
                 fontSize: 14,
               }}
             >
@@ -266,9 +291,9 @@ export default function OrderDetailPage() {
               onClick={handlePay}
               style={{
                 cursor: 'pointer',
-                border: '1px solid #333330',
-                background: '#333330',
-                color: '#fffef2',
+                border: '1px solid var(--color-fg)',
+                background: 'var(--color-fg)',
+                color: 'var(--color-bg)',
                 padding: '16px 22px',
                 fontSize: 14,
                 letterSpacing: '0.04em',
@@ -285,7 +310,7 @@ export default function OrderDetailPage() {
         {order.status === 'WAITING_FOR_DEPOSIT' && order.payment && (
           <div
             style={{
-              background: '#f6f4e6',
+              background: 'var(--color-bg-hover-light)',
               padding: '20px 22px',
               marginBottom: 24,
               display: 'flex',
@@ -302,7 +327,7 @@ export default function OrderDetailPage() {
               {order.payment.virtualAccountNumber}
             </p>
             {order.payment.virtualAccountDueDate && (
-              <p style={{ margin: 0, color: '#6d6c61' }}>
+              <p style={{ margin: 0, color: 'var(--color-fg-muted)' }}>
                 입금기한: {new Date(order.payment.virtualAccountDueDate).toLocaleString()}
               </p>
             )}
@@ -311,9 +336,9 @@ export default function OrderDetailPage() {
               disabled={checking}
               style={{
                 cursor: checking ? 'default' : 'pointer',
-                border: '1px solid #333330',
-                background: '#fffef2',
-                color: '#333330',
+                border: '1px solid var(--color-fg)',
+                background: 'var(--color-bg)',
+                color: 'var(--color-fg)',
                 padding: '10px 16px',
                 fontSize: 13,
                 width: 'fit-content',
@@ -331,8 +356,8 @@ export default function OrderDetailPage() {
             style={{
               cursor: 'pointer',
               fontSize: 13,
-              color: '#6d6c61',
-              borderBottom: '1px solid #dddaca',
+              color: 'var(--color-fg-muted)',
+              borderBottom: '1px solid var(--color-border)',
               paddingBottom: 1,
             }}
           >
@@ -343,8 +368,8 @@ export default function OrderDetailPage() {
             style={{
               cursor: 'pointer',
               fontSize: 13,
-              color: '#6d6c61',
-              borderBottom: '1px solid #dddaca',
+              color: 'var(--color-fg-muted)',
+              borderBottom: '1px solid var(--color-border)',
               paddingBottom: 1,
             }}
           >

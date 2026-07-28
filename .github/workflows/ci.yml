@@ -31,9 +31,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x backend/gradlew
 
-      - name: Run tests with coverage
+      # check = spotlessCheck(포맷 강제) + test(테스트 실행, 리포트 생성) 포함
+      # jacocoTestCoverageVerification = 커버리지 60% 미달 시 빌드 실패(하드 게이트)
+      # jacocoTestReport = 아래 아티팩트 업로드용 HTML 리포트 보장
+      - name: Check, test & coverage gate
         working-directory: backend
-        run: ./gradlew test jacocoTestReport
+        run: ./gradlew check jacocoTestCoverageVerification jacocoTestReport
 
       - name: Upload JaCoCo report
         if: always()
@@ -50,7 +53,7 @@ jobs:
           path: backend/build/reports/tests/test/
 
   frontend:
-    name: Frontend Build
+    name: Frontend Test & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -65,6 +68,16 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
+
+      # prettier 포맷 검사(--check) — 규칙 위반 시 실패시켜 포맷 강제
+      - name: Format check
+        working-directory: frontend
+        run: npm run format:check
+
+      # vitest 단발 실행(watch 아님) — 프론트 테스트를 CI 통과 조건에 포함
+      - name: Test
+        working-directory: frontend
+        run: npm run test:run
 
       - name: Build
         working-directory: frontend

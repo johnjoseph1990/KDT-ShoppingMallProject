@@ -4,8 +4,8 @@ import { getProducts } from '../api/products'
 import { addToCart } from '../api/cart'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-
-const fmt = (n) => n.toLocaleString('ko-KR') + '원'
+import { fmt } from '../utils/product'
+import ProductCard from '../components/ProductCard'
 
 /* 카테고리 필터 → 상품 태그(product_tag)로 매핑.
    name/description 부분일치인 keyword 검색이 아니라, 정확히 일치하는
@@ -28,20 +28,6 @@ const RATINGS = [
   { key: 'r45', label: '★ 4.5 이상', value: 4.5 },
 ]
 
-/* 재고 수량을 화면 표시용 배지로 바꾼다.
-   "몇 개 남았을 때부터 재촉할지"는 정답이 없는 비즈니스 판단이라 이 함수 한 곳에 모아둔다.
-   카드의 배지 텍스트/색이 모두 이 결과를 쓰므로, 여기만 고치면 표시 규칙이 일괄로 바뀐다. */
-function stockBadge(stockQuantity) {
-  // 검사 순서 주의: 0은 "5 이하"에도 해당하므로 품절을 반드시 먼저 걸러낸다.
-  // 순서를 바꾸면 품절 상품이 '마감임박'으로 잘못 표시된다.
-  // 색상은 상세 페이지의 품절 경고색(#e63946)과 통일
-  if (stockQuantity === 0) return { text: '품절', color: '#e63946' }
-  // 5개 이하면 재촉 배지 — 품절만큼 급하진 않으므로 빨강 대신 기본 먹색을 쓴다
-  if (stockQuantity <= 5) return { text: '마감임박', color: '#333330' }
-  // 재고가 넉넉하면 배지를 그리지 않는다 (null이면 렌더링 자체를 생략)
-  return null
-}
-
 export default function ProductListPage() {
   const [products, setProducts] = useState([])
   const [totalElements, setTotalElements] = useState(0)
@@ -58,7 +44,7 @@ export default function ProductListPage() {
   // 돌아오게 하려면, 로그인으로 넘어가기 전에 이 위치 정보를 함께 들고 가야 한다.
   const location = useLocation()
   const { user } = useAuth()
-  const { refreshCart, showToast } = useCart()
+  const { refreshCart, showToast, showMessage } = useCart()
 
   useEffect(() => {
     const tag = CATS.find((c) => c.key === cat)?.tag || ''
@@ -77,7 +63,7 @@ export default function ProductListPage() {
         // 페이지당 10개만 받으므로 products.length로는 전체 개수를 알 수 없다.
         setTotalElements(res.data.totalElements ?? 0)
       })
-      .catch(() => {})
+      .catch(() => showMessage('상품 목록을 불러오지 못했습니다'))
   }, [cat, keyword, ratingKey, page])
 
   // 필터를 바꾸면 페이지를 0으로 되돌린다.
@@ -102,7 +88,6 @@ export default function ProductListPage() {
   const handleAddToCart = async (e, product) => {
     e.stopPropagation()
     if (!user) {
-      alert('로그인 후 담을 수 있어요')
       // state: { from: location } — 로그인 페이지에 "로그인 성공하면 여기로 돌아와야 해"라고 알려주는 값
       navigate('/login', { state: { from: location } })
       return
@@ -111,7 +96,9 @@ export default function ProductListPage() {
       await addToCart({ productId: product.id, quantity: 1 })
       refreshCart()
       showToast(product.name)
-    } catch {}
+    } catch (err) {
+      showMessage(err.response?.data?.message || '장바구니 추가에 실패했습니다')
+    }
   }
 
   return (
@@ -132,7 +119,14 @@ export default function ProductListPage() {
       >
         쇼핑
       </h1>
-      <p style={{ margin: '0 0 28px', fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+      <p
+        style={{
+          margin: '0 0 28px',
+          fontSize: 14,
+          color: 'var(--color-fg-muted)',
+          fontWeight: 300,
+        }}
+      >
         {totalElements}개의 상품 · 매주 화·금 수확분 기준
       </p>
 
@@ -147,21 +141,21 @@ export default function ProductListPage() {
           style={{
             flex: '1 1 280px',
             maxWidth: 360,
-            border: '1px solid #dddaca',
+            border: '1px solid var(--color-border)',
             background: 'transparent',
             padding: '10px 14px',
             fontSize: 13,
             fontWeight: 300,
-            color: '#333330',
+            color: 'var(--color-fg)',
           }}
         />
         <button
           type="submit"
           style={{
             cursor: 'pointer',
-            border: '1px solid #333330',
-            background: '#333330',
-            color: '#fffef2',
+            border: '1px solid var(--color-fg)',
+            background: 'var(--color-fg)',
+            color: 'var(--color-bg)',
             padding: '10px 20px',
             fontSize: 13,
             fontWeight: 300,
@@ -180,9 +174,9 @@ export default function ProductListPage() {
             }}
             style={{
               cursor: 'pointer',
-              border: '1px solid #dddaca',
+              border: '1px solid var(--color-border)',
               background: 'transparent',
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
               padding: '10px 16px',
               fontSize: 13,
               fontWeight: 300,
@@ -220,7 +214,7 @@ export default function ProductListPage() {
           id="rating-filter-label"
           style={{
             fontSize: 12,
-            color: '#6d6c61',
+            color: 'var(--color-fg-muted)',
             fontWeight: 300,
             letterSpacing: '0.08em',
             marginRight: 2,
@@ -241,7 +235,7 @@ export default function ProductListPage() {
 
       {/* 3열 상품 그리드 */}
       {products.length === 0 ? (
-        <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>
+        <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
           {keyword || ratingKey !== 'any'
             ? '조건에 맞는 상품이 없습니다. 검색어나 별점 조건을 바꿔보세요.'
             : '상품이 없습니다.'}
@@ -255,8 +249,8 @@ export default function ProductListPage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(3,1fr)',
             gap: 1,
-            background: '#dddaca',
-            border: '1px solid #dddaca',
+            background: 'var(--color-border)',
+            border: '1px solid var(--color-border)',
           }}
         >
           {products.map((p) => (
@@ -283,7 +277,9 @@ export default function ProductListPage() {
         <PageBtn onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
           ← 이전
         </PageBtn>
-        <span style={{ fontSize: 13, color: '#6d6c61', fontWeight: 300 }}>페이지 {page + 1}</span>
+        <span style={{ fontSize: 13, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+          페이지 {page + 1}
+        </span>
         {/* 전체 개수(totalElements) 기준으로 마지막 페이지를 판단한다.
             products.length < 10 으로 판단하면 "정확히 10개"일 때 빈 다음 페이지로 넘어간다 */}
         <PageBtn onClick={() => setPage((p) => p + 1)} disabled={(page + 1) * 10 >= totalElements}>
@@ -300,9 +296,9 @@ function CatBtn({ active, onClick, children }) {
       onClick={onClick}
       style={{
         cursor: 'pointer',
-        border: `1px solid ${active ? '#333330' : '#dddaca'}`,
-        background: active ? '#333330' : 'transparent',
-        color: active ? '#fffef2' : '#333330',
+        border: `1px solid ${active ? 'var(--color-fg)' : 'var(--color-border)'}`,
+        background: active ? 'var(--color-fg)' : 'transparent',
+        color: active ? 'var(--color-bg)' : 'var(--color-fg)',
         padding: '9px 18px',
         fontSize: 13,
         letterSpacing: '0.03em',
@@ -314,147 +310,6 @@ function CatBtn({ active, onClick, children }) {
   )
 }
 
-function ProductCard({ product, onOpen, onAdd }) {
-  const [hovered, setHovered] = useState(false)
-  // 품절 여부는 배지 표시와 무관하게 재고 0으로 직접 판단한다 (버튼 비활성화의 기준)
-  const soldOut = product.stockQuantity === 0
-  const badge = stockBadge(product.stockQuantity)
-  return (
-    <div
-      style={{
-        background: hovered ? '#f6f4e6' : '#fffef2',
-        padding: 28,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* 상품 이미지 — position:'relative'를 준 이유:
-          안쪽의 배지(position:'absolute')가 "이 박스"를 기준으로 위치를 잡게 하기 위함.
-          relative 부모가 없으면 배지가 화면 전체를 기준으로 붙어버린다. */}
-      <div
-        onClick={onOpen}
-        style={{
-          cursor: 'pointer',
-          aspectRatio: '4/5',
-          background: '#edeadb',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
-        {product.imageUrl && (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              // 품절 상품은 흑백 + 반투명으로 눌러 "지금은 못 산다"를 색으로도 전달한다
-              filter: soldOut ? 'grayscale(1)' : 'none',
-              opacity: soldOut ? 0.5 : 1,
-            }}
-          />
-        )}
-        {/* 재고 배지 — stockBadge()가 값을 돌려줄 때만 표시 */}
-        {badge && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              background: badge.color,
-              color: '#fffef2',
-              fontSize: 11,
-              letterSpacing: '0.06em',
-              padding: '4px 9px',
-              fontWeight: 400,
-            }}
-          >
-            {badge.text}
-          </span>
-        )}
-      </div>
-
-      {/* 상품 정보 */}
-      <div
-        onClick={onOpen}
-        style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}
-      >
-        <h3
-          style={{
-            margin: 0,
-            fontFamily: "'Noto Serif KR', serif",
-            fontWeight: 400,
-            fontSize: 17,
-          }}
-        >
-          {product.name}
-        </h3>
-        <p style={{ margin: 0, fontSize: 13, color: '#6d6c61', fontWeight: 300, lineHeight: 1.7 }}>
-          {product.description?.slice(0, 40)}
-        </p>
-        {/* 평균 별점 — 리뷰가 없으면 서버가 0.0을 내려주므로 그때는 '리뷰 없음'으로 표시한다.
-            toFixed(1): 4.3333... 같은 값을 소수점 한 자리로 반올림해 문자열로 만든다. */}
-        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
-          {product.averageRating > 0 ? `★ ${product.averageRating.toFixed(1)}` : '리뷰 없음'}
-        </p>
-        <p style={{ margin: '6px 0 0', fontSize: 14 }}>{fmt(product.price)}</p>
-      </div>
-
-      {/* 장바구니 버튼 — 텍스트 대신 카트 아이콘만 표시.
-          텍스트가 없으므로 스크린리더용으로 aria-label을 반드시 붙인다.
-          SVG는 stroke="currentColor"라 버튼 color를 따라가고, hover 시 함께 반전된다. */}
-      {/* disabled: 품절이면 클릭 자체를 막는다. onClick 안에서 걸러도 되지만,
-          disabled를 쓰면 키보드 탭 이동에서도 건너뛰어져 접근성 측면에서 더 정확하다. */}
-      <button
-        onClick={onAdd}
-        disabled={soldOut}
-        aria-label={soldOut ? '품절된 상품' : '장바구니에 담기'}
-        style={{
-          cursor: soldOut ? 'not-allowed' : 'pointer',
-          border: `1px solid ${soldOut ? '#dddaca' : '#333330'}`,
-          background: 'transparent',
-          color: soldOut ? '#a8a495' : '#333330',
-          padding: '12px',
-          // 아이콘을 버튼 가운데로 정렬
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        onMouseEnter={(e) => {
-          if (soldOut) return // 품절 버튼은 hover 반전을 하지 않는다
-          e.currentTarget.style.background = '#333330'
-          e.currentTarget.style.color = '#fffef2'
-        }}
-        onMouseLeave={(e) => {
-          if (soldOut) return
-          e.currentTarget.style.background = 'transparent'
-          e.currentTarget.style.color = '#333330'
-        }}
-      >
-        {/* 카트 아이콘: 바퀴 두 개(circle) + 카트 몸통(path) */}
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="9" cy="20" r="1" />
-          <circle cx="18" cy="20" r="1" />
-          <path d="M2 3h3l2.4 12.4a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L21 7H6" />
-        </svg>
-      </button>
-    </div>
-  )
-}
-
 function PageBtn({ onClick, disabled, children }) {
   return (
     <button
@@ -462,9 +317,9 @@ function PageBtn({ onClick, disabled, children }) {
       disabled={disabled}
       style={{
         cursor: disabled ? 'default' : 'pointer',
-        border: '1px solid #dddaca',
+        border: '1px solid var(--color-border)',
         background: 'transparent',
-        color: '#333330',
+        color: 'var(--color-fg)',
         padding: '8px 16px',
         fontSize: 13,
         opacity: disabled ? 0.4 : 1,

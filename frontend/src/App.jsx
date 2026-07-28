@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import PrivateRoute from './components/PrivateRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import CartDrawer from './components/CartDrawer'
 import Footer from './components/Footer'
@@ -32,73 +33,75 @@ export default function App() {
           <Navbar />
           {/* flex: 1 로 컨텐츠 영역이 늘어나 푸터가 항상 하단에 위치 */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/shop" element={<ProductListPage />} />
-              <Route path="/products/:id" element={<ProductDetailPage />} />
-              <Route path="/story" element={<StoryPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route
-                path="/cart"
-                element={
-                  <PrivateRoute>
-                    <CartPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/orders"
-                element={
-                  <PrivateRoute>
-                    <OrderListPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/orders/:id"
-                element={
-                  <PrivateRoute>
-                    <OrderDetailPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/payments/success"
-                element={
-                  <PrivateRoute>
-                    <PaymentSuccessPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/payments/fail"
-                element={
-                  <PrivateRoute>
-                    <PaymentFailPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/mypage"
-                element={
-                  <PrivateRoute>
-                    <MyPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <PrivateRoute adminOnly>
-                    <AdminPage />
-                  </PrivateRoute>
-                }
-              />
-              {/* path="*": 위 어떤 라우트와도 일치하지 않는 나머지 모든 경로 — 항상 마지막에 둔다 */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/shop" element={<ProductListPage />} />
+                <Route path="/products/:id" element={<ProductDetailPage />} />
+                <Route path="/story" element={<StoryPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route
+                  path="/cart"
+                  element={
+                    <PrivateRoute>
+                      <CartPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <PrivateRoute>
+                      <OrderListPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/orders/:id"
+                  element={
+                    <PrivateRoute>
+                      <OrderDetailPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/payments/success"
+                  element={
+                    <PrivateRoute>
+                      <PaymentSuccessPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/payments/fail"
+                  element={
+                    <PrivateRoute>
+                      <PaymentFailPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/mypage"
+                  element={
+                    <PrivateRoute>
+                      <MyPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <PrivateRoute adminOnly>
+                      <AdminPage />
+                    </PrivateRoute>
+                  }
+                />
+                {/* path="*": 위 어떤 라우트와도 일치하지 않는 나머지 모든 경로 — 항상 마지막에 둔다 */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </ErrorBoundary>
           </div>
           <Footer />
           <CartDrawer />

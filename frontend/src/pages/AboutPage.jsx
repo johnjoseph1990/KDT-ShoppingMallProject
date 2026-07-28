@@ -28,7 +28,7 @@ export default function AboutPage() {
       <section
         style={{
           padding: 'clamp(56px,9vw,120px) clamp(20px,5vw,72px)',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
           textAlign: 'center',
         }}
       >
@@ -54,7 +54,7 @@ export default function AboutPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
         }}
       >
         {STATS.map((s, i) => (
@@ -62,7 +62,7 @@ export default function AboutPage() {
             key={i}
             style={{
               padding: 'clamp(32px,4vw,56px)',
-              borderRight: i < 2 ? '1px solid #dddaca' : 'none',
+              borderRight: i < 2 ? '1px solid var(--color-border)' : 'none',
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
@@ -84,7 +84,7 @@ export default function AboutPage() {
                 margin: 0,
                 fontSize: 14,
                 lineHeight: 1.9,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
               }}
             >
@@ -104,10 +104,25 @@ export default function AboutPage() {
           gap: 22,
         }}
       >
-        <p style={{ margin: 0, fontSize: 13, letterSpacing: '0.14em', color: '#75775e' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            letterSpacing: '0.14em',
+            color: 'var(--color-fg-accent)',
+          }}
+        >
           우리의 약속
         </p>
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 2.1, color: '#4a4a3a', fontWeight: 300 }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 15,
+            lineHeight: 2.1,
+            color: 'var(--color-fg-subtle)',
+            fontWeight: 300,
+          }}
+        >
           민스 파머스 마켓은 2019년 대전의 작은 직거래 장터에서 시작했습니다. 좋은 먹거리는 광고가
           아니라 관계에서 온다고 믿습니다. 우리는 농부에게 제값을 치르고, 흠집 난 과일을 버리지
           않으며, 계절에 없는 것을 팔지 않습니다. 느리지만 정직한 이 방식이, 당신의 식탁과 이 지역의
@@ -131,12 +146,12 @@ function ShopBtn({ onClick, children }) {
         display: 'inline-flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        border: '1px solid #333330',
+        border: '1px solid var(--color-fg)',
         padding: '16px 22px',
         maxWidth: 340,
         fontSize: 14,
-        background: hovered ? '#333330' : 'transparent',
-        color: hovered ? '#fffef2' : '#333330',
+        background: hovered ? 'var(--color-fg)' : 'transparent',
+        color: hovered ? 'var(--color-bg)' : 'var(--color-fg)',
         userSelect: 'none',
       }}
     >

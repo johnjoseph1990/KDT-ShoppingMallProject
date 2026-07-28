@@ -12,11 +12,15 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 // 개발 환경에서만 사용할 초기 데이터 주입 설정 클래스다.
 // 애플리케이션이 시작될 때 관리자/회원/상품 데이터를 미리 넣어, 화면과 로그인 기능을 바로 확인할 수 있게 한다.
 // 이미 데이터가 있으면 다시 넣지 않도록 막아서 중복 저장을 방지한다.
+// @Profile("dev"): spring.profiles.active=dev 일 때만 이 빈이 등록된다.
+// 운영 배포 시 SPRING_PROFILES_ACTIVE=prod 로 설정하면 시드 데이터가 삽입되지 않는다.
+@Profile("dev")
 @Configuration
 public class DevDataInitializer {
 

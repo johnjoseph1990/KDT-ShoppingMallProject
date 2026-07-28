@@ -9,6 +9,7 @@ export function CartProvider({ children }) {
   const { user } = useAuth()
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
+  // toast: null | { text: string, type: 'success' | 'error' }
   const [toast, setToast] = useState(null)
   const toastTimer = useRef(null)
 
@@ -31,9 +32,16 @@ export function CartProvider({ children }) {
   const openCart = () => setCartOpen(true)
   const closeCart = () => setCartOpen(false)
 
-  /* 상품명을 받아 2.2초 토스트를 표시 */
+  /* 장바구니 담기 성공 토스트 — 상품명을 받아 "○○ — 장바구니에 담았습니다" 표시 */
   const showToast = (name) => {
-    setToast(name)
+    setToast({ text: `${name} — 장바구니에 담았습니다`, type: 'success' })
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2200)
+  }
+
+  /* 에러·안내 메시지 토스트 — 전달받은 문자열을 그대로 표시 */
+  const showMessage = (text) => {
+    setToast({ text, type: 'error' })
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), 2200)
   }
@@ -68,6 +76,7 @@ export function CartProvider({ children }) {
         openCart,
         closeCart,
         showToast,
+        showMessage,
         changeQty,
         removeItem,
       }}

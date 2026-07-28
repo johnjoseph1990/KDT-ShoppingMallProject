@@ -1,9 +1,12 @@
 import { useCart } from '../context/CartContext'
 
-/* 장바구니 담기 완료 시 하단에 표시되는 토스트 메시지 */
+/* 장바구니 성공·에러 안내 토스트. toast = { text, type: 'success' | 'error' } */
 export default function Toast() {
   const { toast } = useCart()
   if (!toast) return null
+
+  // 에러는 붉은 계열, 성공은 기존 다크 배경
+  const bg = toast.type === 'error' ? 'var(--color-danger-dark)' : 'var(--color-bg-dark)'
 
   return (
     <div
@@ -12,8 +15,8 @@ export default function Toast() {
         bottom: 28,
         left: '50%',
         transform: 'translateX(-50%)',
-        background: '#333326',
-        color: '#e5e3d3',
+        background: bg,
+        color: 'var(--color-text-on-dark)',
         padding: '13px 26px',
         fontSize: 13,
         letterSpacing: '0.03em',
@@ -22,7 +25,7 @@ export default function Toast() {
         whiteSpace: 'nowrap',
       }}
     >
-      {toast} — 장바구니에 담았습니다
+      {toast.text}
     </div>
   )
 }

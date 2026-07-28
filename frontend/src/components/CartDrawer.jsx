@@ -47,11 +47,11 @@ export default function CartDrawer() {
           right: 0,
           bottom: 0,
           width: 'min(440px, 100vw)',
-          background: '#fffef2',
+          background: 'var(--color-bg)',
           zIndex: 100,
           display: 'flex',
           flexDirection: 'column',
-          borderLeft: '1px solid #dddaca',
+          borderLeft: '1px solid var(--color-border)',
           animation: 'fadeUp .25s ease both',
         }}
       >
@@ -62,7 +62,7 @@ export default function CartDrawer() {
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '22px 28px',
-            borderBottom: '1px solid #dddaca',
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
           <h2
@@ -82,7 +82,7 @@ export default function CartDrawer() {
               border: 'none',
               background: 'transparent',
               fontSize: 22,
-              color: '#6d6c61',
+              color: 'var(--color-fg-muted)',
               lineHeight: 1,
             }}
           >
@@ -96,7 +96,7 @@ export default function CartDrawer() {
             <p
               style={{
                 fontSize: 14,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
                 lineHeight: 1.9,
                 padding: '24px 0',
@@ -109,7 +109,7 @@ export default function CartDrawer() {
             <p
               style={{
                 fontSize: 14,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
                 lineHeight: 1.9,
                 padding: '24px 0',
@@ -128,14 +128,14 @@ export default function CartDrawer() {
                   display: 'flex',
                   gap: 16,
                   padding: '20px 0',
-                  borderBottom: '1px solid #dddaca',
+                  borderBottom: '1px solid var(--color-border)',
                 }}
               >
                 <div
                   style={{
                     width: 64,
                     height: 80,
-                    background: '#edeadb',
+                    background: 'var(--color-bg-hover)',
                     flexShrink: 0,
                     overflow: 'hidden',
                   }}
@@ -165,7 +165,7 @@ export default function CartDrawer() {
                         cursor: 'pointer',
                         border: 'none',
                         background: 'transparent',
-                        color: '#6d6c61',
+                        color: 'var(--color-fg-muted)',
                         fontSize: 13,
                         flexShrink: 0,
                       }}
@@ -180,7 +180,7 @@ export default function CartDrawer() {
                       alignItems: 'center',
                     }}
                   >
-                    <div style={{ display: 'flex', border: '1px solid #dddaca' }}>
+                    <div style={{ display: 'flex', border: '1px solid var(--color-border)' }}>
                       <button
                         onClick={() => changeQty(item.id, item.quantity - 1)}
                         style={{
@@ -230,7 +230,7 @@ export default function CartDrawer() {
         <div
           style={{
             padding: '22px 28px',
-            borderTop: '1px solid #dddaca',
+            borderTop: '1px solid var(--color-border)',
             display: 'flex',
             flexDirection: 'column',
             gap: 14,
@@ -238,7 +238,14 @@ export default function CartDrawer() {
         >
           {user ? (
             <>
-              <p style={{ margin: 0, fontSize: 13, color: '#75775e', fontWeight: 300 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: 'var(--color-fg-accent)',
+                  fontWeight: 300,
+                }}
+              >
                 {shipMsg}
               </p>
               <div
@@ -257,9 +264,9 @@ export default function CartDrawer() {
                 disabled={isEmpty}
                 style={{
                   cursor: isEmpty ? 'default' : 'pointer',
-                  border: '1px solid #333330',
-                  background: '#333330',
-                  color: '#fffef2',
+                  border: '1px solid var(--color-fg)',
+                  background: 'var(--color-fg)',
+                  color: 'var(--color-bg)',
                   padding: '16px',
                   fontSize: 14,
                   letterSpacing: '0.04em',
@@ -277,9 +284,9 @@ export default function CartDrawer() {
               }}
               style={{
                 cursor: 'pointer',
-                border: '1px solid #333330',
-                background: '#333330',
-                color: '#fffef2',
+                border: '1px solid var(--color-fg)',
+                background: 'var(--color-fg)',
+                color: 'var(--color-bg)',
                 padding: '16px',
                 fontSize: 14,
                 letterSpacing: '0.04em',

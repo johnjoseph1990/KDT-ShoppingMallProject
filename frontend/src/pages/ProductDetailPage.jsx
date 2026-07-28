@@ -5,17 +5,18 @@ import { addToCart } from '../api/cart'
 import { getReviews, createReview, updateReview, deleteReview } from '../api/reviews'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-
-const fmt = (n) => n.toLocaleString('ko-KR') + '원'
+import { fmt } from '../utils/product'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
-  const { refreshCart, showToast } = useCart()
+  const { refreshCart, showToast, showMessage } = useCart()
 
   const [product, setProduct] = useState(null)
+  // 상품 조회 실패 시 true로 전환 — !product와 구분해 "로딩 중"과 "실패"를 분리한다
+  const [loadError, setLoadError] = useState(false)
   const [reviews, setReviews] = useState([])
   // 같은 태그를 가진 다른 상품 추천 목록 (R-6)
   const [recommendations, setRecommendations] = useState([])
@@ -31,13 +32,35 @@ export default function ProductDetailPage() {
   const [reviewTotal, setReviewTotal] = useState(0)
 
   useEffect(() => {
-    getProduct(id).then((res) => setProduct(res.data))
-    // 추천 상품 조회 (태그가 없는 상품이면 빈 배열이 돌아옴)
+    // ignore 플래그: id가 바뀌어 이전 요청의 응답이 늦게 도착해도 상태를 덮어쓰지 않게 한다.
+    // (사용자가 상품 A → B → C 빠르게 이동할 때 A 응답이 C 화면을 덮는 race condition 방지)
+    let ignore = false
+
+    setProduct(null)
+    setLoadError(false)
+
+    getProduct(id)
+      .then((res) => {
+        if (!ignore) setProduct(res.data)
+      })
+      .catch(() => {
+        if (!ignore) setLoadError(true)
+      })
+
+    // 추천 상품은 부가 데이터 — 실패해도 화면이 깨지지 않으므로 조용히 무시
     getRecommendations(id)
-      .then((res) => setRecommendations(res.data))
+      .then((res) => {
+        if (!ignore) setRecommendations(res.data)
+      })
       .catch(() => {})
+
     loadKeywords()
     loadReviews()
+
+    // 클린업 함수: 이 effect가 재실행되거나 컴포넌트가 언마운트될 때 실행
+    return () => {
+      ignore = true
+    }
   }, [id])
 
   const loadReviews = () => {
@@ -60,7 +83,6 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      alert('로그인 후 담을 수 있어요')
       navigate('/login', { state: { from: location } })
       return
     }
@@ -69,7 +91,7 @@ export default function ProductDetailPage() {
       refreshCart()
       showToast(product.name)
     } catch (err) {
-      alert(err.response?.data?.message || '장바구니 추가 실패')
+      showMessage(err.response?.data?.message || '장바구니 추가에 실패했습니다')
     }
   }
 
@@ -81,7 +103,7 @@ export default function ProductDetailPage() {
       loadReviews()
       loadKeywords()
     } catch (err) {
-      alert(err.response?.data?.message || '리뷰 작성 실패')
+      showMessage(err.response?.data?.message || '리뷰 작성에 실패했습니다')
     }
   }
 
@@ -105,7 +127,7 @@ export default function ProductDetailPage() {
       loadKeywords()
     } catch (err) {
       // 실패 시에는 편집 폼을 열어둔다. 닫아버리면 방금 입력한 내용이 사라진다.
-      alert(err.response?.data?.message || '리뷰 수정 실패')
+      showMessage(err.response?.data?.message || '리뷰 수정에 실패했습니다')
     }
   }
 
@@ -115,10 +137,41 @@ export default function ProductDetailPage() {
       await deleteReview(id, reviewId)
       loadReviews()
       loadKeywords()
-    } catch {
-      alert('삭제 권한이 없습니다.')
+    } catch (err) {
+      showMessage(err.response?.data?.message || '삭제 권한이 없습니다')
     }
   }
+
+  // 에러와 로딩을 구분해 렌더링한다.
+  // 기존에 !product 하나로 둘 다 처리하면 실패해도 영원히 "불러오는 중..."이 표시된다.
+  if (loadError)
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+          minHeight: '60vh',
+          fontSize: 14,
+          color: 'var(--color-fg-muted)',
+          fontWeight: 300,
+        }}
+      >
+        <p style={{ margin: 0 }}>상품 정보를 불러오지 못했습니다.</p>
+        <span
+          onClick={() => window.location.reload()}
+          style={{
+            cursor: 'pointer',
+            fontSize: 13,
+            borderBottom: '1px solid var(--color-fg-muted)',
+          }}
+        >
+          새로고침
+        </span>
+      </div>
+    )
 
   if (!product)
     return (
@@ -129,7 +182,7 @@ export default function ProductDetailPage() {
           justifyContent: 'center',
           minHeight: '60vh',
           fontSize: 14,
-          color: '#6d6c61',
+          color: 'var(--color-fg-muted)',
           fontWeight: 300,
         }}
       >
@@ -146,7 +199,7 @@ export default function ProductDetailPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: '1.1fr 1fr',
-          borderBottom: '1px solid #dddaca',
+          borderBottom: '1px solid var(--color-border)',
           minHeight: '76vh',
         }}
       >
@@ -155,7 +208,7 @@ export default function ProductDetailPage() {
         <div
           className="hero-sticky-image"
           style={{
-            background: '#edeadb',
+            background: 'var(--color-bg-hover)',
             position: 'sticky',
             top: 72,
             height: 'calc(100vh - 72px)',
@@ -169,7 +222,7 @@ export default function ProductDetailPage() {
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (
-            <div style={{ width: '100%', height: '100%', background: '#edeadb' }} />
+            <div style={{ width: '100%', height: '100%', background: 'var(--color-bg-hover)' }} />
           )}
         </div>
 
@@ -184,7 +237,7 @@ export default function ProductDetailPage() {
         >
           <span
             onClick={() => navigate('/shop')}
-            style={{ cursor: 'pointer', fontSize: 13, color: '#6d6c61' }}
+            style={{ cursor: 'pointer', fontSize: 13, color: 'var(--color-fg-muted)' }}
           >
             ← 쇼핑으로 돌아가기
           </span>
@@ -196,7 +249,7 @@ export default function ProductDetailPage() {
                   margin: 0,
                   fontSize: 12,
                   letterSpacing: '0.14em',
-                  color: '#75775e',
+                  color: 'var(--color-fg-accent)',
                 }}
               >
                 {product.tags.join(' · ')}
@@ -217,7 +270,7 @@ export default function ProductDetailPage() {
               style={{
                 margin: 0,
                 fontSize: 15,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 fontWeight: 300,
                 lineHeight: 1.9,
               }}
@@ -226,12 +279,17 @@ export default function ProductDetailPage() {
             </p>
           </div>
 
+          {/* 조회수 — API 응답의 viewCount를 그대로 표시 */}
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--color-fg-muted)' }}>
+            조회 {product.viewCount.toLocaleString()}회
+          </p>
+
           {/* 재고 상태 */}
           <p
             style={{
               margin: 0,
               fontSize: 14,
-              color: product.stockQuantity > 0 ? '#75775e' : '#e63946',
+              color: product.stockQuantity > 0 ? 'var(--color-fg-accent)' : 'var(--color-danger)',
             }}
           >
             {product.stockQuantity > 0 ? `재고 ${product.stockQuantity}개` : '품절'}
@@ -239,7 +297,7 @@ export default function ProductDetailPage() {
 
           {/* 수량 스테퍼 + 장바구니 버튼 */}
           <div style={{ display: 'flex', gap: 14, alignItems: 'stretch' }}>
-            <div style={{ display: 'flex', border: '1px solid #333330' }}>
+            <div style={{ display: 'flex', border: '1px solid var(--color-fg)' }}>
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 style={{
@@ -309,20 +367,20 @@ export default function ProductDetailPage() {
               display: 'grid',
               gridTemplateColumns: 'repeat(4,1fr)',
               gap: 1,
-              background: '#dddaca',
-              border: '1px solid #dddaca',
+              background: 'var(--color-border)',
+              border: '1px solid var(--color-border)',
             }}
           >
             {recommendations.map((r) => (
               <div
                 key={r.id}
                 onClick={() => navigate(`/products/${r.id}`)}
-                style={{ background: '#fffef2', padding: 20, cursor: 'pointer' }}
+                style={{ background: 'var(--color-bg)', padding: 20, cursor: 'pointer' }}
               >
                 <div
                   style={{
                     aspectRatio: '4/5',
-                    background: '#edeadb',
+                    background: 'var(--color-bg-hover)',
                     overflow: 'hidden',
                     marginBottom: 12,
                   }}
@@ -336,7 +394,9 @@ export default function ProductDetailPage() {
                   )}
                 </div>
                 <p style={{ margin: '0 0 4px', fontSize: 14 }}>{r.name}</p>
-                <p style={{ margin: 0, fontSize: 13, color: '#6d6c61' }}>{fmt(r.price)}</p>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-fg-muted)' }}>
+                  {fmt(r.price)}
+                </p>
               </div>
             ))}
           </div>
@@ -358,17 +418,28 @@ export default function ProductDetailPage() {
 
         {/* 리뷰 본문에서 추출된 키워드 배지. 리뷰가 없으면 keywords도 빈 배열이라 자동으로 숨겨짐 */}
         {keywords.length > 0 && (
-          <p style={{ margin: '-16px 0 32px', fontSize: 13, color: '#75775e' }}>
+          <p style={{ margin: '-16px 0 32px', fontSize: 13, color: 'var(--color-fg-accent)' }}>
             자주 언급된 키워드 · {keywords.map((k) => `${k.keyword}(${k.count})`).join(' · ')}
           </p>
         )}
 
         {reviews.length === 0 ? (
-          <p style={{ fontSize: 14, color: '#6d6c61', fontWeight: 300 }}>첫 리뷰를 작성해보세요.</p>
+          <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+            첫 리뷰를 작성해보세요.
+          </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #dddaca' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              borderTop: '1px solid var(--color-border)',
+            }}
+          >
             {reviews.map((r) => (
-              <div key={r.id} style={{ padding: '24px 0', borderBottom: '1px solid #dddaca' }}>
+              <div
+                key={r.id}
+                style={{ padding: '24px 0', borderBottom: '1px solid var(--color-border)' }}
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -378,11 +449,11 @@ export default function ProductDetailPage() {
                 >
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <strong style={{ fontSize: 14 }}>{r.memberName}</strong>
-                    <span style={{ fontSize: 13, color: '#75775e' }}>
+                    <span style={{ fontSize: 13, color: 'var(--color-fg-accent)' }}>
                       {'★'.repeat(r.rating)}
                       {'☆'.repeat(5 - r.rating)}
                     </span>
-                    <span style={{ fontSize: 12, color: '#6d6c61', fontWeight: 300 }}>
+                    <span style={{ fontSize: 12, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
                       {new Date(r.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -397,7 +468,7 @@ export default function ProductDetailPage() {
                           border: 'none',
                           background: 'transparent',
                           fontSize: 12,
-                          color: '#6d6c61',
+                          color: 'var(--color-fg-muted)',
                         }}
                       >
                         수정
@@ -409,7 +480,7 @@ export default function ProductDetailPage() {
                           border: 'none',
                           background: 'transparent',
                           fontSize: 12,
-                          color: '#6d6c61',
+                          color: 'var(--color-fg-muted)',
                         }}
                       >
                         삭제
@@ -429,7 +500,7 @@ export default function ProductDetailPage() {
                       // 객체를 새로 만들어야 React가 상태 변경을 감지해 다시 그린다.
                       onChange={(e) => setEditing({ ...editing, rating: Number(e.target.value) })}
                       style={{
-                        border: '1px solid #dddaca',
+                        border: '1px solid var(--color-border)',
                         background: 'transparent',
                         padding: '8px 12px',
                         fontSize: 14,
@@ -449,7 +520,7 @@ export default function ProductDetailPage() {
                       rows={3}
                       required
                       style={{
-                        border: '1px solid #dddaca',
+                        border: '1px solid var(--color-border)',
                         background: 'transparent',
                         padding: 12,
                         fontSize: 14,
@@ -463,9 +534,9 @@ export default function ProductDetailPage() {
                         type="submit"
                         style={{
                           cursor: 'pointer',
-                          border: '1px solid #333330',
-                          background: '#333330',
-                          color: '#fffef2',
+                          border: '1px solid var(--color-fg)',
+                          background: 'var(--color-fg)',
+                          color: 'var(--color-bg)',
                           padding: '10px 18px',
                           fontSize: 13,
                         }}
@@ -478,11 +549,11 @@ export default function ProductDetailPage() {
                         onClick={cancelEdit}
                         style={{
                           cursor: 'pointer',
-                          border: '1px solid #dddaca',
+                          border: '1px solid var(--color-border)',
                           background: 'transparent',
                           padding: '10px 18px',
                           fontSize: 13,
-                          color: '#6d6c61',
+                          color: 'var(--color-fg-muted)',
                         }}
                       >
                         취소
@@ -496,7 +567,7 @@ export default function ProductDetailPage() {
                       fontSize: 14,
                       lineHeight: 1.8,
                       fontWeight: 300,
-                      color: '#4a4a3a',
+                      color: 'var(--color-fg-subtle)',
                     }}
                   >
                     {r.content}
@@ -532,7 +603,7 @@ export default function ProductDetailPage() {
             <label
               style={{
                 fontSize: 13,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 8,
@@ -543,7 +614,7 @@ export default function ProductDetailPage() {
                 value={reviewForm.rating}
                 onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
                 style={{
-                  border: '1px solid #dddaca',
+                  border: '1px solid var(--color-border)',
                   background: 'transparent',
                   padding: '10px 14px',
                   fontSize: 14,
@@ -560,7 +631,7 @@ export default function ProductDetailPage() {
             <label
               style={{
                 fontSize: 13,
-                color: '#6d6c61',
+                color: 'var(--color-fg-muted)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 8,
@@ -574,7 +645,7 @@ export default function ProductDetailPage() {
                 rows={4}
                 required
                 style={{
-                  border: '1px solid #dddaca',
+                  border: '1px solid var(--color-border)',
                   background: 'transparent',
                   padding: '14px',
                   fontSize: 14,
@@ -588,9 +659,9 @@ export default function ProductDetailPage() {
               type="submit"
               style={{
                 cursor: 'pointer',
-                border: '1px solid #333330',
-                background: '#333330',
-                color: '#fffef2',
+                border: '1px solid var(--color-fg)',
+                background: 'var(--color-fg)',
+                color: 'var(--color-bg)',
                 padding: '14px 22px',
                 fontSize: 13,
                 letterSpacing: '0.04em',
@@ -618,9 +689,9 @@ function AddCartBtn({ onClick, disabled, price }) {
       style={{
         cursor: disabled ? 'default' : 'pointer',
         flex: 1,
-        border: `1px solid ${hovered ? '#75775e' : '#333330'}`,
-        background: hovered ? '#75775e' : '#333330',
-        color: '#fffef2',
+        border: `1px solid ${hovered ? 'var(--color-fg-accent)' : 'var(--color-fg)'}`,
+        background: hovered ? 'var(--color-fg-accent)' : 'var(--color-fg)',
+        color: 'var(--color-bg)',
         padding: '16px 22px',
         fontSize: 14,
         letterSpacing: '0.04em',
