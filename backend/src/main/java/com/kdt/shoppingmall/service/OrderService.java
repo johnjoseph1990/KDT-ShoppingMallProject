@@ -20,6 +20,8 @@ import com.kdt.shoppingmall.repository.MemberRepository;
 import com.kdt.shoppingmall.repository.OrderRepository;
 import com.kdt.shoppingmall.repository.PaymentRepository;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
+
+  private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
   private final OrderRepository orderRepository;
   private final CartItemRepository cartItemRepository;
@@ -103,7 +107,9 @@ public class OrderService {
   }
 
   public OrderResponse getOrder(Long memberId, Long orderId) {
-    return OrderResponse.from(getOwnedOrderOrThrow(memberId, orderId));
+    Order order = getOwnedOrderOrThrow(memberId, orderId);
+    // 결제가 아직 없는 주문(ORDERED)도 있으므로 Optional로 조회해 없으면 null로 넘긴다.
+    return OrderResponse.from(order, paymentRepository.findByOrder(order).orElse(null));
   }
 
   @Transactional
@@ -113,29 +119,88 @@ public class OrderService {
     // 프론트가 보낸 amount는 브라우저 개발자도구로 조작 가능하므로 절대 신뢰하지 않는다.
     // 서버가 order.getTotalPrice()로 직접 계산한 금액과 다르면 토스 승인 API 호출 자체를 막는다.
     if (order.getTotalPrice() != request.amount()) {
+      // 브라우저 조작으로 금액을 다르게 보낸 시도는 잠재적 이상거래 시그널이므로 감사 로그를 남긴다.
+      log.warn(
+          "결제 금액 불일치: orderId={}, 서버계산금액={}, 요청금액={}",
+          orderId,
+          order.getTotalPrice(),
+          request.amount());
       throw new PaymentAmountMismatchException("결제 금액이 일치하지 않습니다.");
     }
 
-    boolean success =
+    PaymentProcessor.ConfirmResult result =
         paymentProcessor.confirm(request.paymentKey(), request.orderId(), order.getTotalPrice());
 
-    if (success) {
-      order.changeStatus(OrderStatus.PAID);
-    } else {
-      // ORDERED → CANCELED 전이만 허용되므로, 이미 CANCELED인 주문에 pay()를 다시 호출하면
-      // changeStatus()가 InvalidOrderStatusException을 던진다. 이중 재고 복구는 구조적으로 불가.
-      order.changeStatus(OrderStatus.CANCELED);
-      restoreStock(order);
+    // switch 표현식: result.status()의 각 case가 즉시 값을 만들어 payment 변수에 대입된다.
+    // 카드결제는 DONE으로 바로 오고, 가상계좌는 발급만 되면 WAITING_FOR_DEPOSIT으로 온다.
+    Payment payment =
+        switch (result.status()) {
+          case DONE -> {
+            order.changeStatus(OrderStatus.PAID);
+            yield new Payment(
+                order,
+                PaymentStatus.SUCCESS,
+                result.method(),
+                order.getTotalPrice(),
+                request.paymentKey());
+          }
+          case WAITING_FOR_DEPOSIT -> {
+            order.changeStatus(OrderStatus.WAITING_FOR_DEPOSIT);
+            yield new Payment(
+                order,
+                PaymentStatus.WAITING_FOR_DEPOSIT,
+                result.method(),
+                order.getTotalPrice(),
+                request.paymentKey(),
+                result.virtualAccountBankCode(),
+                result.virtualAccountNumber(),
+                result.virtualAccountDueDate());
+          }
+          case FAILED -> {
+            // ORDERED → CANCELED 전이만 허용되므로, 이미 CANCELED인 주문에 pay()를 다시 호출하면
+            // changeStatus()가 InvalidOrderStatusException을 던진다. 이중 재고 복구는 구조적으로 불가.
+            order.changeStatus(OrderStatus.CANCELED);
+            restoreStock(order);
+            yield new Payment(
+                order,
+                PaymentStatus.FAILED,
+                result.method(),
+                order.getTotalPrice(),
+                request.paymentKey());
+          }
+        };
+
+    return PaymentResponse.from(paymentRepository.save(payment));
+  }
+
+  // 가상계좌 입금 여부를 폴링으로 확인한다. 웹훅 대신 이 방식을 쓰는 이유는 토스 서버가
+  // localhost로 콜백을 보낼 수 없어, 로컬 개발 환경에서 재현이 안 되기 때문이다.
+  @Transactional
+  public OrderResponse checkDepositStatus(Long memberId, Long orderId) {
+    Order order = getOwnedOrderOrThrow(memberId, orderId);
+    // 입금 대기 중이 아닌 주문(카드결제 완료, 아직 결제 전 등)은 물어볼 필요가 없다.
+    if (order.getStatus() != OrderStatus.WAITING_FOR_DEPOSIT) {
+      return OrderResponse.from(order);
     }
 
     Payment payment =
-        paymentRepository.save(
-            new Payment(
-                order,
-                success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
-                order.getTotalPrice(),
-                request.paymentKey()));
-    return PaymentResponse.from(payment);
+        paymentRepository
+            .findByOrder(order)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("결제 정보를 찾을 수 없습니다. orderId=" + orderId));
+
+    // checkStatus() 호출 자체가 실패하면(네트워크 오류 등) 예외를 여기서 잡지 않고 그대로 위로
+    // 던진다 — GlobalExceptionHandler가 500으로 응답한다. "아직 입금 안 됨"과 "지금 확인이 안 됨"을
+    // 조용히 같은 걸로 취급해버리면, 사용자는 토스 쪽 장애로 확인이 안 되는 상황에서도 그냥
+    // "입금 대기 중"으로만 보여 원인을 알 길이 없다. 확인이 안 될 땐 명확히 에러로 드러나는 쪽을 택한다.
+    PaymentProcessor.ConfirmResult result = paymentProcessor.checkStatus(payment.getPaymentKey());
+    if (result.status() == PaymentProcessor.ConfirmStatus.DONE) {
+      order.changeStatus(OrderStatus.PAID);
+      payment.completeDeposit();
+    }
+    // WAITING_FOR_DEPOSIT이면 아직 입금 전이므로 아무것도 바꾸지 않는다.
+
+    return OrderResponse.from(order, payment);
   }
 
   // status가 없으면(null) 전체 조회, 있으면 상태별 필터링해서 조회한다.

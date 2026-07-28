@@ -2,7 +2,9 @@ package com.kdt.shoppingmall.dto.order;
 
 import com.kdt.shoppingmall.domain.order.Order;
 import com.kdt.shoppingmall.domain.order.OrderStatus;
+import com.kdt.shoppingmall.domain.payment.Payment;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 public record OrderResponse(
@@ -17,9 +19,16 @@ public record OrderResponse(
     String deliveryZipCode,
     String deliveryAddress,
     String deliveryAddressDetail,
-    String deliveryNote) {
+    String deliveryNote,
+    // 가상계좌 입금 대기 화면에 계좌정보를 보여줄 때만 채워진다. Order가 Payment를 직접 갖고 있지
+    // 않아(Payment가 Order를 참조하는 방향) 호출하는 쪽에서 조회해 넘겨줘야 한다.
+    PaymentInfo payment) {
 
   public static OrderResponse from(Order order) {
+    return from(order, null);
+  }
+
+  public static OrderResponse from(Order order, Payment payment) {
     return new OrderResponse(
         order.getId(),
         order.getStatus(),
@@ -31,6 +40,20 @@ public record OrderResponse(
         order.getDeliveryZipCode(),
         order.getDeliveryAddress(),
         order.getDeliveryAddressDetail(),
-        order.getDeliveryNote());
+        order.getDeliveryNote(),
+        payment != null ? PaymentInfo.from(payment) : null);
+  }
+
+  public record PaymentInfo(
+      String virtualAccountBankCode,
+      String virtualAccountNumber,
+      OffsetDateTime virtualAccountDueDate) {
+
+    public static PaymentInfo from(Payment payment) {
+      return new PaymentInfo(
+          payment.getVirtualAccountBankCode(),
+          payment.getVirtualAccountNumber(),
+          payment.getVirtualAccountDueDate());
+    }
   }
 }

@@ -44,7 +44,18 @@ class AdminOrderControllerTest {
   private OrderResponse sampleResponse(OrderStatus status) {
     // 배송지 필드는 관리자 주문 테스트에서 검증 대상이 아니므로 null로 채운다
     return new OrderResponse(
-        1L, status, 10000, LocalDateTime.now(), List.of(), null, null, null, null, null, null);
+        1L,
+        status,
+        10000,
+        LocalDateTime.now(),
+        List.of(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   @Test

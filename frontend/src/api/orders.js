@@ -12,3 +12,6 @@ export const confirmPayment = (orderId, { paymentKey, tossOrderId, amount }) =>
     orderId: tossOrderId,
     amount,
   })
+
+// 가상계좌 발급 후 실제 입금이 됐는지 서버가 토스에 직접 물어보게 하는 폴링 요청.
+export const checkDeposit = (orderId) => axiosInstance.post(`/orders/${orderId}/check-deposit`)

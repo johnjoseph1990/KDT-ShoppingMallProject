@@ -1,31 +1,37 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadTossPayments } from '@tosspayments/payment-sdk'
-import { getOrder } from '../api/orders'
+import { getOrder, checkDeposit } from '../api/orders'
 import { buildTossOrderId } from '../utils/toss'
 import { useAuth } from '../context/AuthContext'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 const STATUS_LABEL = {
   ORDERED: '주문완료',
+  WAITING_FOR_DEPOSIT: '입금대기',
   PAID: '결제완료',
   SHIPPING: '배송중',
   DELIVERED: '배송완료',
   CANCELED: '취소됨',
 }
+// 토스 테스트 가상계좌가 주로 내려주는 은행코드만 최소로 매핑. 목록에 없으면 코드 그대로 보여준다.
+const BANK_NAME = { '20': '우리은행', '88': '신한은행', '81': '하나은행', '03': '기업은행' }
 
 export default function OrderDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [order, setOrder] = useState(null)
+  const [paymentMethod, setPaymentMethod] = useState('카드')
+  const [checking, setChecking] = useState(false)
 
   useEffect(() => {
     getOrder(id).then((res) => setOrder(res.data))
   }, [id])
 
-  // "결제하기" 클릭 → 토스 결제창(팝업/리다이렉트) 오픈. 결제창 자체에서 카드 승인까지 끝나면
-  // successUrl로 리다이렉트되고, 그 이후 승인(confirm) 요청은 PaymentSuccessPage에서 이어진다.
+  // "결제하기" 클릭 → 토스 결제창(팝업/리다이렉트) 오픈. 카드는 결제창에서 승인까지 끝나고,
+  // 가상계좌는 "발급"만 끝난다 — 둘 다 successUrl로 리다이렉트되고, 이어지는 승인(confirm)
+  // 요청은 PaymentSuccessPage에서 처리한다.
   const handlePay = async () => {
     try {
       const tossPayments = await loadTossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY)
@@ -34,7 +40,7 @@ export default function OrderDetailPage() {
           ? `${order.items[0].productName} 외 ${order.items.length - 1}건`
           : order.items[0].productName
 
-      await tossPayments.requestPayment('카드', {
+      const commonOptions = {
         amount: order.totalPrice,
         orderId: buildTossOrderId(order.id),
         orderName,
@@ -42,12 +48,35 @@ export default function OrderDetailPage() {
         failUrl: `${window.location.origin}/payments/fail`,
         customerEmail: user?.email,
         customerName: user?.name,
-      })
+      }
+
+      await tossPayments.requestPayment(
+        paymentMethod,
+        paymentMethod === '가상계좌'
+          ? { ...commonOptions, cashReceipt: { type: '미발행' } }
+          : commonOptions,
+      )
     } catch (err) {
       // 사용자가 결제창을 직접 닫은 경우(USER_CANCEL)는 굳이 에러로 알릴 필요 없다.
       if (err.code !== 'USER_CANCEL') {
         alert(err.message || '결제창을 여는 중 문제가 발생했습니다.')
       }
+    }
+  }
+
+  // "입금 확인하기" 클릭 → 서버가 토스에 직접 물어봐서(폴링) 실제 입금 여부를 갱신한다.
+  const handleCheckDeposit = async () => {
+    setChecking(true)
+    try {
+      const res = await checkDeposit(order.id)
+      setOrder(res.data)
+      if (res.data.status === 'WAITING_FOR_DEPOSIT') {
+        alert('아직 입금이 확인되지 않았습니다. 잠시 후 다시 시도해주세요.')
+      }
+    } catch {
+      alert('입금 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -216,24 +245,84 @@ export default function OrderDetailPage() {
           <span>{fmt(order.totalPrice)}</span>
         </div>
 
-        {/* 결제대기 상태에서만 결제 버튼 노출 */}
+        {/* 결제대기 상태에서만 결제수단 선택 + 결제 버튼 노출 */}
         {order.status === 'ORDERED' && (
-          <button
-            onClick={handlePay}
+          <>
+            <div style={{ display: 'flex', gap: 20, marginBottom: 16, fontSize: 14 }}>
+              {['카드', '가상계좌'].map((m) => (
+                <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={m}
+                    checked={paymentMethod === m}
+                    onChange={() => setPaymentMethod(m)}
+                  />
+                  {m === '가상계좌' ? '무통장입금(가상계좌)' : m}
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handlePay}
+              style={{
+                cursor: 'pointer',
+                border: '1px solid #333330',
+                background: '#333330',
+                color: '#fffef2',
+                padding: '16px 22px',
+                fontSize: 14,
+                letterSpacing: '0.04em',
+                width: '100%',
+                marginBottom: 24,
+              }}
+            >
+              결제하기
+            </button>
+          </>
+        )}
+
+        {/* 가상계좌 발급 후 입금 대기 중 — 계좌정보 표시 + 직접 입금 확인 */}
+        {order.status === 'WAITING_FOR_DEPOSIT' && order.payment && (
+          <div
             style={{
-              cursor: 'pointer',
-              border: '1px solid #333330',
-              background: '#333330',
-              color: '#fffef2',
-              padding: '16px 22px',
-              fontSize: 14,
-              letterSpacing: '0.04em',
-              width: '100%',
+              background: '#f6f4e6',
+              padding: '20px 22px',
               marginBottom: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              fontSize: 13,
+              fontWeight: 300,
+              lineHeight: 1.8,
             }}
           >
-            결제하기
-          </button>
+            <p style={{ margin: 0, fontWeight: 400 }}>입금 계좌 안내</p>
+            <p style={{ margin: 0 }}>
+              {BANK_NAME[order.payment.virtualAccountBankCode] ?? order.payment.virtualAccountBankCode}{' '}
+              {order.payment.virtualAccountNumber}
+            </p>
+            {order.payment.virtualAccountDueDate && (
+              <p style={{ margin: 0, color: '#6d6c61' }}>
+                입금기한: {new Date(order.payment.virtualAccountDueDate).toLocaleString()}
+              </p>
+            )}
+            <button
+              onClick={handleCheckDeposit}
+              disabled={checking}
+              style={{
+                cursor: checking ? 'default' : 'pointer',
+                border: '1px solid #333330',
+                background: '#fffef2',
+                color: '#333330',
+                padding: '10px 16px',
+                fontSize: 13,
+                width: 'fit-content',
+                marginTop: 4,
+              }}
+            >
+              {checking ? '확인 중...' : '입금 확인하기'}
+            </button>
+          </div>
         )}
 
         <div style={{ display: 'flex', gap: 24 }}>

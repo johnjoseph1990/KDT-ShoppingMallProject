@@ -54,4 +54,11 @@ public class OrderController {
       @Valid @RequestBody PaymentConfirmRequest request) {
     return orderService.pay(principal.getMember().getId(), orderId, request);
   }
+
+  // 가상계좌 발급 후 실제 입금이 됐는지 프론트가 "확인하기" 버튼으로 물어볼 때 쓰는 엔드포인트.
+  @PostMapping("/{orderId}/check-deposit")
+  public OrderResponse checkDeposit(
+      @AuthenticationPrincipal MemberPrincipal principal, @PathVariable Long orderId) {
+    return orderService.checkDepositStatus(principal.getMember().getId(), orderId);
+  }
 }

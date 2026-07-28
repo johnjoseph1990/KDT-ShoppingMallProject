@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kdt.shoppingmall.config.SecurityConfig;
 import com.kdt.shoppingmall.domain.order.OrderStatus;
+import com.kdt.shoppingmall.domain.payment.PaymentMethod;
 import com.kdt.shoppingmall.domain.payment.PaymentStatus;
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
 import com.kdt.shoppingmall.dto.order.OrderResponse;
@@ -56,6 +57,7 @@ class OrderControllerTest {
         20000,
         LocalDateTime.now(),
         List.of(),
+        null,
         null,
         null,
         null,
@@ -201,7 +203,15 @@ class OrderControllerTest {
   void 결제_인증후_200() throws Exception {
     PaymentResponse response =
         new PaymentResponse(
-            1L, PaymentStatus.SUCCESS, 20000, LocalDateTime.now(), "test_payment_key");
+            1L,
+            PaymentStatus.SUCCESS,
+            PaymentMethod.CARD,
+            20000,
+            LocalDateTime.now(),
+            "test_payment_key",
+            null,
+            null,
+            null);
     PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 20000);
     given(orderService.pay(eq(1L), eq(1L), any(PaymentConfirmRequest.class))).willReturn(response);
 

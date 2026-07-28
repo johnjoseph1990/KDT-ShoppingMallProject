@@ -15,6 +15,7 @@ import com.kdt.shoppingmall.domain.order.Order;
 import com.kdt.shoppingmall.domain.order.OrderItem;
 import com.kdt.shoppingmall.domain.order.OrderStatus;
 import com.kdt.shoppingmall.domain.payment.Payment;
+import com.kdt.shoppingmall.domain.payment.PaymentMethod;
 import com.kdt.shoppingmall.domain.payment.PaymentStatus;
 import com.kdt.shoppingmall.domain.product.Product;
 import com.kdt.shoppingmall.dto.order.OrderCreateRequest;
@@ -250,9 +251,12 @@ class OrderServiceTest {
   }
 
   @Test
-  void pay_결제성공시_PAID_상태_유지() {
-    // paymentProcessor.confirm(...)이 true를 반환하도록 고정 → 항상 성공 경로를 검증
-    given(paymentProcessor.confirm(any(), any(), anyInt())).willReturn(true);
+  void pay_카드결제성공시_PAID_상태_유지() {
+    // paymentProcessor.confirm(...)이 DONE을 반환하도록 고정 → 카드결제 즉시완료 경로를 검증
+    given(paymentProcessor.confirm(any(), any(), anyInt()))
+        .willReturn(
+            new PaymentProcessor.ConfirmResult(
+                PaymentProcessor.ConfirmStatus.DONE, PaymentMethod.CARD, null, null, null));
     product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
     Order order = new Order(member);
     order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
@@ -270,9 +274,39 @@ class OrderServiceTest {
   }
 
   @Test
+  void pay_가상계좌_발급성공시_WAITING_FOR_DEPOSIT_상태() {
+    // 가상계좌는 발급만 되고 실제 입금은 아직이므로, confirm 성공이어도 PAID가 아니라
+    // WAITING_FOR_DEPOSIT으로 가야 한다. 재고는 카드결제와 마찬가지로 이미 차감된 채 유지된다.
+    given(paymentProcessor.confirm(any(), any(), anyInt()))
+        .willReturn(
+            new PaymentProcessor.ConfirmResult(
+                PaymentProcessor.ConfirmStatus.WAITING_FOR_DEPOSIT,
+                PaymentMethod.VIRTUAL_ACCOUNT,
+                "20",
+                "1234567890",
+                null));
+    product.decreaseStock(2);
+    Order order = new Order(member);
+    order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
+    ReflectionTestUtils.setField(order, "id", 1L);
+
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
+
+    PaymentConfirmRequest request = new PaymentConfirmRequest("test_payment_key", "ORDER-1", 20000);
+    PaymentResponse response = orderService.pay(1L, 1L, request);
+
+    assertThat(response.status()).isEqualTo(PaymentStatus.WAITING_FOR_DEPOSIT);
+    assertThat(response.virtualAccountNumber()).isEqualTo("1234567890");
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.WAITING_FOR_DEPOSIT);
+    assertThat(product.getStockQuantity()).as("입금 대기 중에는 재고를 복구하지 않는다").isEqualTo(98);
+  }
+
+  @Test
   void pay_결제실패시_CANCELED_재고복구() {
-    // paymentProcessor.confirm(...)이 false를 반환하도록 고정 → 항상 실패 경로를 검증
-    given(paymentProcessor.confirm(any(), any(), anyInt())).willReturn(false);
+    // paymentProcessor.confirm(...)이 실패를 반환하도록 고정 → 항상 실패 경로를 검증
+    given(paymentProcessor.confirm(any(), any(), anyInt()))
+        .willReturn(PaymentProcessor.ConfirmResult.failed());
     product.decreaseStock(2); // 주문 생성 시 이미 차감된 상태 (100 → 98)
     Order order = new Order(member);
     order.addItem(new OrderItem(product, product.getPrice(), 2)); // totalPrice = 20000
@@ -287,6 +321,79 @@ class OrderServiceTest {
     assertThat(response.status()).isEqualTo(PaymentStatus.FAILED);
     assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
     assertThat(product.getStockQuantity()).as("결제 실패 시 차감됐던 재고(2개)가 복구돼야 한다").isEqualTo(100);
+  }
+
+  @Test
+  void checkDepositStatus_입금완료시_PAID_전환() {
+    Order order = new Order(member);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.changeStatus(OrderStatus.WAITING_FOR_DEPOSIT);
+    Payment payment =
+        new Payment(
+            order,
+            PaymentStatus.WAITING_FOR_DEPOSIT,
+            PaymentMethod.VIRTUAL_ACCOUNT,
+            20000,
+            "test_payment_key");
+
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(paymentRepository.findByOrder(order)).willReturn(Optional.of(payment));
+    given(paymentProcessor.checkStatus("test_payment_key"))
+        .willReturn(
+            new PaymentProcessor.ConfirmResult(
+                PaymentProcessor.ConfirmStatus.DONE,
+                PaymentMethod.VIRTUAL_ACCOUNT,
+                null,
+                null,
+                null));
+
+    OrderResponse response = orderService.checkDepositStatus(1L, 1L);
+
+    assertThat(response.status()).isEqualTo(OrderStatus.PAID);
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+  }
+
+  @Test
+  void checkDepositStatus_아직_입금안됨_상태유지() {
+    Order order = new Order(member);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.changeStatus(OrderStatus.WAITING_FOR_DEPOSIT);
+    Payment payment =
+        new Payment(
+            order,
+            PaymentStatus.WAITING_FOR_DEPOSIT,
+            PaymentMethod.VIRTUAL_ACCOUNT,
+            20000,
+            "test_payment_key");
+
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+    given(paymentRepository.findByOrder(order)).willReturn(Optional.of(payment));
+    given(paymentProcessor.checkStatus("test_payment_key"))
+        .willReturn(
+            new PaymentProcessor.ConfirmResult(
+                PaymentProcessor.ConfirmStatus.WAITING_FOR_DEPOSIT,
+                PaymentMethod.VIRTUAL_ACCOUNT,
+                null,
+                null,
+                null));
+
+    OrderResponse response = orderService.checkDepositStatus(1L, 1L);
+
+    assertThat(response.status()).isEqualTo(OrderStatus.WAITING_FOR_DEPOSIT);
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.WAITING_FOR_DEPOSIT);
+  }
+
+  @Test
+  void checkDepositStatus_입금대기상태가_아니면_토스에_묻지않는다() {
+    Order order = new Order(member);
+    ReflectionTestUtils.setField(order, "id", 1L);
+    order.changeStatus(OrderStatus.PAID);
+    given(orderRepository.findById(1L)).willReturn(Optional.of(order));
+
+    OrderResponse response = orderService.checkDepositStatus(1L, 1L);
+
+    assertThat(response.status()).isEqualTo(OrderStatus.PAID);
+    verify(paymentProcessor, never()).checkStatus(any());
   }
 
   @Test
