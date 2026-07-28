@@ -91,6 +91,9 @@ public class SecurityConfig {
                     // 사용자에게는 403으로 잘못 뒤바뀌어 원인을 숨기게 된다.
                     .requestMatchers("/error")
                     .permitAll()
+                    // Actuator 헬스체크는 로그인 세션 없이 Docker 등 모니터링 도구가 호출해야 하므로 공개
+                    .requestMatchers("/actuator/health")
+                    .permitAll()
                     // 상품 목록/상세 조회(GET)는 로그인 안 해도 볼 수 있어야 하는 화면이라 허용
                     .requestMatchers(HttpMethod.GET, "/api/products/**")
                     .permitAll()

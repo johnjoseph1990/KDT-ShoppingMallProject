@@ -34,6 +34,14 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update}
       # 운영 배포 시 SPRING_PROFILES_ACTIVE=prod 로 설정 → DevDataInitializer 비활성화
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+    healthcheck:
+      # Alpine 기반 이미지라 curl이 없고 BusyBox wget은 기본 포함되어 있어 이걸 사용한다.
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # JVM 부팅(클래스패스 스캔, Hibernate DDL 등)은 DB 기동보다 오래 걸리므로 유예 시간을 둔다.
+      start_period: 30s
     depends_on:
       db:
         # DB 헬스체크 통과 후 백엔드가 기동되도록 순서 보장
@@ -50,7 +58,9 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        # 백엔드 프로세스가 뜨는 것만이 아니라, 실제로 요청을 받을 준비가 됐을 때 프론트를 기동한다.
+        condition: service_healthy
 
 volumes:
   postgres_data:

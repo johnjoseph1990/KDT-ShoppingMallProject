@@ -24,6 +24,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// 헬스체크(/actuator/health) 등 운영 확인용 엔드포인트 제공. 지금은 health만 노출한다
+	// (Prometheus 연동 등 메트릭 수집은 다음 단계에서 별도 의존성으로 추가 예정).
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	// 낙관적 락 충돌 시 자동 재시도(@Retryable). spring-aspects는 @Retryable이
 	// 동작하는 데 필요한 AOP(프록시) 지원을 제공한다.
 	implementation 'org.springframework.retry:spring-retry'
