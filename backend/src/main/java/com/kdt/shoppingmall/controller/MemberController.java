@@ -1,5 +1,6 @@
 package com.kdt.shoppingmall.controller;
 
+import com.kdt.shoppingmall.dto.member.DeleteRequest;
 import com.kdt.shoppingmall.dto.member.MemberResponse;
 import com.kdt.shoppingmall.dto.member.MemberUpdateRequest;
 import com.kdt.shoppingmall.security.MemberPrincipal;
@@ -46,10 +47,16 @@ public class MemberController {
   // 절차적으로 보면 '요청 받기 → 서비스 호출 → 세션 정리 → 응답' 순서로 진행된다.
   @DeleteMapping("/me")
   public ResponseEntity<Void> delete(
-      @AuthenticationPrincipal MemberPrincipal principal, HttpServletRequest httpRequest) {
-    memberService.delete(principal.getMember().getId());
-    // 탈퇴 처리 후 세션을 끊어 이후 요청이 인증된 것처럼 처리되지 않게 막는다
-    httpRequest.getSession().invalidate();
+      @AuthenticationPrincipal MemberPrincipal principal,
+      // @Valid: DeleteRequest.password 필드의 @NotBlank 검증을 자동으로 실행한다
+      @Valid @RequestBody DeleteRequest request,
+      HttpServletRequest httpRequest) {
+    memberService.delete(principal.getMember().getId(), request.password());
+    // getSession(false): 세션이 없으면 null 반환. getSession()은 없을 때 새 세션을 생성하므로 위험.
+    var session = httpRequest.getSession(false);
+    if (session != null) {
+      session.invalidate();
+    }
     SecurityContextHolder.clearContext();
     return ResponseEntity.noContent().build();
   }

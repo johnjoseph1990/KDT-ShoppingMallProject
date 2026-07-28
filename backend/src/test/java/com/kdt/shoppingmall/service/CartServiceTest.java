@@ -142,4 +142,25 @@ class CartServiceTest {
 
     verify(cartItemRepository).delete(cartItem);
   }
+
+  @Test
+  void addItem_없는회원_예외발생() {
+    // getMemberOrThrow: memberRepository.findById().orElseThrow() 예외 경로 커버
+    CartItemRequest request = new CartItemRequest(1L, 1);
+    given(memberRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> cartService.addItem(99L, request))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
+  }
+
+  @Test
+  void updateQuantity_없는_cartItem_예외발생() {
+    // getOwnedCartItemOrThrow: cartItemRepository.findById().orElseThrow() 예외 경로 커버
+    given(cartItemRepository.findById(999L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> cartService.updateQuantity(1L, 999L, 3))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("999");
+  }
 }

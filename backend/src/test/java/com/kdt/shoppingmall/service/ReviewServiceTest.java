@@ -178,6 +178,16 @@ class ReviewServiceTest {
   }
 
   @Test
+  void createReview_없는회원_예외발생() {
+    // createReview: memberRepository.findById().orElseThrow() 예외 경로 커버
+    given(memberRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> reviewService.createReview(99L, 1L, new ReviewRequest(5, "좋아요")))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
+  }
+
+  @Test
   void deleteReview_성공() {
     given(reviewRepository.findById(1L)).willReturn(Optional.of(review));
 
@@ -236,6 +246,16 @@ class ReviewServiceTest {
     assertThatThrownBy(() -> reviewService.updateReview(1L, 1L, request))
         .isInstanceOf(AccessDeniedException.class)
         .hasMessageContaining("본인");
+  }
+
+  @Test
+  void updateReview_없는리뷰_예외발생() {
+    // updateReview: reviewRepository.findById().orElseThrow() 예외 경로 커버
+    given(reviewRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> reviewService.updateReview(1L, 99L, new ReviewUpdateRequest(4, "수정")))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
   }
 
   // 수정 시 기존 키워드를 삭제하고 새 내용 기준으로 재추출해야 한다.

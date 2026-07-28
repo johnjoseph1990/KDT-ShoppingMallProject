@@ -413,4 +413,77 @@ class OrderServiceTest {
     // 금액이 안 맞으면 외부 API(토스)를 호출할 필요가 없어야 한다 — 불필요한 외부 호출 방지 검증
     verify(paymentProcessor, never()).confirm(any(), any(), anyInt());
   }
+
+  @Test
+  void createOrder_없는회원_예외발생() {
+    // memberRepository.findById().orElseThrow() 예외 경로 커버
+    given(memberRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    99L, new OrderCreateRequest(null, null, null, null, null, null, null)))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
+  }
+
+  @Test
+  void createOrder_특정_cartItemIds_선택주문_성공() {
+    // cartItemIds가 [1L]이면 전체 장바구니가 아닌 선택한 항목만 주문해야 한다.
+    CartItem cartItem = new CartItem(member, product, 1);
+    Order savedOrder = new Order(member);
+    ReflectionTestUtils.setField(savedOrder, "id", 1L);
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findById(1L)).willReturn(Optional.of(cartItem));
+    given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
+
+    OrderResponse response =
+        orderService.createOrder(
+            1L, new OrderCreateRequest(List.of(1L), null, null, null, null, null, null));
+
+    assertThat(response).isNotNull();
+    assertThat(product.getStockQuantity()).isEqualTo(99); // 1개 차감
+  }
+
+  @Test
+  void createOrder_없는_cartItem_예외발생() {
+    // resolveCartItems: cartItemRepository.findById().orElseThrow() 예외 경로 커버
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findById(999L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    1L, new OrderCreateRequest(List.of(999L), null, null, null, null, null, null)))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("999");
+  }
+
+  @Test
+  void createOrder_다른회원_cartItem_접근금지() {
+    // resolveCartItems: peek 람다에서 소유자 검증 실패 → AccessDeniedException 경로 커버
+    Member other = new Member("other@test.com", "encoded", "다른회원", MemberRole.USER);
+    ReflectionTestUtils.setField(other, "id", 2L);
+    CartItem otherCartItem = new CartItem(other, product, 1);
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findById(1L)).willReturn(Optional.of(otherCartItem));
+
+    assertThatThrownBy(
+            () ->
+                orderService.createOrder(
+                    1L, new OrderCreateRequest(List.of(1L), null, null, null, null, null, null)))
+        .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+  }
+
+  @Test
+  void getOrder_없는주문_예외발생() {
+    // getOwnedOrderOrThrow: orderRepository.findById().orElseThrow() 예외 경로 커버
+    given(orderRepository.findById(99L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> orderService.getOrder(1L, 99L))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessageContaining("99");
+  }
 }

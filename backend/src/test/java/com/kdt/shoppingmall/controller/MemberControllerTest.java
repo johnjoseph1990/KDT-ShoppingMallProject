@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kdt.shoppingmall.config.SecurityConfig;
 import com.kdt.shoppingmall.domain.member.MemberRole;
+import com.kdt.shoppingmall.dto.member.DeleteRequest;
 import com.kdt.shoppingmall.dto.member.MemberResponse;
 import com.kdt.shoppingmall.dto.member.MemberUpdateRequest;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
@@ -90,9 +91,42 @@ class MemberControllerTest {
   @Test
   @WithMockMemberPrincipal
   void 회원탈퇴_성공_204() throws Exception {
-    willDoNothing().given(memberService).delete(1L);
+    DeleteRequest request = new DeleteRequest("password123");
+    willDoNothing().given(memberService).delete(eq(1L), any());
 
-    mockMvc.perform(delete("/api/members/me")).andExpect(status().isNoContent());
+    mockMvc
+        .perform(
+            delete("/api/members/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 회원탈퇴_비밀번호_누락_400() throws Exception {
+    // password 필드 없이 빈 JSON 요청 시 @NotBlank 검증에 걸려 400이어야 한다
+    mockMvc
+        .perform(delete("/api/members/me").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 회원탈퇴_비밀번호_불일치_401() throws Exception {
+    // 비밀번호가 틀리면 서비스에서 PasswordMismatchException → 401
+    DeleteRequest request = new DeleteRequest("wrongPass");
+    willThrow(new PasswordMismatchException("현재 비밀번호가 올바르지 않습니다."))
+        .given(memberService)
+        .delete(eq(1L), any());
+
+    mockMvc
+        .perform(
+            delete("/api/members/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.message").value("현재 비밀번호가 올바르지 않습니다."));
   }
 
   @Test

@@ -255,4 +255,22 @@ class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(invalidRequest)))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 입금확인_인증후_200() throws Exception {
+    // 가상계좌 입금 확인: POST /api/orders/{orderId}/check-deposit → 200 + OrderResponse 반환.
+    // orderService.checkDepositStatus(memberId, orderId)를 호출하는지 컨트롤러 레이어만 검증.
+    given(orderService.checkDepositStatus(1L, 1L)).willReturn(sampleResponse());
+
+    mockMvc
+        .perform(post("/api/orders/1/check-deposit"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ORDERED"));
+  }
+
+  @Test
+  void 입금확인_미인증_401() throws Exception {
+    mockMvc.perform(post("/api/orders/1/check-deposit")).andExpect(status().isUnauthorized());
+  }
 }

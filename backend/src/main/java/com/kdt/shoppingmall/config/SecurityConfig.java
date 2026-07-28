@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,8 +22,11 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 // 필요할 때 주입(DI)해준다.
 // @EnableWebSecurity: 스프링 시큐리티의 "요청을 가로채는 필터들"을 활성화하는 스위치.
 // 이게 없으면 아래 filterChain() Bean을 만들어도 실제로 요청을 검사하지 않는다.
+// @EnableMethodSecurity: @PreAuthorize, @PostAuthorize 같은 메서드 레벨 보안 어노테이션을 활성화한다.
+// URL 패턴 설정만으로는 설정 변경 시 구멍이 생길 수 있으므로, 중요한 메서드에 이중으로 권한을 명시한다.
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
   // 이 클래스가 회원 정보를 조회할 방법이 필요해서 UserDetailsService 구현체를 주입받는다.

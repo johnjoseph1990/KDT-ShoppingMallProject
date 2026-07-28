@@ -21,7 +21,16 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+    // Spring Security 자체가 던지는 기본 영문 메시지("Access Denied", "Access is denied")는
+    // 클라이언트에 노출하지 않고 한국어로 교체한다.
+    // 서비스 레이어에서 직접 던진 한국어 메시지(예: "구매자만 리뷰를 작성할 수 있습니다.")는 그대로 전달한다.
+    String msg = e.getMessage();
+    if (msg == null
+        || msg.equalsIgnoreCase("Access Denied")
+        || msg.equalsIgnoreCase("Access is denied")) {
+      msg = "접근 권한이 없습니다.";
+    }
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", msg));
   }
 
   // AuthController.login()에서 authenticationManager.authenticate()가 던지는

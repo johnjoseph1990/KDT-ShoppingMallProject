@@ -335,4 +335,55 @@ class ProductServiceTest {
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("99");
   }
+
+  @Test
+  void create_태그포함_성공() {
+    // addTags의 forEach 람다 경로 커버 — 태그 리스트가 있으면 product.addTag()가 호출돼야 한다.
+    ProductRequest request =
+        new ProductRequest("태그상품", "설명", 20000, 50, null, List.of("스포츠", "신발"));
+    Product product = new Product("태그상품", "설명", 20000, 50, null);
+    given(productRepository.save(any(Product.class))).willReturn(product);
+
+    ProductResponse response = productService.create(request);
+
+    assertThat(response.name()).isEqualTo("태그상품");
+    verify(productRepository).save(any(Product.class));
+  }
+
+  @Test
+  void findBestProducts_SALES_폴백_avgRating_있는_상품() {
+    // SALES 폴백 람다에서 avg != null 경로(0.0 폴백이 아닌 실제 값 사용)를 커버
+    Product product = new Product("판매왕상품", "설명", 15000, 50, null);
+    Pageable pageable = PageRequest.of(0, 5);
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    java.util.ArrayList<Object[]> salesRows = new java.util.ArrayList<>();
+    salesRows.add(new Object[] {product, 100L});
+    given(productRepository.findTopBySales(any(), eq(pageable)))
+        .willReturn(new PageImpl<>(salesRows));
+    // 리뷰 평점이 실제로 있는 경우 (avg != null 분기)
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(4.2);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent().get(0).averageRating()).isEqualTo(4.2);
+    assertThat(result.getContent().get(0).source()).isEqualTo("SALES");
+  }
+
+  @Test
+  void findBestProducts_LATEST_폴백_avgRating_있는_상품() {
+    // LATEST 폴백 람다에서 avg != null 경로를 커버
+    Product product = new Product("신상품", "설명", 20000, 10, null);
+    Pageable pageable = PageRequest.of(0, 5);
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    given(productRepository.findTopBySales(any(), any())).willReturn(Page.empty());
+    given(productRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of(product)));
+    // 리뷰 평점이 실제로 있는 경우 (avg != null 분기)
+    given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(3.8);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent().get(0).averageRating()).isEqualTo(3.8);
+    assertThat(result.getContent().get(0).source()).isEqualTo("LATEST");
+  }
 }

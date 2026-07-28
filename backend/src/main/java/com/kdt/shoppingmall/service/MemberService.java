@@ -83,12 +83,16 @@ public class MemberService {
   // 순서: review_keyword → review → address → member
   // review_keyword는 review를 참조하고, review는 member를 참조하므로
   // 부모(member)를 지우기 전에 자식을 역순으로 지워야 DB 제약이 깨지지 않는다.
+  // rawPassword: 세션 탈취 시 공격자가 계정을 삭제하는 것을 막기 위해 비밀번호를 재확인한다.
   @Transactional
-  public void delete(Long memberId) {
+  public void delete(Long memberId, String rawPassword) {
     Member member =
         memberRepository
             .findById(memberId)
             .orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 회원입니다."));
+    if (!passwordEncoder.matches(rawPassword, member.getPassword())) {
+      throw new PasswordMismatchException("현재 비밀번호가 올바르지 않습니다.");
+    }
     reviewKeywordRepository.deleteByReviewMemberId(memberId);
     reviewRepository.deleteAllByMemberId(memberId);
     addressRepository.deleteAllByMemberId(memberId);

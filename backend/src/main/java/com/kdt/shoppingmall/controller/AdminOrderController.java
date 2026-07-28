@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,6 +50,9 @@ public class AdminOrderController {
 
   @PatchMapping("/{orderId}/status")
   // @PatchMapping: 리소스의 "일부 값"을 수정할 때 주로 사용하는 HTTP PATCH 요청을 처리한다.
+  // @PreAuthorize: URL 패턴 설정과 이중으로 메서드 레벨에서 ADMIN 권한을 명시한다.
+  // SecurityConfig URL 규칙이 변경·제거되더라도 이 메서드는 독립적으로 보호된다.
+  @PreAuthorize("hasRole('ADMIN')")
   public OrderResponse changeOrderStatus(
       // @PathVariable: URL 경로의 {orderId} 값을 파라미터로 매핑한다.
       // @Valid: 요청 바디 DTO에 선언된 검증 규칙을 자동 검사한다.

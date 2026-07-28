@@ -114,8 +114,10 @@ class MemberServiceTest {
     Member member = new Member("test@test.com", "encoded", "테스터", MemberRole.USER);
     ReflectionTestUtils.setField(member, "id", 1L);
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    // 탈퇴 시 비밀번호 재확인: 입력한 평문 비밀번호와 DB 해시가 일치해야 한다
+    given(passwordEncoder.matches("password123", "encoded")).willReturn(true);
 
-    memberService.delete(1L);
+    memberService.delete(1L, "password123");
 
     // FK 제약 고려 삭제 순서:
     //   review_keyword → review → address → member
@@ -127,6 +129,20 @@ class MemberServiceTest {
     order.verify(reviewRepository).deleteAllByMemberId(1L);
     order.verify(addressRepository).deleteAllByMemberId(1L);
     order.verify(memberRepository).delete(member);
+  }
+
+  @Test
+  void delete_비밀번호_불일치_예외발생() {
+    // 탈퇴 시 비밀번호가 틀리면 PasswordMismatchException이 발생해야 한다
+    Member member = new Member("test@test.com", "encoded", "테스터", MemberRole.USER);
+    ReflectionTestUtils.setField(member, "id", 1L);
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(passwordEncoder.matches("wrongPass", "encoded")).willReturn(false);
+
+    assertThatThrownBy(() -> memberService.delete(1L, "wrongPass"))
+        .isInstanceOf(PasswordMismatchException.class);
+
+    verify(memberRepository, never()).delete(any());
   }
 
   @Test
@@ -175,7 +191,7 @@ class MemberServiceTest {
     // 없는 ID로 탈퇴 요청 시 ResourceNotFoundException이 발생해야 한다
     given(memberRepository.findById(99L)).willReturn(Optional.empty());
 
-    assertThatThrownBy(() -> memberService.delete(99L))
+    assertThatThrownBy(() -> memberService.delete(99L, "anypass"))
         .isInstanceOf(ResourceNotFoundException.class);
 
     verify(memberRepository, never()).delete(any());

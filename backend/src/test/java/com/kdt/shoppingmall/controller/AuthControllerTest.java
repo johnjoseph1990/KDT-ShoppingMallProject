@@ -2,6 +2,7 @@ package com.kdt.shoppingmall.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -17,6 +18,7 @@ import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
 import com.kdt.shoppingmall.security.MemberPrincipal;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import com.kdt.shoppingmall.service.MemberService;
+import com.kdt.shoppingmall.support.WithMockMemberPrincipal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -158,5 +160,35 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
         // 비밀번호 틀림과 동일하게 401. 이메일 존재 여부를 노출하지 않기 위함(3장 참고).
         .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 로그아웃_인증후_204() throws Exception {
+    // 로그아웃은 세션 무효화 + SecurityContext 초기화. 응답은 204 No Content.
+    mockMvc.perform(post("/api/auth/logout")).andExpect(status().isNoContent());
+  }
+
+  @Test
+  void 로그아웃_미인증_401() throws Exception {
+    // /api/auth/logout은 anyRequest().authenticated() 규칙에 해당하므로 미인증 시 401.
+    mockMvc.perform(post("/api/auth/logout")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockMemberPrincipal
+  void 내_정보_조회_인증후_200() throws Exception {
+    // GET /api/auth/me: @AuthenticationPrincipal로 주입된 MemberPrincipal의 정보를 반환.
+    // 서비스 호출 없이 SecurityContext에서 꺼낸 principal만 사용하므로 Mock 스텁이 필요 없다.
+    mockMvc
+        .perform(get("/api/auth/me"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value("test@test.com"))
+        .andExpect(jsonPath("$.name").value("테스터"));
+  }
+
+  @Test
+  void 내_정보_조회_미인증_401() throws Exception {
+    mockMvc.perform(get("/api/auth/me")).andExpect(status().isUnauthorized());
   }
 }

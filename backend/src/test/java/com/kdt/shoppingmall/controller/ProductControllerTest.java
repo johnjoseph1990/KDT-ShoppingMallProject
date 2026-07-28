@@ -229,4 +229,24 @@ class ProductControllerTest {
   void 상품삭제_ADMIN_204() throws Exception {
     mockMvc.perform(delete("/api/products/1")).andExpect(status().isNoContent());
   }
+
+  @Test
+  void 상품추천조회_인증없이_성공() throws Exception {
+    // GET /api/products/{id}/recommendations: 인증 없이도 같은 태그 추천 상품 목록을 볼 수 있어야 한다.
+    // SecurityConfig에서 GET /api/products/** 는 permitAll이므로 인증 없이 200이 와야 한다.
+    given(productService.getRecommendations(1L)).willReturn(List.of(sampleResponse()));
+
+    mockMvc
+        .perform(get("/api/products/1/recommendations"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].name").value("상품A"));
+  }
+
+  @Test
+  void 상품추천조회_없는상품_404() throws Exception {
+    given(productService.getRecommendations(99L))
+        .willThrow(new ResourceNotFoundException("상품을 찾을 수 없습니다. id=99"));
+
+    mockMvc.perform(get("/api/products/99/recommendations")).andExpect(status().isNotFound());
+  }
 }
