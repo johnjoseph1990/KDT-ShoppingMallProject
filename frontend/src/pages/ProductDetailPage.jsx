@@ -34,6 +34,9 @@ export default function ProductDetailPage() {
   useEffect(() => {
     // ignore 플래그: id가 바뀌어 이전 요청의 응답이 늦게 도착해도 상태를 덮어쓰지 않게 한다.
     // (사용자가 상품 A → B → C 빠르게 이동할 때 A 응답이 C 화면을 덮는 race condition 방지)
+    // id가 바뀌면(추천 상품 클릭 등) 항상 맨 위부터 보여준다
+    window.scrollTo({ top: 0, behavior: 'instant' })
+
     let ignore = false
 
     setProduct(null)

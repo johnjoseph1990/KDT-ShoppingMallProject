@@ -33,8 +33,14 @@ export default function OrderDetailPage() {
   // 가상계좌는 "발급"만 끝난다 — 둘 다 successUrl로 리다이렉트되고, 이어지는 승인(confirm)
   // 요청은 PaymentSuccessPage에서 처리한다.
   const handlePay = async () => {
+    // VITE_TOSS_CLIENT_KEY가 없으면 SDK가 내부적으로 undefined.startsWith()를 호출해 TypeError 발생
+    const clientKey = import.meta.env.VITE_TOSS_CLIENT_KEY
+    if (!clientKey) {
+      alert('결제 키가 설정되지 않았습니다. frontend/.env에 VITE_TOSS_CLIENT_KEY를 추가하세요.')
+      return
+    }
     try {
-      const tossPayments = await loadTossPayments(import.meta.env.VITE_TOSS_CLIENT_KEY)
+      const tossPayments = await loadTossPayments(clientKey)
       const orderName =
         order.items.length > 1
           ? `${order.items[0].productName} 외 ${order.items.length - 1}건`
