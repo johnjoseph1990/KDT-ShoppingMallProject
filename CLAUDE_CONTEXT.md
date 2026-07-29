@@ -16,17 +16,19 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `cart` / `order` / `payment` — 장바구니 → 주문 생성(낙관적 락 + `@Retryable`) → 토스페이먼츠 결제
 - `address` — 배송지 관리
 
-## 2. 현재 상태 (2026-07-25 기준)
+## 2. 현재 상태 (2026-07-30 기준)
 
-- **로컬 `master`와 `origin/master`가 완전히 동기화됨** (`e830af8` viewCount DEFAULT 0 수정 포함, 그 뒤 docs 커밋 2개까지 모두 push 완료). 별도로 push할 것 없음.
+- **로컬 `master`와 `origin/master`가 완전히 동기화됨**. 별도로 push할 것 없음.
 - `git status`에 계속 뜨는 untracked 파일(`document/*.pdf`, `curriculum/`, `document/*.md` 학습노트 등)은 **의도적으로 커밋 안 하는 로컬 학습자료**임 — 삭제하거나 커밋 대상으로 제안할 필요 없음. 단, 인수인계용 학습노트는 예외적으로 커밋하기도 함(아래 6번 참고).
 
 ## 3. 진행 중 / 보류 작업
 
-### 3-1. 토스페이먼츠 연동 — 거의 완료, 선택적 확인만 남음
-결제창 오픈까지 Playwright로 검증 완료(상품명·금액·클라이언트 키 정상). 카드사 선택 이후 실제 카드결제 성공/실패 리다이렉트는 PG가 자동화 클릭을 막아 **사람이 브라우저에서 직접** 테스트 카드(`4330000000000004`)로 확인해야 함. 급하지 않은 선택 작업.
-- 백엔드 `TOSS_SECRET_KEY`는 OS 환경변수로만 주입 (`bootRun` 실행 셸마다 `$env:TOSS_SECRET_KEY` 지정 필요, 파일 저장 안 함)
-- 프론트 `frontend/.env`의 `VITE_TOSS_CLIENT_KEY`는 git 미포함(`.gitignore`)
+### 3-1. 토스페이먼츠 연동 — ✅ 완료 (2026-07-29/30)
+결제창형·가상계좌(무통장입금) 연동 모두 완료. **이 PC에 루트 `.env`가 없어서 가상계좌 결제가 "취소됨"으로 뜨던 문제를 2026-07-29에 해결함**: 토스 개발자센터에서 발급받은 테스트 키(`test_ck_...`/`test_sk_...`)를 루트 `.env` + `frontend/.env`에 채운 뒤 `docker compose up -d --build`로 컨테이너 재생성, `docker exec mins-backend printenv TOSS_SECRET_KEY`로 주입 확인, Playwright로 로그인→주문→가상계좌(농협) 선택→결제까지 실행해 "입금대기" 상태 전환과 계좌번호 표시까지 검증 완료.
+- 백엔드는 컨테이너로 띄울 경우 `docker-compose.yml`이 루트 `.env`를 자동으로 읽어 `TOSS_SECRET_KEY`에 주입함(다른 PC에서 새로 세팅할 때도 `bootRun` 셸 환경변수 대신 이 방식이 표준)
+- 프론트 `frontend/.env`의 `VITE_TOSS_CLIENT_KEY`는 git 미포함(`.gitignore`) — 새 PC마다 `.env.example` 복사 후 채워야 함
+- 카드결제 실제 승인까지는 2026-07-28에 이미 확인됨 (신한/롯데 등 실카드번호 입력은 PG 보안모듈로 자동화 불가하나, 사람이 직접 확인 완료)
+- **남은 작업 없음.**
 
 ### 3-2. Farmers Market 보완전략 — P0/P1 이미 해결, P2-7만 남음
 `document/MINS_Farmers_Market_보완전략.md`는 다른 PC에서 작성된 구(舊) 리포트(백엔드 붙기 전 목데이터 단계 기준)이며, 실제 코드와 대조해 이미 최신 상태로 갱신해둠. **남은 실제 작업은 P2-7(네비게이션 시맨틱 교체)뿐**:
@@ -41,13 +43,14 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - 배치 전략: 읽기전용 5종 병렬 + 쓰기 권한 `test-writer`만 단독 선행. 변경 규모별로 조합 스케일.
 - 설계 회고·발표 메모: `document/2026-07-25_에이전트_설계_회고.md` (뼈대만, 나중에 확장 예정).
 
-**남은 작업(운영 업그레이드 다음 층):** 데이터 안전성(`ddl-auto=update` → Flyway 전환), 관측성(로깅·메트릭·헬스체크), 성능(N+1·인덱스). Hook(커밋 전 포맷 강제)도 미구축(하네스 Layer 3).
+**운영 업그레이드 3대 항목 진행 상황:** 관측성(Actuator 헬스체크 + traceId 로그/MDC)은 2026-07-29 1단계 완료(`43f5d6f`). 데이터 안전성(`ddl-auto=update` → Flyway 전환)은 지금 규모에서는 과설계라고 판단해 보류 결정(진행 안 함). **남은 건 성능(N+1·인덱스)뿐.** Hook(커밋 전 포맷 강제)도 미구축(하네스 Layer 3, 우선순위 낮음).
 
 ## 4. 새 PC / 새 작업자가 이어받을 때 체크리스트
 
 1. `git pull origin master`
 2. `docker compose up -d` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
-3. 이 문서의 3번 섹션에서 이어할 작업 선택 (우선순위 낮은 순: 3-1 선택적 확인 < 3-2 P2-7 < 3-3 운영 업그레이드 다음 층)
+   - Docker로 백엔드를 띄우는 경우 루트에 `.env`가 없으면 `TOSS_SECRET_KEY`가 빈 값으로 주입되어 가상계좌 결제가 "취소됨"으로 표시됨 — `.env.example`을 복사해 실제 토스 테스트 키를 채울 것 (3-1 참고)
+3. 이 문서의 3번 섹션에서 이어할 작업 선택 (우선순위 낮은 순: 3-2 P2-7 < 3-3 성능 개선)
 4. Claude에게 "CLAUDE_CONTEXT.md 읽고 [작업명] 이어서 해줘"라고 지시하면 됨
 
 ## 5. 이 문서 유지보수 원칙
