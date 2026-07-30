@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Badge, Button, Tabs, Table, Textarea, TextInput } from '@vapor-ui/core'
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../api/products'
-import { getAdminOrders, updateOrderStatus } from '../api/admin'
+import { getAdminOrders, updateOrderStatus, uploadImage } from '../api/admin'
 
 // 관리자가 선택 가능한 주문 상태 목록
 const ORDER_STATUSES = ['ORDERED', 'PAID', 'SHIPPING', 'DELIVERED', 'CANCELED']
@@ -60,6 +60,7 @@ function ProductManager() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null) // null이면 신규 등록 모드
   const [page, setPage] = useState(0)
+  const [uploading, setUploading] = useState(false) // 이미지 업로드 진행 중 여부
 
   useEffect(() => {
     loadProducts()
@@ -74,6 +75,21 @@ function ProductManager() {
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
   // Vapor TextInput/Textarea(문자열 필드)용: 값이 바로 전달됨
   const setField = (field) => (value) => setForm({ ...form, [field]: value })
+
+  // 파일 선택 시 Azure Blob Storage에 즉시 업로드하고, 반환된 URL을 form에 저장
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const res = await uploadImage(file)
+      setForm((prev) => ({ ...prev, imageUrl: res.data.url }))
+    } catch {
+      alert('이미지 업로드 실패')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -156,11 +172,24 @@ function ProductManager() {
             style={styles.input}
             required
           />
-          <TextInput
-            placeholder="이미지 URL"
-            value={form.imageUrl}
-            onValueChange={setField('imageUrl')}
-          />
+          {/* 파일 선택 → Azure 업로드 → URL 자동 저장 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              style={styles.input}
+            />
+            {uploading && <span style={{ fontSize: '0.8rem', color: '#888' }}>업로드 중...</span>}
+            {form.imageUrl && (
+              <img
+                src={form.imageUrl}
+                alt="미리보기"
+                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '4px' }}
+              />
+            )}
+          </div>
         </div>
         <Textarea
           placeholder="상품 설명"
@@ -174,7 +203,7 @@ function ProductManager() {
           onValueChange={setField('tags')}
         />
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button type="submit" colorPalette="primary">
+          <Button type="submit" colorPalette="primary" disabled={uploading}>
             {editingId ? '수정 완료' : '등록'}
           </Button>
           {editingId && (

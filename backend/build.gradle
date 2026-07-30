@@ -39,6 +39,8 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// Azure Blob Storage SDK — 상품 이미지를 Azure에 업로드하기 위해 추가
+	implementation 'com.azure:azure-storage-blob:12.28.0'
 	// 테스트 전용: H2 인메모리 DB (@DataJpaTest 슬라이스 테스트용)
 	testRuntimeOnly 'com.h2database:h2'
 	testAnnotationProcessor 'org.projectlombok:lombok'

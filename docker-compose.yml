@@ -30,6 +30,8 @@ services:
       # 운영 배포 시 .env 파일 또는 호스트 환경변수로 오버라이드
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-mins1234}
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY:-}
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING:-}
+      AZURE_STORAGE_CONTAINER_NAME: ${AZURE_STORAGE_CONTAINER_NAME:-product-images}
       # 운영 배포 시 DDL_AUTO=validate 로 설정해 자동 스키마 변경 방지
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update}
       # 운영 배포 시 SPRING_PROFILES_ACTIVE=prod 로 설정 → DevDataInitializer 비활성화
