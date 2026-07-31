@@ -21,6 +21,8 @@ RUN npm run build
 # Nginx: 정적 파일 서빙 + /api 프록시를 담당하는 경량 웹서버
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-# 기본 Nginx 설정을 덮어써 SPA fallback과 API 프록시를 적용한다
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx:alpine 1.19+ 는 /etc/nginx/templates/*.template 파일을 컨테이너 기동 시
+# envsubst로 처리해 /etc/nginx/conf.d/ 에 출력한다.
+# → BACKEND_URL 환경변수가 런타임에 주입되어 로컬/Azure 환경 모두 동일 이미지 사용 가능.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 80

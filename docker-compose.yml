@@ -59,6 +59,11 @@ services:
     container_name: mins-frontend
     ports:
       - "80:80"
+    environment:
+      # nginx.conf.template의 ${BACKEND_URL}을 컨테이너 기동 시 envsubst로 치환한다.
+      # 로컬: docker-compose 서비스명 + 컨테이너 직접 포트 (네트워크 내부 직통)
+      # Azure Container Apps: http://backend (내부 ingress, 포트 80으로 노출됨)
+      BACKEND_URL: http://backend:8080
     depends_on:
       backend:
         # 백엔드 프로세스가 뜨는 것만이 아니라, 실제로 요청을 받을 준비가 됐을 때 프론트를 기동한다.

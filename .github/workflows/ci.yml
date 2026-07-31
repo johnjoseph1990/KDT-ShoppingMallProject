@@ -82,3 +82,60 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+
+  # ── CD: Azure Container Apps 배포 ────────────────────────────────────────────
+  # master push 시에만 실행 (PR은 CI만, 배포는 하지 않음)
+  # 사전 조건: backend/frontend 테스트가 모두 통과해야 deploy가 실행됨
+  deploy:
+    name: Deploy to Azure
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v7
+
+      # Azure CLI 인증 — GitHub Secret AZURE_CREDENTIALS(Service Principal JSON)로 로그인
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # ACR(Azure Container Registry)에 Docker 이미지를 푸시하기 위한 로그인
+      - name: Login to ACR
+        run: |
+          echo "${{ secrets.ACR_PASSWORD }}" | docker login \
+            ${{ secrets.ACR_LOGIN_SERVER }} \
+            --username "${{ secrets.ACR_USERNAME }}" \
+            --password-stdin
+
+      # 백엔드 이미지 빌드 + ACR 푸시 (git SHA를 태그로 사용해 롤백 가능하게 유지)
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }} ./backend
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
+
+      # 프론트엔드 이미지 빌드 + ACR 푸시
+      # VITE_TOSS_CLIENT_KEY는 Vite 빌드 시점에 번들에 박히므로 build-arg로 전달
+      - name: Build & Push Frontend Image
+        run: |
+          docker build \
+            --build-arg VITE_TOSS_CLIENT_KEY=${{ secrets.VITE_TOSS_CLIENT_KEY }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }} \
+            ./frontend
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
+
+      # 백엔드 Container App에 새 이미지 배포
+      - name: Deploy Backend
+        run: |
+          az containerapp update \
+            --name backend \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
+
+      # 프론트엔드 Container App에 새 이미지 배포
+      - name: Deploy Frontend
+        run: |
+          az containerapp update \
+            --name frontend \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --image ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
