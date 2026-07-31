@@ -2,30 +2,25 @@ package com.kdt.shoppingmall.service;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
 import java.io.IOException;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 // Azure Blob Storage에 파일을 업로드하고 공개 URL을 반환하는 서비스.
-// @Service: 스프링이 이 클래스를 빈으로 등록해 다른 곳에서 @Autowired/생성자 주입으로 쓸 수 있게 한다.
+// @ConditionalOnBean: AzureStorageConfig가 BlobContainerClient 빈을 만들었을 때만
+// 이 서비스 빈도 생성된다. 환경변수 미설정 시 빈이 없어도 앱이 정상 기동된다.
 @Service
+@ConditionalOnBean(BlobContainerClient.class)
 public class AzureBlobService {
 
-  // BlobContainerClient: 특정 컨테이너에 대한 작업(업로드/다운로드/삭제)을 담당하는 Azure SDK 클라이언트
+  // BlobContainerClient를 직접 만들지 않고 AzureStorageConfig가 만든 빈을 주입받는다.
+  // 이렇게 하면 테스트에서 Mock BlobContainerClient를 주입해 실제 Azure 없이 단위 테스트 가능.
   private final BlobContainerClient containerClient;
 
-  public AzureBlobService(
-      // @Value: application.properties의 값을 생성자 파라미터로 주입한다
-      @Value("${azure.storage.connection-string}") String connectionString,
-      @Value("${azure.storage.container-name}") String containerName) {
-    this.containerClient =
-        new BlobServiceClientBuilder()
-            .connectionString(connectionString)
-            .buildClient()
-            .getBlobContainerClient(containerName);
+  public AzureBlobService(BlobContainerClient containerClient) {
+    this.containerClient = containerClient;
   }
 
   /**
