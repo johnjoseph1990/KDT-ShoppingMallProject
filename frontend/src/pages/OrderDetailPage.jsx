@@ -15,7 +15,7 @@ const STATUS_LABEL = {
   CANCELED: '취소됨',
 }
 // 토스 테스트 가상계좌가 주로 내려주는 은행코드만 최소로 매핑. 목록에 없으면 코드 그대로 보여준다.
-const BANK_NAME = { '20': '우리은행', '88': '신한은행', '81': '하나은행', '03': '기업은행' }
+const BANK_NAME = { 20: '우리은행', 88: '신한은행', 81: '하나은행', '03': '기업은행' }
 
 export default function OrderDetailPage() {
   const { id } = useParams()
@@ -281,7 +281,10 @@ export default function OrderDetailPage() {
           <>
             <div style={{ display: 'flex', gap: 20, marginBottom: 16, fontSize: 14 }}>
               {['카드', '가상계좌'].map((m) => (
-                <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <label
+                  key={m}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+                >
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -329,7 +332,8 @@ export default function OrderDetailPage() {
           >
             <p style={{ margin: 0, fontWeight: 400 }}>입금 계좌 안내</p>
             <p style={{ margin: 0 }}>
-              {BANK_NAME[order.payment.virtualAccountBankCode] ?? order.payment.virtualAccountBankCode}{' '}
+              {BANK_NAME[order.payment.virtualAccountBankCode] ??
+                order.payment.virtualAccountBankCode}{' '}
               {order.payment.virtualAccountNumber}
             </p>
             {order.payment.virtualAccountDueDate && (
