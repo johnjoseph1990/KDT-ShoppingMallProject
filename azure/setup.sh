@@ -115,9 +115,24 @@ az containerapp create \
     "AZURE_STORAGE_CONNECTION_STRING=secretref:azure-storage-conn" \
     "AZURE_STORAGE_CONTAINER_NAME=product-images"
 
-echo "=== 6. Frontend Container App 생성 (외부 ingress, HTTPS 자동) ==="
+echo "=== 6. Backend internal ingress HTTP 허용 ==="
+# Azure Container Apps internal ingress는 기본적으로 HTTP → HTTPS 301 redirect
+# nginx가 같은 환경 내부에서 HTTP로 백엔드에 접근하려면 allowInsecure가 필요
+az containerapp ingress update \
+  --name "$BACKEND_APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --allow-insecure
+
+# 백엔드 internal FQDN 조회 — 프론트엔드의 BACKEND_URL로 사용
+BACKEND_INTERNAL_FQDN=$(az containerapp show \
+  --name "$BACKEND_APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query "properties.configuration.ingress.fqdn" \
+  --output tsv)
+
+echo "=== 7. Frontend Container App 생성 (외부 ingress, HTTPS 자동) ==="
 # --ingress external: 인터넷에서 HTTPS로 접근 가능. Azure가 TLS 인증서를 자동 발급·갱신
-# BACKEND_URL=http://backend: 같은 Environment의 backend 앱을 내부 DNS로 직접 참조
+# BACKEND_URL: nginx가 백엔드 internal ingress FQDN으로 프록시 (full FQDN 필요)
 az containerapp create \
   --name "$FRONTEND_APP" \
   --resource-group "$RESOURCE_GROUP" \
@@ -131,7 +146,7 @@ az containerapp create \
   --min-replicas 0 \
   --max-replicas 2 \
   --env-vars \
-    "BACKEND_URL=http://${BACKEND_APP}"
+    "BACKEND_URL=http://${BACKEND_INTERNAL_FQDN}"
 
 FRONTEND_URL=$(az containerapp show \
   --name "$FRONTEND_APP" \

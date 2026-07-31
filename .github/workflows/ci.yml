@@ -132,10 +132,28 @@ jobs:
             --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --image ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
 
-      # 프론트엔드 Container App에 새 이미지 배포
+      # 백엔드 internal FQDN 조회 — 프론트엔드 nginx가 같은 환경 내 백엔드를 찾을 때 사용
+      # internal ingress는 HTTP를 허용(allowInsecure=true)해야 nginx가 301 없이 직접 접속 가능
+      - name: Get Backend Internal FQDN
+        id: backend_fqdn
+        run: |
+          FQDN=$(az containerapp show \
+            --name backend \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+          echo "backend_url=http://${FQDN}" >> $GITHUB_OUTPUT
+          # HTTP를 허용하지 않으면 301로 redirect되므로 allowInsecure 보장
+          az containerapp ingress update \
+            --name backend \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+            --allow-insecure
+
+      # 프론트엔드 Container App에 새 이미지 + BACKEND_URL 환경변수 함께 배포
       - name: Deploy Frontend
         run: |
           az containerapp update \
             --name frontend \
             --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
+            --image ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }} \
+            --set-env-vars "BACKEND_URL=${{ steps.backend_fqdn.outputs.backend_url }}"

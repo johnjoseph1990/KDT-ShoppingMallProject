@@ -62,7 +62,7 @@ services:
     environment:
       # nginx.conf.template의 ${BACKEND_URL}을 컨테이너 기동 시 envsubst로 치환한다.
       # 로컬: docker-compose 서비스명 + 컨테이너 직접 포트 (네트워크 내부 직통)
-      # Azure Container Apps: http://backend (내부 ingress, 포트 80으로 노출됨)
+      # Azure: http://backend.internal.<env-id>.koreacentral.azurecontainerapps.io (full FQDN 필요)
       BACKEND_URL: http://backend:8080
     depends_on:
       backend:

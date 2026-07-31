@@ -25,4 +25,11 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # envsubst로 처리해 /etc/nginx/conf.d/ 에 출력한다.
 # → BACKEND_URL 환경변수가 런타임에 주입되어 로컬/Azure 환경 모두 동일 이미지 사용 가능.
 COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# 컨테이너 시작 시 /etc/resolv.conf에서 DNS resolver를 읽어 NGINX_RESOLVER 환경변수로 설정
+# 이 값이 nginx.conf.template의 ${NGINX_RESOLVER}로 치환됨
+COPY docker-entrypoint-wrapper.sh /docker-entrypoint-wrapper.sh
+RUN chmod +x /docker-entrypoint-wrapper.sh
+ENTRYPOINT ["/docker-entrypoint-wrapper.sh"]
+CMD ["nginx", "-g", "daemon off;"]
 EXPOSE 80
