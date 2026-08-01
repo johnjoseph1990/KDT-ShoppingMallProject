@@ -16,9 +16,10 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `cart` / `order` / `payment` — 장바구니 → 주문 생성(낙관적 락 + `@Retryable`) → 토스페이먼츠 결제
 - `address` — 배송지 관리
 
-## 2. 현재 상태 (2026-07-30 기준)
+## 2. 현재 상태 (2026-08-01 기준)
 
 - **로컬 `master`와 `origin/master`가 완전히 동기화됨**. 별도로 push할 것 없음.
+- 2026-08-01, 다른 PC에서 작업한 8개 커밋(`97442f7..86f4b51`)을 pull로 반영함 — Azure Blob Storage 이미지 업로드 + Azure Container Apps 배포/CD 파이프라인. 상세는 3-4 참고.
 - `git status`에 계속 뜨는 untracked 파일(`document/*.pdf`, `curriculum/`, `document/*.md` 학습노트 등)은 **의도적으로 커밋 안 하는 로컬 학습자료**임 — 삭제하거나 커밋 대상으로 제안할 필요 없음. 단, 인수인계용 학습노트는 예외적으로 커밋하기도 함(아래 6번 참고).
 
 ## 3. 진행 중 / 보류 작업
@@ -42,6 +43,13 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `.gitignore`를 `.claude/*` + `!.claude/agents/`로 바꿔 에이전트 6종을 git 추적 등록(개인 설정 `settings.local.json`은 계속 무시).
 - 배치 전략: 읽기전용 5종 병렬 + 쓰기 권한 `test-writer`만 단독 선행. 변경 규모별로 조합 스케일.
 - 설계 회고·발표 메모: `document/2026-07-25_에이전트_설계_회고.md` (뼈대만, 나중에 확장 예정).
+
+### 3-4. Azure Container Apps 배포 + Blob Storage 이미지 업로드 — ✅ 완료 (2026-08-01 이 PC에서 pull로 반영 확인)
+다른 PC에서 진행되어 8개 커밋으로 pull된 작업. 두 갈래로 나뉜다.
+- **이미지 업로드**: `AzureStorageConfig`/`AzureBlobService`/`UploadController`(`POST /api/admin/upload`) 추가. `AZURE_STORAGE_CONNECTION_STRING` 환경변수가 없으면 관련 빈을 아예 생성하지 않아(`@ConditionalOnExpression`/`@ConditionalOnBean`) 로컬 개발 시 이 값이 없어도 앱은 정상 기동됨(업로드 호출 시에만 503).
+- **Azure Container Apps 배포**: `azure/setup.sh`로 ACR + Container Apps Environment + PostgreSQL Flexible Server 생성. `.github/workflows/ci.yml`에 `deploy` job 추가되어 **master push 시 테스트 통과 후 자동으로 Azure에 배포**됨(빌드→ACR push→Container Apps 이미지 업데이트). `nginx.conf`는 `BACKEND_URL`을 컨테이너 기동 시 런타임 주입받도록 바뀌어 로컬 Docker Compose와 Azure 양쪽에서 같은 이미지를 그대로 사용.
+- `DevDataInitializer`가 `@Profile("dev")` → `@Profile("!test")`로 바뀌어, 배포된 prod 환경(Azure)에도 관리자/상품 시드 데이터가 들어감(배포 직후 빈 화면 방지).
+- **남은 작업 없음.** 새 PC에서 Azure Blob Storage를 로컬 테스트하려면 `.env.example`의 `AZURE_STORAGE_CONNECTION_STRING`/`AZURE_STORAGE_CONTAINER_NAME`을 채우면 되고, 안 채워도 로컬 개발엔 지장 없음.
 
 **운영 업그레이드 3대 항목 진행 상황:** 관측성(Actuator 헬스체크 + traceId 로그/MDC)은 2026-07-29 1단계 완료(`43f5d6f`). 데이터 안전성(`ddl-auto=update` → Flyway 전환)은 지금 규모에서는 과설계라고 판단해 보류 결정(진행 안 함). **남은 건 성능(N+1·인덱스)뿐.** Hook(커밋 전 포맷 강제)도 미구축(하네스 Layer 3, 우선순위 낮음).
 
