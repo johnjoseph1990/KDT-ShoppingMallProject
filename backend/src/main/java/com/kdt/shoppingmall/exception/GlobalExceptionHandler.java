@@ -104,6 +104,14 @@ public class GlobalExceptionHandler {
         .body(Map.of("message", "이미 처리된 요청입니다. 잠시 후 다시 시도해주세요."));
   }
 
+  // 이미지가 아닌 파일을 업로드하려 한 경우. 400(잘못된 요청)으로 내려주면
+  // 프론트의 uploadErrorMessage()가 default 분기에서 이 message를 그대로 화면에 띄운다.
+  @ExceptionHandler(UnsupportedFileTypeException.class)
+  public ResponseEntity<Map<String, String>> handleUnsupportedFileType(
+      UnsupportedFileTypeException e) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
     String message =
