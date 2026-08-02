@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Badge, Button, Tabs, Table, Textarea, TextInput } from '@vapor-ui/core'
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../api/products'
-import { getAdminOrders, updateOrderStatus } from '../api/admin'
+import { getAdminOrders, updateOrderStatus, uploadImage } from '../api/admin'
+// 이미지 업로드 검증 규칙과 에러 문구는 utils/imageUpload 한 곳에서만 관리한다
+import { validateImageFile, uploadErrorMessage } from '../utils/imageUpload'
 // 주문 상태 표기는 utils/orderStatus 한 곳에서만 관리한다.
 // (예전엔 이 파일에 라벨을 직접 복사해뒀다가 WAITING_FOR_DEPOSIT를 빠뜨려
 //  입금대기 주문이 "주문완료"로 잘못 표시되는 버그가 있었다)
@@ -57,6 +59,10 @@ function ProductManager() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null) // null이면 신규 등록 모드
   const [page, setPage] = useState(0)
+  // 업로드 진행 중 여부 — true인 동안 파일 입력과 저장 버튼을 잠가서
+  // URL이 아직 안 채워진 상태로 상품이 저장되는 것을 막는다
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('') // 빈 문자열이면 에러 없음
   useEffect(() => {
     loadProducts()
   }, [page])
@@ -70,6 +76,39 @@ function ProductManager() {
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
   // Vapor TextInput/Textarea(문자열 필드)용: 값이 바로 전달됨
   const setField = (field) => (value) => setForm({ ...form, [field]: value })
+
+  // 파일 선택 → 검증 → 서버 업로드 → 받은 공개 URL을 imageUrl 칸에 자동 입력.
+  // (지금까지는 백엔드/Blob이 다 동작하는데도 화면에 파일 선택 UI가 없어서
+  //  uploadImage()가 아무 데서도 호출되지 않는 죽은 코드였다 — 2026-08-02 DEF-5)
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return // 사용자가 파일 선택 창을 그냥 닫은 경우
+
+    // 같은 파일을 다시 고를 수 있게 input 값을 비운다.
+    // (비우지 않으면 값이 안 바뀌어 onChange 자체가 안 걸린다 — 업로드 실패 후 재시도가 막힘)
+    e.target.value = ''
+
+    const error = validateImageFile(file)
+    if (error) {
+      setUploadError(error)
+      return
+    }
+
+    setUploadError('')
+    setUploading(true)
+    try {
+      const res = await uploadImage(file)
+      // await 뒤의 setForm은 함수형으로 쓴다. 업로드를 기다리는 동안 사용자가
+      // 다른 칸(상품명 등)을 고쳤을 수 있는데, {...form}을 쓰면 오래된 스냅샷으로
+      // 덮어써서 그 입력이 사라진다.
+      setForm((prev) => ({ ...prev, imageUrl: res.data.url }))
+    } catch (err) {
+      setUploadError(uploadErrorMessage(err))
+    } finally {
+      // 성공이든 실패든 잠금은 반드시 풀어야 하므로 finally에 둔다
+      setUploading(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -88,6 +127,7 @@ function ProductManager() {
       }
       setForm(EMPTY_FORM)
       setEditingId(null)
+      setUploadError('') // 폼을 비웠으니 이전 업로드 에러 문구도 같이 지운다
       loadProducts()
     } catch (err) {
       alert(err.response?.data?.message || '저장 실패')
@@ -95,6 +135,12 @@ function ProductManager() {
   }
 
   const handleEdit = (product) => {
+    // 폼 내용을 통째로 갈아끼우는 곳에서는 에러 문구도 함께 초기화한다.
+    // 안 그러면 A 상품에서 난 업로드 에러가, B 상품 "수정"을 눌러 폼이 바뀐 뒤에도
+    // 그대로 남아 지금 상품의 문제인 것처럼 보인다.
+    // (폼 상태를 교체하는 진입점은 handleSubmit·handleCancel·handleEdit 셋뿐이고,
+    //  앞의 둘은 이미 같은 처리를 하고 있다)
+    setUploadError('')
     setEditingId(product.id)
     setForm({
       name: product.name,
@@ -119,6 +165,7 @@ function ProductManager() {
   const handleCancel = () => {
     setForm(EMPTY_FORM)
     setEditingId(null)
+    setUploadError('')
   }
 
   return (
@@ -158,6 +205,38 @@ function ProductManager() {
             onValueChange={setField('imageUrl')}
           />
         </div>
+
+        {/* 이미지 업로드 — 파일을 고르면 Azure Blob에 올리고 받은 공개 URL이
+            위 "이미지 URL" 칸에 자동으로 채워진다. URL 직접 입력도 그대로 가능하다. */}
+        <div style={styles.uploadRow}>
+          {/* htmlFor+id로 label과 input을 연결해야 label 클릭·스크린리더 읽기가 동작한다 */}
+          <label htmlFor="product-image-file" style={styles.uploadLabel}>
+            이미지 파일 업로드
+          </label>
+          <input
+            id="product-image-file"
+            type="file"
+            // accept: 파일 선택 창에서 이미지만 보이게 하는 "편의" 기능일 뿐,
+            // 사용자가 '모든 파일'로 바꿔 고를 수 있으므로 진짜 검증은 validateImageFile이 한다
+            accept="image/*"
+            onChange={handleFileChange}
+            disabled={uploading}
+            style={styles.fileInput}
+          />
+          {uploading && <span style={styles.uploadingText}>업로드 중…</span>}
+        </div>
+
+        {/* 에러 문구 — role="alert"를 주면 스크린리더가 나타나는 즉시 읽어준다 */}
+        {uploadError && (
+          <p role="alert" style={styles.uploadError}>
+            {uploadError}
+          </p>
+        )}
+
+        {/* 미리보기 — URL을 직접 입력한 경우에도 그대로 보이므로 오타를 바로 알아챌 수 있다 */}
+        {form.imageUrl && (
+          <img src={form.imageUrl} alt="상품 이미지 미리보기" style={styles.preview} />
+        )}
         <Textarea
           placeholder="상품 설명"
           value={form.description}
@@ -170,7 +249,9 @@ function ProductManager() {
           onValueChange={setField('tags')}
         />
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button type="submit" colorPalette="primary">
+          {/* 업로드 중 저장을 막는다 — 안 막으면 URL이 채워지기 전에 상품이 저장돼
+              이미지 없는 상품이 만들어진다 */}
+          <Button type="submit" colorPalette="primary" disabled={uploading}>
             {editingId ? '수정 완료' : '등록'}
           </Button>
           {editingId && (
@@ -359,4 +440,17 @@ const styles = {
   input: { padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '0.95rem' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' },
   select: { padding: '0.2rem', fontSize: '0.85rem' },
+  uploadRow: { display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' },
+  uploadLabel: { fontSize: '0.85rem', color: '#555' },
+  fileInput: { fontSize: '0.85rem' },
+  uploadingText: { fontSize: '0.85rem', color: '#666' },
+  uploadError: { margin: 0, fontSize: '0.85rem', color: '#c0392b' },
+  // objectFit: 'contain' — 비율을 유지한 채 상자 안에 맞춘다(잘리지 않음)
+  preview: {
+    width: '120px',
+    height: '120px',
+    objectFit: 'contain',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+  },
 }
