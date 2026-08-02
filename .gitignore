@@ -35,3 +35,29 @@ Thumbs.db
 
 # 학습 슬라이드 (발표 확정 시에만 생성, 평소엔 추적 제외)
 docs/learning/slides/
+
+# ── QA·브라우저 검증 산출물 ────────────────────────────────
+# playwright-mcp가 브라우저 자동 검증 중 스크린샷을 떨구는 출력 폴더
+.playwright-mcp/
+
+# 루트에 임시로 쌓인 QA 스크린샷 (def2-*.png, product-list-*.png 등)
+# 맨 앞의 '/'는 "저장소 루트 바로 아래만" 이라는 뜻 — 이게 없으면 패턴이
+# 모든 하위 폴더에 재귀 적용돼 frontend/src/assets/hero.png 같은 실제 에셋까지 무시된다
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+
+# ── 학습 자료 (document/, curriculum/) ────────────────────
+# 주의: 이 두 폴더는 '혼합 추적' 상태다.
+# ERD.md·FUNCTIONAL_SPEC.md·SPRINT_PLAN.md·회고 문서 등은 이미 커밋돼 있으므로
+# 폴더를 통째로 무시하면 안 된다(= 무시 규칙과 실제 추적 상태가 어긋난다).
+# 확장자 단위로만 걸러낼 것.
+#
+# 정책: 바이너리(PDF)·빌드 산출물 성격의 슬라이드(HTML)는 무시,
+#       텍스트인 .md 학습노트는 그대로 커밋해서 다른 PC에서도 본다.
+#       (docs/learning/slides/ 를 무시하는 위 규칙과 같은 결)
+document/*.pdf
+document/*.html
+curriculum/*.pdf
+curriculum/*.html
