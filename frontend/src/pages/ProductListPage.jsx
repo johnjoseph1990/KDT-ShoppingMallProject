@@ -130,8 +130,13 @@ export default function ProductListPage() {
         {totalElements}개의 상품 · 매주 화·금 수확분 기준
       </p>
 
-      {/* 키워드 검색 — form으로 감싸면 입력창에서 Enter만 쳐도 onSubmit이 실행된다 */}
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      {/* 키워드 검색 — form으로 감싸면 입력창에서 Enter만 쳐도 onSubmit이 실행된다.
+          flexWrap: 아주 좁은 화면(320px 등)에서 한 줄에 다 못 넣으면 줄을 바꾼다.
+          없으면 억지로 한 줄에 밀어넣다가 가로 스크롤이 생긴다. */}
+      <form
+        onSubmit={handleSearch}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}
+      >
         <input
           type="search"
           value={keywordInput}
@@ -139,7 +144,15 @@ export default function ProductListPage() {
           placeholder="상품명 · 설명으로 검색"
           aria-label="상품 검색"
           style={{
-            flex: '1 1 280px',
+            // flex-basis 180px: 줄바꿈 여부는 "줄어들기 전 기준 크기"로 판정되므로,
+            // 기준이 크면(280px) 390px 화면에서 버튼이 아래 줄로 밀려난다.
+            // 180으로 낮추면 입력창+검색+초기화가 390px 한 줄에 들어가고,
+            // 넓은 화면에서는 grow가 maxWidth 360까지 늘려줘 데스크톱 모습은 그대로다.
+            flex: '1 1 180px',
+            // minWidth 0: flex 아이템의 기본값 min-width:auto는 "내용보다 작아지지 마라"는
+            // 뜻이라 입력창이 안 줄어든다. 0으로 풀어서 줄어드는 몫을 입력창이 떠맡게 한다
+            // (버튼 대신 입력창이 좁아지는 게 자연스럽다).
+            minWidth: 0,
             maxWidth: 360,
             border: '1px solid var(--color-border)',
             background: 'transparent',
@@ -149,6 +162,10 @@ export default function ProductListPage() {
             color: 'var(--color-fg)',
           }}
         />
+        {/* flexShrink 0 + whiteSpace nowrap이 짝을 이뤄야 버튼 글자가 안 쪼개진다.
+            한글은 글자 사이 어디서나 줄바꿈이 되므로, 폭이 모자라면 "검색"이 "검/색"으로
+            세로 분리된다(390px 모바일에서 실제로 발생). nowrap으로 줄바꿈을 막고,
+            flexShrink 0으로 애초에 찌그러지지 않게 한다. */}
         <button
           type="submit"
           style={{
@@ -159,6 +176,8 @@ export default function ProductListPage() {
             padding: '10px 20px',
             fontSize: 13,
             fontWeight: 300,
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
           }}
         >
           검색
@@ -180,6 +199,10 @@ export default function ProductListPage() {
               padding: '10px 16px',
               fontSize: 13,
               fontWeight: 300,
+              // 검색 버튼과 같은 이유 — 이 버튼이 함께 뜨면 폭이 더 빠듯해져
+              // "초기화"가 "초기/화"로 쪼개졌다.
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
           >
             초기화

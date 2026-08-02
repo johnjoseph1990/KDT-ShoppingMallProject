@@ -50,17 +50,17 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `DevDataInitializer`가 `@Profile("dev")` → `@Profile("!test")`로 바뀌어, 배포된 prod 환경(Azure)에도 관리자/상품 시드 데이터가 들어감(배포 직후 빈 화면 방지).
 - **남은 작업 없음.** 새 PC에서 Azure Blob Storage를 로컬 테스트하려면 `.env.example`의 `AZURE_STORAGE_CONNECTION_STRING`/`AZURE_STORAGE_CONTAINER_NAME`을 채우면 되고, 안 채워도 로컬 개발엔 지장 없음.
 
-### 3-5. 배포 검증 결함 처리 — DEF-8·9·11만 남음 (2026-08-02)
+### 3-5. 배포 검증 결함 처리 — DEF-9·11만 남음 (2026-08-02)
 
-Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배포검증_체크리스트.md`)에서 결함 11건이 나왔고, **P0·P1은 전부 해결·재검증까지 끝났다**. 남은 3건은 모두 P2다.
+Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배포검증_체크리스트.md`)에서 결함 11건이 나왔고, **P0·P1은 전부 해결·재검증까지 끝났다**. 남은 2건은 모두 P2다.
 
 | ID | 남은 결함 | 레이어 |
 |---|---|---|
-| DEF-8 | 모바일 390px에서 "검색" 버튼이 `검/색`으로 세로 분리 | 프론트 CSS |
 | DEF-9 | 관리자 주문 목록 "다음" 버튼이 마지막 페이지에서 비활성화되지 않음 | 프론트 |
 | DEF-11 | 업로드된 Blob 이미지의 Content-Type이 `application/octet-stream` (화면 렌더는 정상) | 백엔드 |
 
 > DEF-7(시맨틱/접근성)은 2026-08-02에 위 3-2의 P2-7과 함께 종결됐다(커밋 `461dbf2`).
+> DEF-8(모바일 버튼 줄바꿈)도 같은 날 종결. **한글은 글자 사이 어디서나 줄바꿈되므로 flex 아이템의 최소 너비가 한 글자가 된다** — 좁은 화면에 놓이는 한글 버튼에는 `flexShrink: 0` + `whiteSpace: 'nowrap'`을 습관적으로 붙일 것.
 
 **검증 환경 메모**: 배포 사이트 검증은 브라우저 자동화가 필요하다. Playwright MCP(`npx -y @playwright/mcp@latest`)는 **패키지 최초 다운로드가 30초 연결 타임아웃을 넘겨 실패**할 수 있으니, 세션 시작 전에 그 명령을 한 번 돌려 npx 캐시를 데워두면 된다. MCP를 못 쓸 때는 npx 캐시의 `playwright-core`를 Node 스크립트에서 직접 import해 Chromium을 몰 수 있다(설치된 chromium 리비전과 playwright-core 버전이 맞아야 함).
 
@@ -71,7 +71,7 @@ Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배�
 1. `git pull origin master`
 2. `docker compose up -d` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
    - Docker로 백엔드를 띄우는 경우 루트에 `.env`가 없으면 `TOSS_SECRET_KEY`가 빈 값으로 주입되어 가상계좌 결제가 "취소됨"으로 표시됨 — `.env.example`을 복사해 실제 토스 테스트 키를 채울 것 (3-1 참고)
-3. 이 문서의 3번 섹션에서 이어할 작업 선택 (남은 것: 3-5의 DEF-8·9·11(P2) < 성능 개선(N+1·인덱스))
+3. 이 문서의 3번 섹션에서 이어할 작업 선택 (남은 것: 3-5의 DEF-9·11(P2) < 성능 개선(N+1·인덱스))
 4. Claude에게 "CLAUDE_CONTEXT.md 읽고 [작업명] 이어서 해줘"라고 지시하면 됨
 
 ## 5. 이 문서 유지보수 원칙
