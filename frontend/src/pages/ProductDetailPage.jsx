@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { fmt } from '../utils/product'
 import TextLink from '../components/TextLink'
+// 추천 상품 카드는 목록·홈과 같은 컴포넌트를 재사용한다 (DEF-12에서 복제본을 걷어냈다)
+import ProductCard from '../components/ProductCard'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
@@ -370,43 +372,40 @@ export default function ProductDetailPage() {
           >
             이런 상품은 어떠세요?
           </h2>
+          {/* 빈 칸에 회색 배경이 비치는 문제(홈 베스트 섹션의 DEF-4와 같은 원인).
+              이 그리드는 컨테이너 배경(테두리색) + gap 1px로 카드 사이 경계선을 그린다.
+              그래서 카드가 덮지 않은 영역은 그대로 회색으로 드러난다 —
+              추천이 2개면 4열 중 2칸이 회색 박스가 됐다.
+
+              열 수만 카드 수에 맞추면 회색은 사라지지만 카드가 절반 폭으로 커져
+              부가 정보인 추천 섹션이 화면을 압도한다. 그래서 열 수와 함께
+              컨테이너 폭도 개수에 비례시켜(1개당 25%) 카드 폭을 4열 기준으로 유지한다.
+              → 추천이 2개든 4개든 카드 모양이 같고, 남는 공간에는 컨테이너 자체가 없다.
+              모바일에서는 2열로 접히므로 이 폭 제한을 풀어야 한다(index.css의 .rec-grid). */}
           <div
-            className="mobile-2col"
+            className="mobile-2col rec-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4,1fr)',
+              gridTemplateColumns: `repeat(${Math.min(recommendations.length, 4)},1fr)`,
+              maxWidth: `${Math.min(recommendations.length, 4) * 25}%`,
               gap: 1,
               background: 'var(--color-border)',
               border: '1px solid var(--color-border)',
             }}
           >
+            {/* 여기는 원래 <div onClick={() => navigate(...)}>로 카드를 직접 그려놨다.
+                div는 브라우저에게 그냥 상자라서 Tab으로 도달할 수 없고 Enter도 안 먹으며
+                "새 탭에서 열기"도 불가능했다 — 마우스 사용자 전용 UI였다(2026-08-02 DEF-12).
+
+                DEF-7에서 ProductCard를 stretched link로 고쳤는데도 이 카드들만 남은 이유가
+                바로 "복제본이었기 때문"이다. 컴포넌트를 고쳐도 컴포넌트를 안 쓰는 곳은
+                안 고쳐진다. 그래서 수정 = ProductCard로 교체 = 중복 제거다.
+
+                featured를 쓰는 이유: 홈 베스트 섹션도 똑같은 4열 그리드에 이 모드를 쓴다
+                (배지·별점·장바구니 버튼 없는 축약형). 축약 카드의 정본이 이미 있으므로
+                새 변종을 만들지 않고 그것을 재사용한다. */}
             {recommendations.map((r) => (
-              <div
-                key={r.id}
-                onClick={() => navigate(`/products/${r.id}`)}
-                style={{ background: 'var(--color-bg)', padding: 20, cursor: 'pointer' }}
-              >
-                <div
-                  style={{
-                    aspectRatio: '4/5',
-                    background: 'var(--color-bg-hover)',
-                    overflow: 'hidden',
-                    marginBottom: 12,
-                  }}
-                >
-                  {r.imageUrl && (
-                    <img
-                      src={r.imageUrl}
-                      alt={r.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-                <p style={{ margin: '0 0 4px', fontSize: 14 }}>{r.name}</p>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-fg-muted)' }}>
-                  {fmt(r.price)}
-                </p>
-              </div>
+              <ProductCard key={r.id} product={r} to={`/products/${r.id}`} featured />
             ))}
           </div>
         </section>
