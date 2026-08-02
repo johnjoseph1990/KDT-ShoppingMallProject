@@ -11,8 +11,10 @@ import com.kdt.shoppingmall.exception.ResourceNotFoundException;
 import com.kdt.shoppingmall.repository.ProductRepository;
 import com.kdt.shoppingmall.repository.ReviewKeywordRepository;
 import com.kdt.shoppingmall.repository.ReviewRepository;
+import java.util.LinkedHashMap;
 import java.util.List;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -64,47 +66,63 @@ public class ProductService {
     return products.map(this::toResponse);
   }
 
-  // [P1-2 + P1-3] 베스트 상품 3단계 폴백:
+  // [P1-2 + P1-3] 베스트 상품 3단계 채우기(fill-through):
   //   1순위 REVIEW_BEST — 리뷰 5개 이상 + 평균 별점 내림차순 (N+1도 동시에 해결)
-  //   2순위 SALES       — 결제 완료 주문에서 판매량 순 (리뷰 데이터 부족 시)
-  //   3순위 LATEST      — 최신 등록 상품 (판매 데이터도 없을 때)
+  //   2순위 SALES       — 결제 완료 주문에서 판매량 순
+  //   3순위 LATEST      — 최신 등록 상품
   //
-  // 각 단계는 앞 단계가 결과를 하나도 못 낼 때만 실행한다 (배타적 전환).
-  // source 필드로 클라이언트가 어느 단계 결과인지 구분할 수 있다.
+  // 예전에는 앞 단계가 "하나라도" 결과를 내면 그걸로 전량 확정하고 끝냈다. 그래서
+  // 판매 실적 있는 상품이 1개뿐이어도 그 1개만 반환돼, 화면 그리드에 카드 1개 +
+  // 빈 칸 3개가 뜨는 결함(2026-08-02 DEF-4)이 있었다. 지금은 각 단계가 "부족한 만큼만"
+  // 다음 단계로 채워 항상 요청한 개수(size)를 최대한 채우려 시도한다.
+  //
+  // 같은 상품이 여러 단계의 후보에 동시에 낄 수 있어(예: 리뷰도 많고 판매도 많은 상품)
+  // LinkedHashMap으로 상품 id를 키 삼아 중복을 제거하면서, 먼저 뽑힌 순서
+  // (REVIEW_BEST → SALES → LATEST)를 그대로 유지한다. 화면 상단 배지는 이 목록의
+  // 첫 항목 source를 쓰므로, "가장 강한 근거가 있으면 그 근거가 대표로 노출"되는
+  // 기존 우선순위 의미는 그대로 유지된다.
   public Page<BestProductResponse> findBestProducts(Pageable pageable) {
+    int size = pageable.getPageSize();
+    LinkedHashMap<Long, BestProductResponse> picked = new LinkedHashMap<>();
+
     // 1순위: 리뷰 기반
-    Page<Object[]> best = productRepository.findBestProductsWithAvgRating(pageable);
-    if (best.getTotalElements() > 0) {
+    for (Object[] row : productRepository.findBestProductsWithAvgRating(pageable)) {
       // Object[0]=Product, Object[1]=AVG(rating) — 쿼리에서 함께 반환해 N+1 제거
-      return best.map(
-          row -> BestProductResponse.from((Product) row[0], (Double) row[1], "REVIEW_BEST"));
+      Product p = (Product) row[0];
+      picked.put(p.getId(), BestProductResponse.from(p, (Double) row[1], "REVIEW_BEST"));
     }
 
-    // 2순위: 판매량 기반
-    Page<Object[]> sales = productRepository.findTopBySales(PAID_STATUSES, pageable);
-    if (sales.getTotalElements() > 0) {
-      return sales.map(
-          row -> {
-            Product p = (Product) row[0];
-            // 폴백 상태에서는 상품 수가 적어 N+1의 실질적 영향이 작다.
-            Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
-            return BestProductResponse.from(p, avg != null ? avg : 0.0, "SALES");
-          });
+    // 2순위: 판매량 기반 — 1순위가 다 채우지 못한 만큼만 진행
+    if (picked.size() < size) {
+      for (Object[] row : productRepository.findTopBySales(PAID_STATUSES, pageable)) {
+        Product p = (Product) row[0];
+        if (picked.containsKey(p.getId())) {
+          continue; // 이미 REVIEW_BEST로 뽑힌 상품은 건너뛴다
+        }
+        // 폴백 상태에서는 상품 수가 적어 N+1의 실질적 영향이 작다.
+        Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
+        picked.put(p.getId(), BestProductResponse.from(p, avg != null ? avg : 0.0, "SALES"));
+      }
     }
 
-    // 3순위: 최신 등록 순 — pageable의 정렬을 createdAt DESC로 고정한다.
-    Pageable latestSort =
-        PageRequest.of(
-            pageable.getPageNumber(),
-            pageable.getPageSize(),
-            Sort.by(Sort.Direction.DESC, "createdAt"));
-    return productRepository
-        .findAll(latestSort)
-        .map(
-            p -> {
-              Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
-              return BestProductResponse.from(p, avg != null ? avg : 0.0, "LATEST");
-            });
+    // 3순위: 최신 등록 순 — 그래도 부족하면 채운다. pageable의 정렬을 createdAt DESC로 고정.
+    if (picked.size() < size) {
+      Pageable latestSort =
+          PageRequest.of(
+              pageable.getPageNumber(),
+              pageable.getPageSize(),
+              Sort.by(Sort.Direction.DESC, "createdAt"));
+      for (Product p : productRepository.findAll(latestSort)) {
+        if (picked.containsKey(p.getId())) {
+          continue;
+        }
+        Double avg = reviewRepository.findAverageRatingByProductId(p.getId());
+        picked.put(p.getId(), BestProductResponse.from(p, avg != null ? avg : 0.0, "LATEST"));
+      }
+    }
+
+    List<BestProductResponse> content = picked.values().stream().limit(size).toList();
+    return new PageImpl<>(content, pageable, content.size());
   }
 
   // 상품에 달린 리뷰에서 추출된 키워드를 빈도 내림차순으로 반환한다.

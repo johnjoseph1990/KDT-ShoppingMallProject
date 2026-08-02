@@ -194,6 +194,9 @@ class ProductServiceTest {
     rows.add(new Object[] {product, 4.5});
     given(productRepository.findBestProductsWithAvgRating(pageable))
         .willReturn(new PageImpl<>(rows));
+    // 1순위가 size(5)를 못 채우면(1개뿐) 2·3순위도 시도한다 — 채울 후보가 없다는 것만 알려준다.
+    given(productRepository.findTopBySales(any(), any())).willReturn(Page.empty());
+    given(productRepository.findAll(any(Pageable.class))).willReturn(Page.empty());
 
     Page<BestProductResponse> result = productService.findBestProducts(pageable);
 
@@ -215,6 +218,8 @@ class ProductServiceTest {
     given(productRepository.findTopBySales(any(), eq(pageable)))
         .willReturn(new PageImpl<>(salesRows));
     given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(null);
+    // SALES가 1개뿐이라 size(5)를 못 채우므로 LATEST도 시도한다 — 채울 후보가 없다고 알려준다.
+    given(productRepository.findAll(any(Pageable.class))).willReturn(Page.empty());
 
     Page<BestProductResponse> result = productService.findBestProducts(pageable);
 
@@ -362,6 +367,7 @@ class ProductServiceTest {
         .willReturn(new PageImpl<>(salesRows));
     // 리뷰 평점이 실제로 있는 경우 (avg != null 분기)
     given(reviewRepository.findAverageRatingByProductId(product.getId())).willReturn(4.2);
+    given(productRepository.findAll(any(Pageable.class))).willReturn(Page.empty());
 
     Page<BestProductResponse> result = productService.findBestProducts(pageable);
 
@@ -385,5 +391,71 @@ class ProductServiceTest {
 
     assertThat(result.getContent().get(0).averageRating()).isEqualTo(3.8);
     assertThat(result.getContent().get(0).source()).isEqualTo("LATEST");
+  }
+
+  // [DEF-4] 2026-08-02 배포 검증에서 발견: 판매 실적 있는 상품이 1개뿐이면 그 1개만
+  // 반환돼 홈 화면 그리드가 카드 1개 + 빈 칸 3개로 망가졌다. 이제는 부족한 만큼
+  // LATEST로 채워 항상 요청한 개수(size)를 최대한 채워야 한다.
+  @Test
+  void findBestProducts_판매실적이_1개뿐이면_최신상품으로_나머지를_채운다() {
+    Product salesHit = new Product("판매왕상품", "설명", 15000, 50, null);
+    setField(salesHit, "id", 1L);
+    Product latest1 = new Product("최신상품1", "설명", 9000, 30, null);
+    setField(latest1, "id", 2L);
+    Product latest2 = new Product("최신상품2", "설명", 12000, 30, null);
+    setField(latest2, "id", 3L);
+    Product latest3 = new Product("최신상품3", "설명", 8000, 30, null);
+    setField(latest3, "id", 4L);
+    Pageable pageable = PageRequest.of(0, 5);
+
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    java.util.ArrayList<Object[]> salesRows = new java.util.ArrayList<>();
+    salesRows.add(new Object[] {salesHit, 100L});
+    given(productRepository.findTopBySales(any(), eq(pageable)))
+        .willReturn(new PageImpl<>(salesRows));
+    given(productRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of(latest1, latest2, latest3)));
+    given(reviewRepository.findAverageRatingByProductId(any())).willReturn(null);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    // 판매 실적 1개 + 최신상품 3개 = 4개 (카탈로그에 이것뿐이라 5개를 다 못 채워도 정상)
+    assertThat(result.getContent()).hasSize(4);
+    assertThat(result.getContent().get(0).source()).isEqualTo("SALES");
+    assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+    assertThat(result.getContent().subList(1, 4))
+        .extracting(BestProductResponse::source)
+        .containsOnly("LATEST");
+    // 중복 없이 서로 다른 상품이어야 한다
+    assertThat(result.getContent()).extracting(BestProductResponse::id).doesNotHaveDuplicates();
+  }
+
+  // 같은 상품이 SALES와 LATEST 양쪽 후보에 동시에 낄 수 있다(판매도 있고 최신 등록도 맞는 경우).
+  // 이때 한 번만 담기되, 먼저 뽑힌 SALES 라벨을 유지해야 한다(LATEST로 덮어써지면 안 됨).
+  @Test
+  void findBestProducts_여러단계에_겹치는_상품은_한번만_먼저뽑힌_source유지() {
+    Product overlap = new Product("판매도되고최신인상품", "설명", 15000, 50, null);
+    setField(overlap, "id", 1L);
+    Product latestOnly = new Product("최신상품만", "설명", 9000, 30, null);
+    setField(latestOnly, "id", 2L);
+    Pageable pageable = PageRequest.of(0, 5);
+
+    given(productRepository.findBestProductsWithAvgRating(pageable)).willReturn(Page.empty());
+    java.util.ArrayList<Object[]> salesRows = new java.util.ArrayList<>();
+    salesRows.add(new Object[] {overlap, 50L});
+    given(productRepository.findTopBySales(any(), eq(pageable)))
+        .willReturn(new PageImpl<>(salesRows));
+    // LATEST 후보 목록 맨 앞에 이미 SALES로 뽑힌 상품이 다시 등장한다
+    given(productRepository.findAll(any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of(overlap, latestOnly)));
+    given(reviewRepository.findAverageRatingByProductId(any())).willReturn(null);
+
+    Page<BestProductResponse> result = productService.findBestProducts(pageable);
+
+    assertThat(result.getContent()).hasSize(2); // 중복 제거로 2개(overlap, latestOnly)만
+    assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+    assertThat(result.getContent().get(0).source()).isEqualTo("SALES"); // LATEST로 안 덮어써짐
+    assertThat(result.getContent().get(1).id()).isEqualTo(2L);
+    assertThat(result.getContent().get(1).source()).isEqualTo("LATEST");
   }
 }

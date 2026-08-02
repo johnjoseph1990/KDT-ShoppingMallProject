@@ -193,12 +193,17 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* mobile-2col: 데스크톱 4열 → 768px 이하에서 2열로 접힘 (index.css) */}
+        {/* mobile-2col: 데스크톱 N열 → 768px 이하에서 2열로 접힘 (index.css, !important로 강제) */}
+        {/* 컨테이너 배경(var(--color-border))은 gap 사이 얇은 경계선을 만드는 용도인데,
+            카드가 4개보다 적으면 빈 그리드 칸에도 이 배경이 그대로 비쳐 회색 박스처럼
+            보이는 결함이 있었다(DEF-4). 열 수를 실제 카드 개수에 맞춰 빈 칸 자체를 없앤다.
+            백엔드가 "부족하면 채우기"로 항상 4개를 채우려 하지만, 카탈로그가 정말
+            작을 때를 대비한 방어적 처리다. */}
         <div
           className="mobile-2col"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4,1fr)',
+            gridTemplateColumns: `repeat(${featured.length > 0 ? featured.length : 4}, 1fr)`,
             gap: 1,
             background: 'var(--color-border)',
             border: '1px solid var(--color-border)',
