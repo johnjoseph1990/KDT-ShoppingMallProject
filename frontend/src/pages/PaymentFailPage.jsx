@@ -11,7 +11,8 @@ export default function PaymentFailPage() {
   const orderId = parseOrderId(searchParams.get('orderId'))
 
   return (
-    <div style={{ textAlign: 'center', padding: 60 }}>
+    /* <main>: 이 화면의 주 콘텐츠임을 알리는 시맨틱 태그 (화면상 div와 동일) */
+    <main style={{ textAlign: 'center', padding: 60 }}>
       <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', marginBottom: 24 }}>{message}</p>
       <button
         onClick={() => navigate(orderId ? `/orders/${orderId}` : '/orders')}
@@ -26,6 +27,6 @@ export default function PaymentFailPage() {
       >
         주문으로 돌아가기
       </button>
-    </div>
+    </main>
   )
 }

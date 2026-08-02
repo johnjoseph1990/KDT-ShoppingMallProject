@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import TextLink from '../components/TextLink'
 
 const STATS = [
   {
@@ -20,8 +20,8 @@ const STATS = [
 ]
 
 export default function AboutPage() {
-  const navigate = useNavigate()
-
+  // useNavigate가 없어진 이유: 이 페이지의 유일한 클릭이 페이지 이동인데,
+  // 이제 TextLink(<a>)가 그 일을 맡아 프로그래밍 방식 이동이 필요 없다 (DEF-7)
   return (
     <main style={{ animation: 'fadeUp .4s ease both', flex: 1 }}>
       {/* 헤드라인 */}
@@ -128,21 +128,21 @@ export default function AboutPage() {
           않으며, 계절에 없는 것을 팔지 않습니다. 느리지만 정직한 이 방식이, 당신의 식탁과 이 지역의
           땅을 함께 건강하게 만든다고 생각합니다.
         </p>
-        <ShopBtn onClick={() => navigate('/shop')}>이번 주 수확물 보기 →</ShopBtn>
+        <ShopBtn to="/shop">이번 주 수확물 보기 →</ShopBtn>
       </section>
     </main>
   )
 }
 
-function ShopBtn({ onClick, children }) {
+/* 이름은 Btn이지만 하는 일은 페이지 이동뿐이라 <button>이 아니라 링크가 맞다 (DEF-7) */
+function ShopBtn({ to, children }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <span
-      onClick={onClick}
+    <TextLink
+      to={to}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        cursor: 'pointer',
         display: 'inline-flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -156,6 +156,6 @@ function ShopBtn({ onClick, children }) {
       }}
     >
       {children}
-    </span>
+    </TextLink>
   )
 }

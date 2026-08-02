@@ -33,7 +33,9 @@ export default function AdminPage() {
   const [tab, setTab] = useState('products')
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    /* <main>: 페이지의 주 콘텐츠 영역임을 알리는 시맨틱 태그.
+       화면은 div와 동일하지만 스크린리더가 "본문으로 건너뛰기"를 할 수 있게 된다. */
+    <main style={{ maxWidth: '800px', margin: '0 auto' }}>
       <h2>관리자 페이지</h2>
       {/* Tabs.Panel은 기본적으로 비활성 탭의 내용을 DOM에서 제거(keepMounted=false)하므로,
           기존의 삼항 조건부 렌더링과 동일하게 선택된 탭의 패널만 마운트된다 */}
@@ -49,7 +51,7 @@ export default function AdminPage() {
           <OrderManager />
         </Tabs.Panel>
       </Tabs.Root>
-    </div>
+    </main>
   )
 }
 

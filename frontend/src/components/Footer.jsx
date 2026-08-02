@@ -1,9 +1,9 @@
-import { useNavigate } from 'react-router-dom'
+import TextLink from './TextLink'
 
 /* 모든 페이지 하단에 표시되는 공통 푸터 */
 export default function Footer() {
-  const navigate = useNavigate()
-
+  // useNavigate를 쓰지 않는다 — "둘러보기" 항목은 이동이므로 진짜 <a>(TextLink)여야 한다.
+  // 예전엔 span+onClick+navigate였는데 키보드로 도달할 수 없었다 (DEF-7).
   return (
     <footer
       style={{
@@ -83,7 +83,7 @@ export default function Footer() {
             { label: '생산자', to: '/story' },
             { label: '브랜드', to: '/about' },
           ].map(({ label, to }) => (
-            <FooterLink key={to} onClick={() => navigate(to)}>
+            <FooterLink key={to} to={to}>
               {label}
             </FooterLink>
           ))}
@@ -121,15 +121,17 @@ export default function Footer() {
   )
 }
 
-function FooterLink({ onClick, children }) {
+// span+onClick이 아니라 TextLink(=<a>)를 쓴다. 겉모습은 그대로지만
+// Tab 이동·Enter·새 탭으로 열기·스크린리더 인식이 전부 동작하게 된다.
+function FooterLink({ to, children }) {
   return (
-    <span
-      onClick={onClick}
-      style={{ cursor: 'pointer', color: 'var(--color-text-footer)' }}
+    <TextLink
+      to={to}
+      style={{ color: 'var(--color-text-footer)' }}
       onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-bg)')}
       onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-footer)')}
     >
       {children}
-    </span>
+    </TextLink>
   )
 }

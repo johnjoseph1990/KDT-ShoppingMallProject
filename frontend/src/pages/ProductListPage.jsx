@@ -257,7 +257,7 @@ export default function ProductListPage() {
             <ProductCard
               key={p.id}
               product={p}
-              onOpen={() => navigate(`/products/${p.id}`)}
+              to={`/products/${p.id}`}
               onAdd={(e) => handleAddToCart(e, p)}
             />
           ))}

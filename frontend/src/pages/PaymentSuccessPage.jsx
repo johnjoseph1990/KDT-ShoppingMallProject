@@ -29,16 +29,19 @@ export default function PaymentSuccessPage() {
 
   if (status === 'error') {
     return (
-      <div
+      /* <main>: 이 화면의 주 콘텐츠임을 알리는 시맨틱 태그 (화면상 div와 동일) */
+      <main
         style={{ textAlign: 'center', padding: 60, fontSize: 14, color: 'var(--color-fg-muted)' }}
       >
         결제 승인 처리 중 문제가 발생했습니다. 주문 목록에서 상태를 다시 확인해주세요.
-      </div>
+      </main>
     )
   }
   return (
-    <div style={{ textAlign: 'center', padding: 60, fontSize: 14, color: 'var(--color-fg-muted)' }}>
+    <main
+      style={{ textAlign: 'center', padding: 60, fontSize: 14, color: 'var(--color-fg-muted)' }}
+    >
       결제를 확인하는 중입니다...
-    </div>
+    </main>
   )
 }

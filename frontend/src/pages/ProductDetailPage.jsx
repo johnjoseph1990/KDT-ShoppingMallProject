@@ -6,6 +6,7 @@ import { getReviews, createReview, updateReview, deleteReview } from '../api/rev
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { fmt } from '../utils/product'
+import TextLink from '../components/TextLink'
 
 export default function ProductDetailPage() {
   const { id } = useParams()
@@ -163,16 +164,23 @@ export default function ProductDetailPage() {
         }}
       >
         <p style={{ margin: 0 }}>상품 정보를 불러오지 못했습니다.</p>
-        <span
+        {/* 다른 곳으로 가는 게 아니라 현재 페이지를 다시 불러오는 "동작"이라 <button> */}
+        <button
+          type="button"
           onClick={() => window.location.reload()}
           style={{
             cursor: 'pointer',
             fontSize: 13,
+            background: 'none',
+            border: 'none',
             borderBottom: '1px solid var(--color-fg-muted)',
+            padding: 0,
+            fontFamily: 'inherit',
+            color: 'inherit',
           }}
         >
           새로고침
-        </span>
+        </button>
       </div>
     )
 
@@ -238,12 +246,10 @@ export default function ProductDetailPage() {
             gap: 28,
           }}
         >
-          <span
-            onClick={() => navigate('/shop')}
-            style={{ cursor: 'pointer', fontSize: 13, color: 'var(--color-fg-muted)' }}
-          >
+          {/* 이동이므로 진짜 링크로 (DEF-7) */}
+          <TextLink to="/shop" style={{ fontSize: 13, color: 'var(--color-fg-muted)' }}>
             ← 쇼핑으로 돌아가기
-          </span>
+          </TextLink>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {product.tags?.length > 0 && (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import TextLink from '../components/TextLink'
 
 /* 정적 농부 데이터 (실제 서비스에서는 백엔드 API로 교체) */
 const FARMERS = [
@@ -43,7 +43,8 @@ const FARMERS = [
 ]
 
 export default function StoryPage() {
-  const navigate = useNavigate()
+  // useNavigate가 사라진 이유: 이동은 전부 TextLink(<a>)가 맡고, 남은 클릭은
+  // URL을 바꾸지 않는 상태 변경(상세 펼치기/접기)이라 <button>으로 처리한다 (DEF-7)
   /* 선택된 농부 인덱스 (null이면 목록 뷰) */
   const [selectedIdx, setSelectedIdx] = useState(null)
 
@@ -91,12 +92,26 @@ export default function StoryPage() {
               gap: 22,
             }}
           >
-            <span
+            {/* 페이지 이동이 아니라 이 화면 안에서 목록 보기로 되돌리는 "동작"이므로
+                링크(<a>)가 아니라 <button>이 맞다. URL이 바뀌지 않기 때문이다.
+                type="button" — 폼 안에 놓여도 실수로 submit되지 않게 명시한다. */}
+            <button
+              type="button"
               onClick={() => setSelectedIdx(null)}
-              style={{ cursor: 'pointer', fontSize: 13, color: 'var(--color-fg-muted)' }}
+              style={{
+                cursor: 'pointer',
+                fontSize: 13,
+                color: 'var(--color-fg-muted)',
+                // 버튼 기본 스타일(회색 배경·테두리)을 지워 기존 글자 모양 그대로 유지
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                textAlign: 'left',
+                fontFamily: 'inherit',
+              }}
             >
               ← 농부 이야기로 돌아가기
-            </span>
+            </button>
             <p
               style={{
                 margin: 0,
@@ -152,10 +167,10 @@ export default function StoryPage() {
             >
               {f.detail}
             </p>
-            <span
-              onClick={() => navigate('/shop')}
+            {/* 이쪽은 /shop으로 이동하므로 링크(<a>)가 맞다 */}
+            <TextLink
+              to="/shop"
               style={{
-                cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -175,7 +190,7 @@ export default function StoryPage() {
               }}
             >
               이 농가의 상품 보기 <span>→</span>
-            </span>
+            </TextLink>
           </div>
         </div>
       </main>
@@ -305,19 +320,28 @@ export default function StoryPage() {
             >
               {f.story}
             </p>
-            <span
+            {/* URL을 바꾸지 않고 같은 화면에서 상세를 펼치는 "동작"이라 <button> */}
+            <button
+              type="button"
               onClick={() => setSelectedIdx(i)}
               style={{
                 cursor: 'pointer',
                 alignSelf: 'flex-start',
                 fontSize: 13,
                 letterSpacing: '0.05em',
+                // 버튼 기본 외형(회색 배경·사방 테두리·패딩)을 지우고 밑줄만 남겨
+                // 기존 글자 링크와 똑같이 보이게 한다.
+                // border를 먼저 none으로 지운 뒤 borderBottom을 주는 순서가 중요하다.
+                background: 'none',
+                border: 'none',
                 borderBottom: '1px solid var(--color-fg)',
-                paddingBottom: 2,
+                padding: '0 0 2px',
+                fontFamily: 'inherit',
+                color: 'inherit',
               }}
             >
               이야기 더 보기 →
-            </span>
+            </button>
           </div>
         </section>
       ))}

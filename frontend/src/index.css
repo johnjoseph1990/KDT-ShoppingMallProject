@@ -167,6 +167,38 @@ h3 {
   display: none; /* 기본: 안 보임 */
 }
 
+/* ====== 상품 카드: "stretched link" 패턴 (2026-08-02 DEF-7) ====== */
+
+/* 문제였던 것: 상품 카드 전체가 <div onClick>이라 마우스로만 열 수 있었다.
+   Tab으로 도달 불가, Enter 무반응, 우클릭 "새 탭에서 열기"도 안 됐다.
+
+   그렇다고 카드 전체를 <a>로 감쌀 수는 없다 — 카드 안에 장바구니 <button>이 있는데
+   <a> 안에 <button>을 넣는 건 HTML 스펙 위반이라 브라우저·스크린리더 동작이 제각각이 된다.
+
+   해결(stretched link): 진짜 링크는 상품명 하나만 두고, 그 링크의 ::after 가상요소를
+   카드 전체 크기로 늘려 "보이지 않는 클릭 판"을 덮는다.
+   → 키보드에는 탭 정지가 상품명 1개 + 장바구니 버튼 1개로 깔끔하게 잡히고,
+     마우스로는 예전처럼 카드 아무 데나 눌러도 상세로 이동한다. */
+
+.product-card {
+  /* ::after가 이 카드를 기준으로 펼쳐지도록 위치 기준점을 만든다.
+     이게 없으면 ::after가 훨씬 바깥 조상 기준으로 늘어나 화면 전체를 덮어버린다. */
+  position: relative;
+}
+
+.product-card-link::after {
+  content: ''; /* 가상요소는 content가 있어야 생성된다 (빈 문자열로 충분) */
+  position: absolute;
+  inset: 0; /* top·right·bottom·left를 한 번에 0으로 = 부모를 꽉 채움 */
+}
+
+/* 장바구니 버튼은 위 클릭 판보다 위에 있어야 자기 클릭을 뺏기지 않는다.
+   z-index는 position이 static이 아닐 때만 먹으므로 relative를 함께 준다. */
+.product-card-action {
+  position: relative;
+  z-index: 1;
+}
+
 /* @media 쿼리: 화면이 768px 이하일 때 (태블릿, 모바일)
    ① 가로로 긴 데스크톱 네비게이션 숨김
    ② 모바일용 햄버거 메뉴 보임

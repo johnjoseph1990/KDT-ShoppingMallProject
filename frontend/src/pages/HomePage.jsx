@@ -5,6 +5,7 @@ import { addToCart } from '../api/cart'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import ProductCard from '../components/ProductCard'
+import TextLink from '../components/TextLink'
 
 /* 백엔드 /api/products/best 의 source 값(REVIEW_BEST/SALES/LATEST)을
    화면 문구로 바꿔주는 매핑. 콜드스타트 폴백 단계마다 사용자에게
@@ -53,7 +54,10 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ animation: 'fadeUp .5s ease both', flex: 1 }}>
+    /* <main>: 이 페이지의 "주 콘텐츠"임을 브라우저·스크린리더에 알리는 시맨틱 태그.
+       div와 화면상 차이는 없지만, 스크린리더 사용자가 네비게이션을 건너뛰고
+       본문으로 바로 점프할 수 있게 해준다. 한 페이지에 하나만 둔다. */
+    <main style={{ animation: 'fadeUp .5s ease both', flex: 1 }}>
       {/* ─── 히어로 섹션 ─── */}
       <section
         style={{
@@ -137,7 +141,7 @@ export default function HomePage() {
             민스 파머스 마켓은 대전과 충남의 스물세 곳 소농과 함께합니다. 수확한 지 하루가 지나지
             않은 채소와 과일, 그날 구운 빵을 문 앞까지 전합니다.
           </p>
-          <HoverBtn light onClick={() => navigate('/shop')}>
+          <HoverBtn light to="/shop">
             이번 주 수확물 보기 <span>→</span>
           </HoverBtn>
         </div>
@@ -179,10 +183,10 @@ export default function HomePage() {
               </p>
             )}
           </div>
-          <span
-            onClick={() => navigate('/shop')}
+          {/* 페이지 이동이므로 span+onClick이 아니라 진짜 링크(<a>)를 쓴다 — DEF-7 */}
+          <TextLink
+            to="/shop"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
               borderBottom: '1px solid var(--color-fg)',
@@ -190,7 +194,7 @@ export default function HomePage() {
             }}
           >
             전체 보기
-          </span>
+          </TextLink>
         </div>
 
         {/* mobile-2col: 데스크톱 N열 → 768px 이하에서 2열로 접힘 (index.css, !important로 강제) */}
@@ -214,7 +218,7 @@ export default function HomePage() {
                 <ProductCard
                   key={p.id}
                   product={p}
-                  onOpen={() => navigate(`/products/${p.id}`)}
+                  to={`/products/${p.id}`}
                   onAdd={() => handleAddToCart(p)}
                   featured
                 />
@@ -278,7 +282,7 @@ export default function HomePage() {
             매주 그 시기에 가장 좋은 것들로 꾸린 제철 꾸러미. 어떤 채소가 올지 모르는 설렘과, 무엇이
             와도 좋다는 믿음을 함께 담았습니다.
           </p>
-          <HoverBtn onClick={() => navigate('/shop')}>
+          <HoverBtn to="/shop">
             꾸러미 살펴보기 <span>→</span>
           </HoverBtn>
         </div>
@@ -329,10 +333,9 @@ export default function HomePage() {
           <p style={{ margin: 0, fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
             금산 · 흙내음농원 · 이정순 농부
           </p>
-          <span
-            onClick={() => navigate('/story')}
+          <TextLink
+            to="/story"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
               borderBottom: '1px solid var(--color-fg)',
@@ -340,15 +343,17 @@ export default function HomePage() {
             }}
           >
             스물세 농가의 이야기 읽기
-          </span>
+          </TextLink>
         </div>
       </section>
-    </div>
+    </main>
   )
 }
 
-/* 호버 시 색상 반전되는 버튼 */
-function HoverBtn({ onClick, children, light = false }) {
+/* 호버 시 색상 반전되는 큰 링크 (히어로/섹션 CTA)
+   "Btn"이라는 이름이지만 실제 하는 일은 페이지 이동뿐이라 <button>이 아니라 링크가 맞다.
+   예전엔 span+onClick+navigate였는데, 키보드로 도달할 수 없고 새 탭으로 열 수도 없었다 (DEF-7). */
+function HoverBtn({ to, children, light = false }) {
   const [hovered, setHovered] = useState(false)
   const border = light ? 'var(--color-bg)' : 'var(--color-text-on-dark)'
   const textColor = light ? 'var(--color-bg)' : 'var(--color-text-on-dark)'
@@ -356,12 +361,11 @@ function HoverBtn({ onClick, children, light = false }) {
   const hoverText = light ? 'var(--color-fg)' : 'var(--color-bg-dark)'
 
   return (
-    <span
-      onClick={onClick}
+    <TextLink
+      to={to}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        cursor: 'pointer',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -376,6 +380,6 @@ function HoverBtn({ onClick, children, light = false }) {
       }}
     >
       {children}
-    </span>
+    </TextLink>
   )
 }

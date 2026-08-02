@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { loadTossPayments } from '@tosspayments/payment-sdk'
 import { getOrder, checkDeposit } from '../api/orders'
 import { buildTossOrderId } from '../utils/toss'
 import { useAuth } from '../context/AuthContext'
 // 주문 상태 한글 표기는 utils/orderStatus 한 곳에서 관리한다
 import { orderStatusLabel } from '../utils/orderStatus'
+import TextLink from '../components/TextLink'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 // 토스 테스트 가상계좌가 주로 내려주는 은행코드만 최소로 매핑. 목록에 없으면 코드 그대로 보여준다.
@@ -13,7 +14,7 @@ const BANK_NAME = { 20: '우리은행', 88: '신한은행', 81: '하나은행', 
 
 export default function OrderDetailPage() {
   const { id } = useParams()
-  const navigate = useNavigate()
+  // 이동은 전부 TextLink(<a>)가 담당하므로 useNavigate는 더 이상 필요 없다 (DEF-7)
   const { user } = useAuth()
   const [order, setOrder] = useState(null)
   const [paymentMethod, setPaymentMethod] = useState('카드')
@@ -158,10 +159,10 @@ export default function OrderDetailPage() {
             <br />
             발송이 시작되면 문자로 알려드릴게요.
           </p>
-          <span
-            onClick={() => navigate('/')}
+          {/* 이동이므로 진짜 링크로 (DEF-7) */}
+          <TextLink
+            to="/"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               letterSpacing: '0.05em',
               borderBottom: '1px solid var(--color-fg)',
@@ -169,7 +170,7 @@ export default function OrderDetailPage() {
             }}
           >
             처음으로 돌아가기
-          </span>
+          </TextLink>
         </div>
       </section>
 
@@ -371,10 +372,9 @@ export default function OrderDetailPage() {
         )}
 
         <div style={{ display: 'flex', gap: 24 }}>
-          <span
-            onClick={() => navigate('/orders')}
+          <TextLink
+            to="/orders"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               color: 'var(--color-fg-muted)',
               borderBottom: '1px solid var(--color-border)',
@@ -382,11 +382,10 @@ export default function OrderDetailPage() {
             }}
           >
             주문 목록
-          </span>
-          <span
-            onClick={() => navigate('/shop')}
+          </TextLink>
+          <TextLink
+            to="/shop"
             style={{
-              cursor: 'pointer',
               fontSize: 13,
               color: 'var(--color-fg-muted)',
               borderBottom: '1px solid var(--color-border)',
@@ -394,7 +393,7 @@ export default function OrderDetailPage() {
             }}
           >
             계속 쇼핑하기
-          </span>
+          </TextLink>
         </div>
       </section>
     </main>

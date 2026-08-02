@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createOrder } from '../api/orders'
 import { useCart } from '../context/CartContext'
 import { getAddresses } from '../api/addresses'
+import TextLink from '../components/TextLink'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 // 주문 생성 전 미리보기용 값. 실제 배송비는 백엔드 Order.applyShippingFee()가
@@ -102,243 +103,252 @@ export default function CartPage() {
 
   return (
     <>
-      {/* form이 양쪽 패널을 감싸 왼쪽 입력값 검증 후 오른쪽 버튼에서 제출 가능 */}
-      {/* mobile-1col: 배송정보 폼(왼쪽)+주문요약(오른쪽) 2단 → 모바일에서 1단으로 접힘 */}
-      <form
-        onSubmit={handleOrder}
-        className="mobile-1col"
-        style={{
-          animation: 'fadeUp .4s ease both',
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr',
-          borderBottom: '1px solid var(--color-border)',
-          alignItems: 'start',
-        }}
-      >
-        {/* 왼쪽: 배송 정보 폼 */}
-        <div
+      {/* <main>: 페이지의 주 콘텐츠임을 알리는 시맨틱 태그.
+          form을 직접 main으로 바꿀 수는 없어(제출 기능이 필요하다) 한 겹 감쌌다.
+          App.jsx의 라우트 컨테이너가 flex column이므로 여기서 flex:1을 받고,
+          form이 다시 그 안에서 flex:1로 늘어나 기존과 같은 높이가 된다.
+          모달은 main 밖에 두는 게 맞다 — 본문이 아니라 그 위에 겹치는 레이어다. */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* form이 양쪽 패널을 감싸 왼쪽 입력값 검증 후 오른쪽 버튼에서 제출 가능 */}
+        {/* mobile-1col: 배송정보 폼(왼쪽)+주문요약(오른쪽) 2단 → 모바일에서 1단으로 접힘 */}
+        <form
+          onSubmit={handleOrder}
+          className="mobile-1col"
           style={{
-            padding: 'clamp(32px,5vw,72px)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 32,
-            borderRight: '1px solid var(--color-border)',
+            animation: 'fadeUp .4s ease both',
+            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: '1.2fr 1fr',
+            borderBottom: '1px solid var(--color-border)',
+            alignItems: 'start',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-            <h1
+          {/* 왼쪽: 배송 정보 폼 */}
+          <div
+            style={{
+              padding: 'clamp(32px,5vw,72px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 32,
+              borderRight: '1px solid var(--color-border)',
+            }}
+          >
+            <div
+              style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}
+            >
+              <h1
+                style={{
+                  margin: 0,
+                  fontFamily: "'Noto Serif KR', serif",
+                  fontWeight: 300,
+                  fontSize: 30,
+                }}
+              >
+                주문하기
+              </h1>
+              {/* 저장된 배송지가 있을 경우 한 번의 클릭으로 폼을 채울 수 있게 한다 */}
+              <button
+                type="button"
+                onClick={() => setShowAddressPicker(true)}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--color-border)',
+                  padding: '7px 14px',
+                  fontSize: 12,
+                  color: 'var(--color-fg-muted)',
+                  cursor: 'pointer',
+                  fontFamily: "'Noto Sans KR', sans-serif",
+                  letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                저장된 배송지
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 480 }}>
+              <FormLabel label="받는 분">
+                <input
+                  placeholder="이름"
+                  required
+                  style={inputStyle}
+                  onChange={setField('name')}
+                  value={form.name}
+                />
+              </FormLabel>
+              <FormLabel label="연락처">
+                <input
+                  placeholder="010-0000-0000"
+                  required
+                  style={inputStyle}
+                  onChange={setField('phone')}
+                  value={form.phone}
+                />
+              </FormLabel>
+              <FormLabel label="배송 주소">
+                {/* 1행: 우편번호 + 주소 찾기 버튼 */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    placeholder="우편번호"
+                    readOnly
+                    required
+                    style={{
+                      ...inputStyle,
+                      width: 120,
+                      flexShrink: 0,
+                      cursor: 'default',
+                      color: '#555',
+                    }}
+                    value={form.zipCode}
+                  />
+                  <button
+                    type="button"
+                    onClick={openAddressSearch}
+                    style={{
+                      flexShrink: 0,
+                      border: '1px solid var(--color-fg)',
+                      background: 'var(--color-fg)',
+                      color: 'var(--color-bg)',
+                      padding: '0 16px',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      fontFamily: "'Noto Sans KR', sans-serif",
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    주소 찾기
+                  </button>
+                </div>
+                {/* 2행: 도로명/지번 주소 (API가 채워줌, 읽기 전용) */}
+                <input
+                  placeholder="주소를 검색하세요"
+                  readOnly
+                  required
+                  style={{ ...inputStyle, cursor: 'default', color: '#555' }}
+                  value={form.address}
+                />
+                {/* 3행: 상세 주소 (직접 입력) */}
+                <input
+                  placeholder="상세 주소 (동·호수 등)"
+                  style={inputStyle}
+                  onChange={setField('addressDetail')}
+                  value={form.addressDetail}
+                />
+              </FormLabel>
+              <FormLabel label="배송 메모">
+                <textarea
+                  placeholder="부재 시 문 앞에 놓아주세요"
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  onChange={setField('note')}
+                  value={form.note}
+                />
+              </FormLabel>
+            </div>
+          </div>
+
+          {/* 오른쪽: 주문 내역 + 결제 버튼 */}
+          <div
+            style={{
+              padding: 'clamp(32px,5vw,72px)',
+              background: 'var(--color-bg-hover-light)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 24,
+              position: 'sticky',
+              top: 72,
+            }}
+          >
+            <h2
               style={{
                 margin: 0,
                 fontFamily: "'Noto Serif KR', serif",
-                fontWeight: 300,
-                fontSize: 30,
+                fontWeight: 400,
+                fontSize: 20,
               }}
             >
-              주문하기
-            </h1>
-            {/* 저장된 배송지가 있을 경우 한 번의 클릭으로 폼을 채울 수 있게 한다 */}
-            <button
-              type="button"
-              onClick={() => setShowAddressPicker(true)}
-              style={{
-                background: 'none',
-                border: '1px solid var(--color-border)',
-                padding: '7px 14px',
-                fontSize: 12,
-                color: 'var(--color-fg-muted)',
-                cursor: 'pointer',
-                fontFamily: "'Noto Sans KR', sans-serif",
-                letterSpacing: '0.03em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              저장된 배송지
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 480 }}>
-            <FormLabel label="받는 분">
-              <input
-                placeholder="이름"
-                required
-                style={inputStyle}
-                onChange={setField('name')}
-                value={form.name}
-              />
-            </FormLabel>
-            <FormLabel label="연락처">
-              <input
-                placeholder="010-0000-0000"
-                required
-                style={inputStyle}
-                onChange={setField('phone')}
-                value={form.phone}
-              />
-            </FormLabel>
-            <FormLabel label="배송 주소">
-              {/* 1행: 우편번호 + 주소 찾기 버튼 */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  placeholder="우편번호"
-                  readOnly
-                  required
-                  style={{
-                    ...inputStyle,
-                    width: 120,
-                    flexShrink: 0,
-                    cursor: 'default',
-                    color: '#555',
-                  }}
-                  value={form.zipCode}
-                />
-                <button
-                  type="button"
-                  onClick={openAddressSearch}
-                  style={{
-                    flexShrink: 0,
-                    border: '1px solid var(--color-fg)',
-                    background: 'var(--color-fg)',
-                    color: 'var(--color-bg)',
-                    padding: '0 16px',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    fontFamily: "'Noto Sans KR', sans-serif",
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  주소 찾기
-                </button>
+              주문 내역
+            </h2>
+
+            {cartItems.length === 0 ? (
+              <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
+                장바구니가 비어 있습니다.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {cartItems.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '12px 0',
+                      borderBottom: '1px solid var(--color-border)',
+                      fontSize: 14,
+                      gap: 12,
+                    }}
+                  >
+                    <span style={{ fontWeight: 300 }}>
+                      {item.productName} × {item.quantity}
+                    </span>
+                    <span>{fmt(item.price * item.quantity)}</span>
+                  </div>
+                ))}
               </div>
-              {/* 2행: 도로명/지번 주소 (API가 채워줌, 읽기 전용) */}
-              <input
-                placeholder="주소를 검색하세요"
-                readOnly
-                required
-                style={{ ...inputStyle, cursor: 'default', color: '#555' }}
-                value={form.address}
-              />
-              {/* 3행: 상세 주소 (직접 입력) */}
-              <input
-                placeholder="상세 주소 (동·호수 등)"
-                style={inputStyle}
-                onChange={setField('addressDetail')}
-                value={form.addressDetail}
-              />
-            </FormLabel>
-            <FormLabel label="배송 메모">
-              <textarea
-                placeholder="부재 시 문 앞에 놓아주세요"
-                rows={3}
-                style={{ ...inputStyle, resize: 'vertical' }}
-                onChange={setField('note')}
-                value={form.note}
-              />
-            </FormLabel>
-          </div>
-        </div>
+            )}
 
-        {/* 오른쪽: 주문 내역 + 결제 버튼 */}
-        <div
-          style={{
-            padding: 'clamp(32px,5vw,72px)',
-            background: 'var(--color-bg-hover-light)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 24,
-            position: 'sticky',
-            top: 72,
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-              fontFamily: "'Noto Serif KR', serif",
-              fontWeight: 400,
-              fontSize: 20,
-            }}
-          >
-            주문 내역
-          </h2>
-
-          {cartItems.length === 0 ? (
-            <p style={{ fontSize: 14, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
-              장바구니가 비어 있습니다.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '12px 0',
-                    borderBottom: '1px solid var(--color-border)',
-                    fontSize: 14,
-                    gap: 12,
-                  }}
-                >
-                  <span style={{ fontWeight: 300 }}>
-                    {item.productName} × {item.quantity}
-                  </span>
-                  <span>{fmt(item.price * item.quantity)}</span>
-                </div>
-              ))}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 14,
+                color: 'var(--color-fg-muted)',
+              }}
+            >
+              <span>배송비</span>
+              <span>{ship === 0 ? '무료' : fmt(ship)}</span>
             </div>
-          )}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 16,
+                fontFamily: "'Noto Serif KR', serif",
+              }}
+            >
+              <span>합계</span>
+              <span>{fmt(grand)}</span>
+            </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 14,
-              color: 'var(--color-fg-muted)',
-            }}
-          >
-            <span>배송비</span>
-            <span>{ship === 0 ? '무료' : fmt(ship)}</span>
+            <button
+              type="submit"
+              disabled={cartItems.length === 0 || loading}
+              style={{
+                cursor: cartItems.length === 0 || loading ? 'default' : 'pointer',
+                border: '1px solid var(--color-fg)',
+                background: 'var(--color-fg)',
+                color: 'var(--color-bg)',
+                padding: '16px 22px',
+                fontSize: 14,
+                letterSpacing: '0.04em',
+                opacity: cartItems.length === 0 ? 0.5 : 1,
+              }}
+            >
+              {fmt(grand)} 결제하기
+            </button>
+            {/* 이동이므로 진짜 링크로 — 키보드 Tab·Enter·새 탭 열기가 동작한다 (DEF-7) */}
+            <TextLink
+              to="/shop"
+              style={{
+                fontSize: 13,
+                color: 'var(--color-fg-muted)',
+                textAlign: 'center',
+              }}
+            >
+              계속 쇼핑하기
+            </TextLink>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 16,
-              fontFamily: "'Noto Serif KR', serif",
-            }}
-          >
-            <span>합계</span>
-            <span>{fmt(grand)}</span>
-          </div>
-
-          <button
-            type="submit"
-            disabled={cartItems.length === 0 || loading}
-            style={{
-              cursor: cartItems.length === 0 || loading ? 'default' : 'pointer',
-              border: '1px solid var(--color-fg)',
-              background: 'var(--color-fg)',
-              color: 'var(--color-bg)',
-              padding: '16px 22px',
-              fontSize: 14,
-              letterSpacing: '0.04em',
-              opacity: cartItems.length === 0 ? 0.5 : 1,
-            }}
-          >
-            {fmt(grand)} 결제하기
-          </button>
-          <span
-            onClick={() => navigate('/shop')}
-            style={{
-              cursor: 'pointer',
-              fontSize: 13,
-              color: 'var(--color-fg-muted)',
-              textAlign: 'center',
-            }}
-          >
-            계속 쇼핑하기
-          </span>
-        </div>
-      </form>
+        </form>
+      </main>
 
       {/* 저장된 배송지 선택 모달 */}
       {showAddressPicker && (
@@ -446,15 +456,26 @@ function AddressPickerModal({ onClose, onSelect }) {
           </p>
         ) : (
           sorted.map((addr) => (
-            <div
+            /* 배송지 "선택"은 페이지 이동이 아니라 폼을 채우는 동작이므로 <button>.
+               div였을 때는 Tab으로 도달할 수 없어 마우스로만 고를 수 있었다 (DEF-7).
+               버튼은 기본이 가운데 정렬이라 textAlign:'left'를 줘야 기존 모양이 유지된다. */
+            <button
               key={addr.id}
+              type="button"
               onClick={() => onSelect(addr)}
               style={{
                 padding: '16px 0',
+                border: 'none',
                 borderBottom: '1px solid var(--color-border)',
+                background: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                width: '100%',
+                fontFamily: 'inherit',
+                color: 'inherit',
                 gap: 5,
               }}
               onMouseEnter={(e) =>
@@ -484,7 +505,7 @@ function AddressPickerModal({ onClose, onSelect }) {
               <span style={{ fontSize: 13, fontWeight: 300 }}>
                 ({addr.zipCode}) {addr.address} {addr.addressDetail ?? ''}
               </span>
-            </div>
+            </button>
           ))
         )}
       </div>
