@@ -94,6 +94,50 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 배포 전 시크릿 검증 — 도커 빌드에 시간을 쓰기 전에 맨 앞에서 빠르게 실패시킨다.
+      #
+      # 왜 필요한가: GitHub Actions에서 `${{ secrets.NOT_EXIST }}`는 에러가 아니라
+      # "빈 문자열"로 치환된다. 그래서 시크릿을 등록하지 않아도 빌드·배포가 성공하고,
+      # 기능만 조용히 죽는다. 실제로 2026-08-02에 VITE_TOSS_CLIENT_KEY가 없는 채로
+      # 배포되어 운영 환경 결제가 전부 불가능했다(document/2026-08-02_배포검증_체크리스트.md DEF-1).
+      #
+      # `::error::` 는 GitHub Actions 로그에 빨간 에러로 표시되게 하는 워크플로우 명령어다.
+      - name: Verify deploy secrets
+        env:
+          # 시크릿을 env로 받아둔다. 셸에 직접 보간하면 값에 따옴표 등이 섞였을 때
+          # 명령이 깨질 수 있어서, 이렇게 환경변수를 거치는 게 안전한 관용구다.
+          VITE_TOSS_CLIENT_KEY: ${{ secrets.VITE_TOSS_CLIENT_KEY }}
+          TOSS_SECRET_KEY: ${{ secrets.TOSS_SECRET_KEY }}
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+        run: |
+          # missing: 비어 있는 시크릿 개수를 세는 카운터.
+          # 첫 실패에서 바로 exit 하지 않는 이유 — 두 개가 비어 있으면 하나 고치고
+          # 다시 배포를 돌려야 나머지를 알게 된다. 전부 검사한 뒤 한 번에 보고한다.
+          missing=0
+
+          # 검사할 시크릿 "이름들"을 순회한다. 값이 아니라 이름을 도는 게 핵심.
+          for name in VITE_TOSS_CLIENT_KEY TOSS_SECRET_KEY ACR_LOGIN_SERVER; do
+            # ${!name} = 간접 참조(indirect expansion).
+            # name이 "TOSS_SECRET_KEY"라는 문자열일 때 ${!name}은 그 이름을 가진
+            # 변수의 "값"을 꺼낸다. 덕분에 if를 세 번 복붙하지 않아도 된다.
+            # -z 는 "문자열 길이가 0인가". 큰따옴표는 필수 — 없으면 값이 비었을 때
+            # 셸이 [ -z ] 로 해석해 문법 오류가 난다.
+            if [ -z "${!name}" ]; then
+              # ::error:: 는 GitHub Actions 워크플로우 명령어. 로그에 빨간 에러로 뜨고
+              # 요약 화면에도 노출된다. 값은 절대 찍지 않고 "이름"만 알린다.
+              echo "::error::$name 이(가) 비어 있습니다. GitHub Secrets에 등록한 뒤 다시 배포하세요."
+              missing=$((missing + 1))
+            fi
+          done
+
+          if [ "$missing" -gt 0 ]; then
+            echo "::error::시크릿 $missing 개가 누락되어 배포를 중단합니다."
+            # exit 1 = 스텝 실패 → deploy job 중단. 도커 빌드 전에 멈추므로 시간 낭비가 없다.
+            exit 1
+          fi
+
+          echo "필수 배포 시크릿 확인 완료."
+
       # Azure CLI 인증 — GitHub Secret AZURE_CREDENTIALS(Service Principal JSON)로 로그인
       - name: Azure Login
         uses: azure/login@v2
