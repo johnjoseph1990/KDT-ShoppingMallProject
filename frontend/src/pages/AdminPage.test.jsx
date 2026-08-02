@@ -6,7 +6,7 @@
 //
 // 이 테스트는 DEF-8 테스트와 달리 jsdom으로 충분하다 —
 // 픽셀이 아니라 "버튼의 disabled 속성"이라는 DOM 상태를 보는 것이기 때문이다.
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AdminPage from './AdminPage'
 import { getProducts } from '../api/products'
@@ -41,10 +41,26 @@ vi.mock('../api/admin', () => ({
   uploadImage: vi.fn(),
 }))
 
+// 대기 중인 API 응답이 화면 상태에 반영될 때까지 기다린다.
+//
+// 왜 필요한가 (2026-08-02 CI에서 실제로 깨졌다):
+// 처음엔 '총액'이 뜨는 것만 기다렸는데, '총액'은 **표 머리글**이라 데이터와 상관없이
+// 패널이 마운트되는 순간 바로 뜬다. 즉 "화면이 그려졌다"는 신호일 뿐
+// "응답이 도착해 totalPages가 채워졌다"는 신호가 아니다.
+// 그래서 로컬에서는 우연히 통과했지만 CI에서는 응답 반영 전에 단언이 실행돼 실패했다.
+//
+// act(async () => {})는 대기 중인 프로미스 콜백을 흘려보내고
+// 그로 인한 리렌더까지 적용한 뒤 돌아온다 — 데이터가 0건이라 화면에
+// 아무 변화가 없는 경우에도 쓸 수 있는 유일한 완료 신호다.
+const settle = async () => {
+  await act(async () => {})
+}
+
 // 주문 탭은 기본 선택이 아니라 클릭해야 마운트된다 (Tabs.Panel의 keepMounted=false)
 const openOrdersTab = async () => {
   fireEvent.click(screen.getByText('주문 관리'))
-  await waitFor(() => expect(screen.getByText('총액')).toBeInTheDocument())
+  await waitFor(() => expect(screen.getByText('총액')).toBeInTheDocument()) // 패널 마운트
+  await settle() // 응답(totalPages) 반영
 }
 
 const nextBtn = () => screen.getByRole('button', { name: '다음' })
@@ -91,6 +107,7 @@ describe('AdminPage 페이징 — 마지막 페이지 인식 (DEF-9)', () => {
     fireEvent.click(nextBtn())
 
     await waitFor(() => expect(screen.getByText('페이지 2')).toBeInTheDocument())
+    await settle() // 2페이지 응답까지 반영시킨 뒤 판정한다
     expect(nextBtn()).toBeDisabled()
   })
 
@@ -119,6 +136,10 @@ describe('AdminPage 페이징 — 마지막 페이지 인식 (DEF-9)', () => {
     getProducts.mockResolvedValue(pageOf([], { totalPages: 0 }))
 
     render(<AdminPage />)
-    await waitFor(() => expect(nextBtn()).toBeDisabled())
+    // 결과가 0건이면 화면에 새로 나타나는 텍스트가 없어서 기다릴 대상이 없다.
+    // waitFor(...toBeDisabled())로 쓰면 "응답 도착 전 초기 상태"에서 곧바로 통과해버려
+    // 정작 고장난 코드도 잡지 못하는 헛통과가 된다 — 그래서 settle()로 반영을 먼저 보장한다.
+    await settle()
+    expect(nextBtn()).toBeDisabled()
   })
 })
