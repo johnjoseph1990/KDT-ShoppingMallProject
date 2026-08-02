@@ -94,6 +94,8 @@ public class OrderService {
       product.decreaseStock(cartItem.getQuantity());
       order.addItem(new OrderItem(product, product.getPrice(), cartItem.getQuantity()));
     }
+    // 상품을 모두 담은 뒤 장바구니 전체 합계를 기준으로 배송비를 확정한다.
+    order.applyShippingFee();
 
     Order saved = orderRepository.save(order);
     cartItemRepository.deleteAll(cartItems);

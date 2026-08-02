@@ -5,6 +5,9 @@ import { useCart } from '../context/CartContext'
 import { getAddresses } from '../api/addresses'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
+// 주문 생성 전 미리보기용 값. 실제 배송비는 백엔드 Order.applyShippingFee()가
+// 최종 계산해 주문에 반영한다(FREE_SHIPPING_THRESHOLD/SHIPPING_FEE). 이 숫자를 바꾸면
+// 반드시 backend/.../domain/order/Order.java도 함께 바꿔야 미리보기와 실제 청구가 어긋나지 않는다.
 const FREE_SHIP = 40000
 
 /* 배송 정보 입력 + 주문 내역 확인 후 결제하는 체크아웃 페이지 */

@@ -28,6 +28,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
 
+  // 배송비 정책. 주문 시점의 상품 합계로 판단해 Order에 스냅샷으로 저장한다 — OrderItem의
+  // orderPrice와 같은 이유로, 나중에 정책(기준 금액·배송비)이 바뀌어도 이미 만든 주문의
+  // 금액은 그대로 유지되어야 하기 때문이다. 프론트(CartPage.jsx의 FREE_SHIP/3500)에도
+  // 같은 값이 미리보기용으로 있으니, 한쪽을 바꾸면 반드시 다른 쪽도 확인한다.
+  public static final int FREE_SHIPPING_THRESHOLD = 40000;
+  public static final int SHIPPING_FEE = 3500;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -42,6 +49,12 @@ public class Order {
 
   @Column(nullable = false)
   private int totalPrice;
+
+  // columnDefinition으로 기본값을 명시해야 한다 — 기본값 없이 nullable=false만 붙이면
+  // 기존 row가 있는 orders 테이블에 ddl-auto=update가 이 컬럼을 추가하는 DDL 자체가
+  // 거부된다(과거 Product.viewCount 필드에서 겪었던 것과 같은 함정).
+  @Column(nullable = false, columnDefinition = "integer default 0")
+  private int shippingFee;
 
   @Column(nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -96,6 +109,13 @@ public class Order {
     orderItems.add(item);
     item.assignOrder(this);
     this.totalPrice += item.getOrderPrice() * item.getQuantity();
+  }
+
+  // 상품을 모두 담은 뒤(addItem 반복 종료 후) 한 번만 호출한다. 배송비는 "장바구니 전체
+  // 합계"를 기준으로 판단해야 하므로, 상품을 하나씩 담는 addItem 안에서는 계산할 수 없다.
+  public void applyShippingFee() {
+    this.shippingFee = this.totalPrice >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    this.totalPrice += this.shippingFee;
   }
 
   public void changeStatus(OrderStatus target) {

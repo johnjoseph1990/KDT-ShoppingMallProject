@@ -257,6 +257,22 @@ export default function OrderDetailPage() {
           ))}
         </div>
 
+        {/* 배송비 별도 표기 — order.totalPrice에는 이미 배송비가 합산돼 있으므로,
+            그 안에서 배송비만큼을 빼서 보여주면 장바구니 화면과 동일한 형태(상품금액+배송비)가 된다.
+            이전엔 장바구니에서 보여준 합계와 실제 주문 금액이 달라 혼란을 주는 결함(DEF-2)이 있었다. */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '10px 0',
+            fontSize: 13,
+            color: 'var(--color-fg-muted)',
+          }}
+        >
+          <span>배송비</span>
+          <span>{order.shippingFee > 0 ? fmt(order.shippingFee) : '무료'}</span>
+        </div>
+
         <div
           style={{
             display: 'flex',

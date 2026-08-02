@@ -47,6 +47,7 @@ class AdminOrderControllerTest {
         1L,
         status,
         10000,
+        0,
         LocalDateTime.now(),
         List.of(),
         null,

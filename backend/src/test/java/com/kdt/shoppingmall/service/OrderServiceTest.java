@@ -94,6 +94,41 @@ class OrderServiceTest {
   }
 
   @Test
+  void createOrder_4만원_미만이면_배송비_3500원이_총액에_포함된다() {
+    // willAnswer로 save에 전달된 실제 Order를 그대로 돌려줘야, createOrder() 내부에서
+    // 계산된 totalPrice/shippingFee를 응답에서 검증할 수 있다 (고정된 Mock 객체를
+    // 반환하면 실제 계산 결과를 확인할 수 없다).
+    CartItem cartItem = new CartItem(member, product, 2); // 10,000원 × 2 = 20,000원
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findByMemberId(1L)).willReturn(List.of(cartItem));
+    given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
+
+    OrderResponse response =
+        orderService.createOrder(
+            1L, new OrderCreateRequest(null, null, null, null, null, null, null));
+
+    assertThat(response.shippingFee()).isEqualTo(3500);
+    assertThat(response.totalPrice()).isEqualTo(23500);
+  }
+
+  @Test
+  void createOrder_4만원_이상이면_배송비_무료() {
+    CartItem cartItem = new CartItem(member, product, 4); // 10,000원 × 4 = 40,000원
+
+    given(memberRepository.findById(1L)).willReturn(Optional.of(member));
+    given(cartItemRepository.findByMemberId(1L)).willReturn(List.of(cartItem));
+    given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
+
+    OrderResponse response =
+        orderService.createOrder(
+            1L, new OrderCreateRequest(null, null, null, null, null, null, null));
+
+    assertThat(response.shippingFee()).isZero();
+    assertThat(response.totalPrice()).isEqualTo(40000);
+  }
+
+  @Test
   void createOrder_빈카트_예외발생() {
     given(memberRepository.findById(1L)).willReturn(Optional.of(member));
     given(cartItemRepository.findByMemberId(1L)).willReturn(List.of());

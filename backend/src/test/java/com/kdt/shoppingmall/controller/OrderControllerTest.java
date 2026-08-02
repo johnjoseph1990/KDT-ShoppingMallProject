@@ -55,6 +55,7 @@ class OrderControllerTest {
         1L,
         OrderStatus.ORDERED,
         20000,
+        0,
         LocalDateTime.now(),
         List.of(),
         null,
