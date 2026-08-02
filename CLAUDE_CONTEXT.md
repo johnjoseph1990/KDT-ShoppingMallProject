@@ -51,6 +51,21 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `DevDataInitializer`가 `@Profile("dev")` → `@Profile("!test")`로 바뀌어, 배포된 prod 환경(Azure)에도 관리자/상품 시드 데이터가 들어감(배포 직후 빈 화면 방지).
 - **남은 작업 없음.** 새 PC에서 Azure Blob Storage를 로컬 테스트하려면 `.env.example`의 `AZURE_STORAGE_CONNECTION_STRING`/`AZURE_STORAGE_CONTAINER_NAME`을 채우면 되고, 안 채워도 로컬 개발엔 지장 없음.
 
+### 3-5. 배포 검증 결함 처리 — DEF-7·8·9·11만 남음 (2026-08-02)
+
+Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배포검증_체크리스트.md`)에서 결함 11건이 나왔고, **P0·P1은 전부 해결·재검증까지 끝났다**. 남은 4건은 모두 P2다.
+
+| ID | 남은 결함 | 레이어 |
+|---|---|---|
+| DEF-7 | CartPage·AdminPage에 `<main>` 없음, 푸터 "둘러보기"·배송지 카드가 `cursor:pointer` div라 키보드 접근 불가 | 프론트 |
+| DEF-8 | 모바일 390px에서 "검색" 버튼이 `검/색`으로 세로 분리 | 프론트 CSS |
+| DEF-9 | 관리자 주문 목록 "다음" 버튼이 마지막 페이지에서 비활성화되지 않음 | 프론트 |
+| DEF-11 | 업로드된 Blob 이미지의 Content-Type이 `application/octet-stream` (화면 렌더는 정상) | 백엔드 |
+
+> **DEF-7은 아래 3-2의 P2-7과 사실상 같은 작업**이다 — `div onClick` → `<Link>`/`<button>` 교체라는 같은 뿌리라서, 한 번에 처리하면 두 항목이 동시에 닫힌다.
+
+**검증 환경 메모**: 배포 사이트 검증은 브라우저 자동화가 필요하다. Playwright MCP(`npx -y @playwright/mcp@latest`)는 **패키지 최초 다운로드가 30초 연결 타임아웃을 넘겨 실패**할 수 있으니, 세션 시작 전에 그 명령을 한 번 돌려 npx 캐시를 데워두면 된다. MCP를 못 쓸 때는 npx 캐시의 `playwright-core`를 Node 스크립트에서 직접 import해 Chromium을 몰 수 있다(설치된 chromium 리비전과 playwright-core 버전이 맞아야 함).
+
 **운영 업그레이드 3대 항목 진행 상황:** 관측성(Actuator 헬스체크 + traceId 로그/MDC)은 2026-07-29 1단계 완료(`43f5d6f`). 데이터 안전성(`ddl-auto=update` → Flyway 전환)은 지금 규모에서는 과설계라고 판단해 보류 결정(진행 안 함). **남은 건 성능(N+1·인덱스)뿐.** Hook(커밋 전 포맷 강제)도 미구축(하네스 Layer 3, 우선순위 낮음).
 
 ## 4. 새 PC / 새 작업자가 이어받을 때 체크리스트
