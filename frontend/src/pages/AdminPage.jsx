@@ -55,12 +55,48 @@ export default function AdminPage() {
   )
 }
 
+// ─── 페이징 버튼 (상품 탭·주문 탭이 함께 쓴다) ──────────────────
+// 왜 컴포넌트로 뺐나: 두 패널이 똑같은 마크업을 복사해 쓰고 있었고, 그래서
+// "다음" 버튼의 잘못된 비활성화 조건도 양쪽에 똑같이 복사돼 있었다(2026-08-02 DEF-9).
+// 한 곳으로 모으면 조건을 한 번만 고쳐도 양쪽이 같이 낫는다.
+//
+// totalPages는 백엔드 Page 응답에 원래부터 들어 있던 값이다 —
+// 예전에는 res.data.content만 꺼내 쓰고 이 값을 버리는 바람에
+// "지금이 마지막 페이지인지"를 알 방법이 없었다.
+function Pager({ page, totalPages, onChange }) {
+  // "다음"을 잠글 조건. === 대신 >= 를 쓰는 이유가 세 가지 경우를 한 번에 덮는다:
+  //  ① 정상 경계 — totalPages 5, page 4 → 4 >= 4 → 잠김
+  //  ② 결과 0건 — Spring은 결과가 없으면 totalPages를 0으로 준다.
+  //     page 0 >= -1 → 잠김. (=== 였다면 0 === -1 이 false라 빈 화면에서 버튼이 열린다)
+  //  ③ 응답 전 / 페이지 수가 갑자기 줄어든 경우 — 필터를 걸어 5페이지가 1페이지가 되면
+  //     page(3)가 범위를 넘어서는데, >= 는 이때도 잠근다. 모를 때는 잠그는 쪽이 안전하다.
+  const isLastPage = page >= totalPages - 1
+
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
+      <Button
+        variant="outline"
+        onClick={() => onChange(Math.max(0, page - 1))}
+        disabled={page === 0}
+      >
+        이전
+      </Button>
+      <span>페이지 {page + 1}</span>
+      <Button variant="outline" onClick={() => onChange(page + 1)} disabled={isLastPage}>
+        다음
+      </Button>
+    </div>
+  )
+}
+
 // ─── 상품 관리 패널 ────────────────────────────────────────────
 function ProductManager() {
   const [products, setProducts] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null) // null이면 신규 등록 모드
   const [page, setPage] = useState(0)
+  // 전체 페이지 수 — 초기값 0은 "아직 응답을 못 받았다"는 뜻이다
+  const [totalPages, setTotalPages] = useState(0)
   // 업로드 진행 중 여부 — true인 동안 파일 입력과 저장 버튼을 잠가서
   // URL이 아직 안 채워진 상태로 상품이 저장되는 것을 막는다
   const [uploading, setUploading] = useState(false)
@@ -70,8 +106,12 @@ function ProductManager() {
   }, [page])
 
   const loadProducts = () => {
-    // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
-    getProducts({ page }).then((res) => setProducts(res.data.content))
+    // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다.
+    // content 옆의 totalPages도 함께 챙긴다 — 페이징 버튼이 끝을 알기 위해 필요하다.
+    getProducts({ page }).then((res) => {
+      setProducts(res.data.content)
+      setTotalPages(res.data.totalPages)
+    })
   }
 
   // native input(가격/재고, type="number")용: 이벤트에서 값을 꺼냄
@@ -296,24 +336,7 @@ function ProductManager() {
           ))}
         </Table.Body>
       </Table.Root>
-      {/* 페이지네이션 */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={page === 0}
-        >
-          이전
-        </Button>
-        <span>페이지 {page + 1}</span>
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={products.length === 0}
-        >
-          다음
-        </Button>
-      </div>
+      <Pager page={page} totalPages={totalPages} onChange={setPage} />
     </>
   )
 }
@@ -322,6 +345,7 @@ function ProductManager() {
 function OrderManager() {
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0) // 상품 패널과 같은 이유
   const [statusFilter, setStatusFilter] = useState(null) // null이면 전체 조회
 
   useEffect(() => {
@@ -330,7 +354,10 @@ function OrderManager() {
 
   const loadOrders = () => {
     // 백엔드가 Page 객체로 응답하므로 실제 배열은 res.data.content에 들어있다
-    getAdminOrders(page, statusFilter).then((res) => setOrders(res.data.content))
+    getAdminOrders(page, statusFilter).then((res) => {
+      setOrders(res.data.content)
+      setTotalPages(res.data.totalPages)
+    })
   }
 
   // 필터 변경 시 첫 페이지로 리셋해서 이전 페이지 번호가 남는 부작용을 방지
@@ -406,24 +433,7 @@ function OrderManager() {
           ))}
         </Table.Body>
       </Table.Root>
-      {/* 페이지네이션 */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          disabled={page === 0}
-        >
-          이전
-        </Button>
-        <span>페이지 {page + 1}</span>
-        <Button
-          variant="outline"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={orders.length === 0}
-        >
-          다음
-        </Button>
-      </div>
+      <Pager page={page} totalPages={totalPages} onChange={setPage} />
     </>
   )
 }
