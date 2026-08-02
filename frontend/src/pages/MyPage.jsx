@@ -4,19 +4,14 @@ import { useAuth } from '../context/AuthContext'
 import { updateMe, deleteMe, logout as logoutApi } from '../api/auth'
 import { getOrders } from '../api/orders'
 import { getAddresses, createAddress, updateAddress, deleteAddress } from '../api/addresses'
+// 주문 상태 한글 표기는 utils/orderStatus 한 곳에서 관리한다
+import { orderStatusLabel } from '../utils/orderStatus'
 
-// 주문 상태 한글 표기
-const STATUS_LABEL = {
-  ORDERED: '주문완료',
-  PAID: '결제완료',
-  SHIPPING: '배송중',
-  DELIVERED: '배송완료',
-  CANCELED: '취소됨',
-}
-
-// 상태별 색상 정의
+// 상태별 색상 정의 (색상은 이 화면 전용 표현이라 라벨과 달리 여기 남긴다)
 const STATUS_STYLE = {
   ORDERED: { color: 'var(--color-fg-muted)', bg: '#f0eedf' },
+  // 입금대기는 "아직 결제 안 됨"이므로 주문완료와 같은 톤으로 표시한다
+  WAITING_FOR_DEPOSIT: { color: 'var(--color-fg-muted)', bg: '#f0eedf' },
   PAID: { color: 'var(--color-success)', bg: 'var(--color-success-bg)' },
   SHIPPING: { color: 'var(--color-shipping)', bg: 'var(--color-shipping-bg)' },
   DELIVERED: { color: 'var(--color-fg)', bg: 'var(--color-text-on-dark)' },
@@ -356,7 +351,7 @@ function StatusBadge({ status }) {
     <span
       style={{ fontSize: 11, letterSpacing: '0.04em', color, background: bg, padding: '3px 8px' }}
     >
-      {STATUS_LABEL[status] ?? status}
+      {orderStatusLabel(status)}
     </span>
   )
 }

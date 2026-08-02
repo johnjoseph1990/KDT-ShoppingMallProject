@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOrders } from '../api/orders'
+// 주문 상태 한글 표기는 utils/orderStatus 한 곳에서 관리한다
+import { orderStatusLabel } from '../utils/orderStatus'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
-const STATUS_LABEL = {
-  ORDERED: '주문완료',
-  PAID: '결제완료',
-  SHIPPING: '배송중',
-  DELIVERED: '배송완료',
-  CANCELED: '취소됨',
-}
 
 export default function OrderListPage() {
   const [orders, setOrders] = useState([])
@@ -125,7 +120,7 @@ export default function OrderListPage() {
                     fontWeight: 300,
                   }}
                 >
-                  {STATUS_LABEL[order.status] ?? order.status}
+                  {orderStatusLabel(order.status)}
                 </p>
               </div>
             </Link>

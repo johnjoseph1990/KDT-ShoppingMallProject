@@ -2,18 +2,15 @@ import { useEffect, useState } from 'react'
 import { Badge, Button, Tabs, Table, Textarea, TextInput } from '@vapor-ui/core'
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../api/products'
 import { getAdminOrders, updateOrderStatus } from '../api/admin'
+// 주문 상태 표기는 utils/orderStatus 한 곳에서만 관리한다.
+// (예전엔 이 파일에 라벨을 직접 복사해뒀다가 WAITING_FOR_DEPOSIT를 빠뜨려
+//  입금대기 주문이 "주문완료"로 잘못 표시되는 버그가 있었다)
+import { ADMIN_FILTER_STATUSES, orderStatusLabel, adminStatusOptions } from '../utils/orderStatus'
 
-// 관리자가 선택 가능한 주문 상태 목록
-const ORDER_STATUSES = ['ORDERED', 'PAID', 'SHIPPING', 'DELIVERED', 'CANCELED']
-const STATUS_LABEL = {
-  ORDERED: '주문완료',
-  PAID: '결제완료',
-  SHIPPING: '배송중',
-  DELIVERED: '배송완료',
-  CANCELED: '취소됨',
-}
+// 배지 색상은 이 화면 전용 표현이라 여기 남긴다 (라벨과 달리 다른 화면과 공유하지 않음)
 const STATUS_COLOR = {
   ORDERED: 'warning',
+  WAITING_FOR_DEPOSIT: 'warning',
   PAID: 'success',
   SHIPPING: 'primary',
   DELIVERED: 'hint',
@@ -274,9 +271,10 @@ function OrderManager() {
       <div style={{ marginBottom: '0.75rem' }}>
         <select value={statusFilter ?? ''} onChange={handleFilterChange} style={styles.select}>
           <option value="">전체</option>
-          {ORDER_STATUSES.map((s) => (
+          {/* 필터는 조회 조건일 뿐이라 입금대기도 골라볼 수 있어야 한다 */}
+          {ADMIN_FILTER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {STATUS_LABEL[s]}
+              {orderStatusLabel(s)}
             </option>
           ))}
         </select>
@@ -301,19 +299,22 @@ function OrderManager() {
               </Table.Cell>
               <Table.Cell>
                 <Badge colorPalette={STATUS_COLOR[o.status] ?? 'hint'}>
-                  {STATUS_LABEL[o.status] ?? o.status}
+                  {orderStatusLabel(o.status)}
                 </Badge>
               </Table.Cell>
               <Table.Cell>
-                {/* select로 상태 직접 변경 (5개뿐인 단순 선택지라 native select 유지) */}
+                {/* select로 상태 직접 변경 (단순 선택지라 native select 유지).
+                    adminStatusOptions는 현재 상태가 수동 지정 불가한 값(입금대기)이어도
+                    목록에 포함시킨다 — 매칭되는 option이 없으면 브라우저가 첫 항목을
+                    선택된 것처럼 보여줘서 실제 상태를 오인하게 되기 때문이다. */}
                 <select
                   value={o.status}
                   onChange={(e) => handleStatusChange(o.id, e.target.value)}
                   style={styles.select}
                 >
-                  {ORDER_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
+                  {adminStatusOptions(o.status).map((opt) => (
+                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>

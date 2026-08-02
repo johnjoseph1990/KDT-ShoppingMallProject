@@ -4,16 +4,10 @@ import { loadTossPayments } from '@tosspayments/payment-sdk'
 import { getOrder, checkDeposit } from '../api/orders'
 import { buildTossOrderId } from '../utils/toss'
 import { useAuth } from '../context/AuthContext'
+// 주문 상태 한글 표기는 utils/orderStatus 한 곳에서 관리한다
+import { orderStatusLabel } from '../utils/orderStatus'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
-const STATUS_LABEL = {
-  ORDERED: '주문완료',
-  WAITING_FOR_DEPOSIT: '입금대기',
-  PAID: '결제완료',
-  SHIPPING: '배송중',
-  DELIVERED: '배송완료',
-  CANCELED: '취소됨',
-}
 // 토스 테스트 가상계좌가 주로 내려주는 은행코드만 최소로 매핑. 목록에 없으면 코드 그대로 보여준다.
 const BANK_NAME = { 20: '우리은행', 88: '신한은행', 81: '하나은행', '03': '기업은행' }
 
@@ -136,7 +130,7 @@ export default function OrderDetailPage() {
               color: 'var(--color-fg-accent)',
             }}
           >
-            주문 #{order.id} · {STATUS_LABEL[order.status] ?? order.status}
+            주문 #{order.id} · {orderStatusLabel(order.status)}
           </p>
           <h1
             style={{
