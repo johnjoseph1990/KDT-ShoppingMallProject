@@ -50,19 +50,21 @@ KDT 교육과정 쇼핑몰 프로젝트 (Spring Boot + React). 상세 컨벤션�
 - `DevDataInitializer`가 `@Profile("dev")` → `@Profile("!test")`로 바뀌어, 배포된 prod 환경(Azure)에도 관리자/상품 시드 데이터가 들어감(배포 직후 빈 화면 방지).
 - **남은 작업 없음.** 새 PC에서 Azure Blob Storage를 로컬 테스트하려면 `.env.example`의 `AZURE_STORAGE_CONNECTION_STRING`/`AZURE_STORAGE_CONTAINER_NAME`을 채우면 되고, 안 채워도 로컬 개발엔 지장 없음.
 
-### 3-5. 배포 검증 결함 처리 — DEF-11·12만 남음 (2026-08-02)
+### 3-5. 배포 검증 결함 처리 — DEF-11만 남음 (2026-08-02)
 
-Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배포검증_체크리스트.md`)에서 결함 12건이 나왔고, **P0·P1은 전부 해결·재검증까지 끝났다**. 남은 2건은 모두 P2이며, 둘 다 화면은 정상 동작한다.
+Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배포검증_체크리스트.md`)에서 결함 12건이 나왔고, **11건이 해결·재검증까지 끝났다**. 남은 1건은 P2이며 화면은 정상 동작한다.
 
 | ID | 남은 결함 | 레이어 |
 |---|---|---|
 | DEF-11 | 업로드된 Blob 이미지의 Content-Type이 `application/octet-stream` (`<img>`는 스니핑으로 정상 렌더되지만 URL 직접 열면 다운로드됨) | 백엔드 |
-| DEF-12 | 상품 상세 "추천 상품" 카드 4개가 아직 가짜 링크 — `ProductDetailPage.jsx`가 `ProductCard`를 재사용하지 않고 `<div onClick>`으로 복제해놨다 | 프론트 |
 
 > DEF-7(시맨틱/접근성)은 2026-08-02에 위 3-2의 P2-7과 함께 종결됐다(커밋 `461dbf2`).
 > DEF-8(모바일 버튼 줄바꿈)도 같은 날 종결. **한글은 글자 사이 어디서나 줄바꿈되므로 flex 아이템의 최소 너비가 한 글자가 된다** — 좁은 화면에 놓이는 한글 버튼에는 `flexShrink: 0` + `whiteSpace: 'nowrap'`을 습관적으로 붙일 것.
 > DEF-9(관리자 페이징)도 같은 날 종결(커밋 `c4c8143`). **백엔드 Spring `Page` 응답에는 `totalPages`·`last`·`totalElements`가 들어 있는데 프론트가 `content`만 꺼내 쓰고 버리는 패턴을 경계할 것** — 그러면 "마지막 페이지인지"를 알 수 없어 `items.length === 0` 같은 한 칸 늦은 조건을 쓰게 된다.
-> **DEF-9·12는 같은 교훈을 공유한다**: 잘못된 코드가 복붙돼 있으면 버그도 복붙된다. DEF-9는 두 패널의 페이징 마크업을, DEF-12는 상품 카드를 각각 한 컴포넌트로 합치는 일이 곧 수정이다.
+> DEF-12(추천 상품 가짜 링크)도 같은 날 종결(커밋 `db5f396`).
+>
+> **이 프로젝트에서 반복된 단일 원인 — 복제된 코드**: DEF-6(상태 라벨), DEF-8(초기화 버튼), DEF-9(두 패널의 페이징), DEF-12(추천 카드)가 모두 "같은 코드가 두 군데 있어 한쪽만 고쳐졌다"였다. DEF-12에서는 **DEF-4의 회색 빈 칸 결함까지 같은 복제본에 남아 있었다** — 한 복제본이 두 개의 수정을 동시에 놓친 것이다.
+> 실천 규칙 두 가지: ① 카드·목록·페이징 같은 UI를 손으로 다시 그리지 말고 기존 컴포넌트를 재사용한다. ② **회귀 테스트를 컴포넌트에만 걸면 복제본은 안 지켜진다** — DEF-12가 정확히 그렇게 새어나갔으므로, 화면 단위 테스트(`ProductDetailPage.test.jsx`·`AdminPage.test.jsx`)를 함께 둔다.
 
 **검증 환경 메모**: 배포 사이트 검증은 브라우저 자동화가 필요하다. Playwright MCP(`npx -y @playwright/mcp@latest`)는 **패키지 최초 다운로드가 30초 연결 타임아웃을 넘겨 실패**할 수 있으니, 세션 시작 전에 그 명령을 한 번 돌려 npx 캐시를 데워두면 된다. MCP를 못 쓸 때는 npx 캐시의 `playwright-core`를 Node 스크립트에서 직접 import해 Chromium을 몰 수 있다(설치된 chromium 리비전과 playwright-core 버전이 맞아야 함).
 
@@ -73,7 +75,7 @@ Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배�
 1. `git pull origin master`
 2. `docker compose up -d` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
    - Docker로 백엔드를 띄우는 경우 루트에 `.env`가 없으면 `TOSS_SECRET_KEY`가 빈 값으로 주입되어 가상계좌 결제가 "취소됨"으로 표시됨 — `.env.example`을 복사해 실제 토스 테스트 키를 채울 것 (3-1 참고)
-3. 이 문서의 3번 섹션에서 이어할 작업 선택 (남은 것: 3-5의 DEF-11·12(P2) < 성능 개선(N+1·인덱스))
+3. 이 문서의 3번 섹션에서 이어할 작업 선택 (남은 것: 3-5의 DEF-11(P2) < 성능 개선(N+1·인덱스))
 4. Claude에게 "CLAUDE_CONTEXT.md 읽고 [작업명] 이어서 해줘"라고 지시하면 됨
 
 ## 5. 이 문서 유지보수 원칙
