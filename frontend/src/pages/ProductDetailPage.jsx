@@ -322,6 +322,25 @@ export default function ProductDetailPage() {
             {product.stockQuantity > 0 ? `재고 ${product.stockQuantity}개` : '품절'}
           </p>
 
+          {/* 총액 요약: 수량 × 단가 — 수량 스테퍼와 연동해 실시간 반영 */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              padding: '16px 0',
+              borderTop: '1px solid var(--color-border)',
+              borderBottom: '1px solid var(--color-border)',
+            }}
+          >
+            <span style={{ fontSize: 12, letterSpacing: '0.1em', color: 'var(--color-fg-muted)' }}>
+              총 금액
+            </span>
+            <span style={{ fontSize: 22, fontWeight: 400, letterSpacing: '-0.01em' }}>
+              {fmt(product.price * quantity)}
+            </span>
+          </div>
+
           {/* 수량 스테퍼 + 버튼 영역: 세로로 쌓아 바로 구매를 아래 행에 배치 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {/* 첫 행: 수량 스테퍼 + 장바구니 담기 */}
@@ -369,14 +388,12 @@ export default function ProductDetailPage() {
               <AddCartBtn
                 onClick={handleAddToCart}
                 disabled={product.stockQuantity === 0}
-                price={fmt(product.price)}
               />
             </div>
             {/* 두 번째 행: 바로 구매 — 장바구니 담기 + 주문하기 페이지로 즉시 이동 */}
             <BuyNowBtn
               onClick={handleBuyNow}
               disabled={product.stockQuantity === 0}
-              price={fmt(product.price * quantity)}
             />
           </div>
         </div>
@@ -712,9 +729,8 @@ export default function ProductDetailPage() {
   )
 }
 
-/* 장바구니 담기 버튼 (hover 시 색상 변경) */
-// 장바구니 담기와 구분되도록 outline 스타일로 렌더링한다 (primary vs secondary CTA).
-function BuyNowBtn({ onClick, disabled, price }) {
+// 바로 구매 버튼 — outline 스타일로 장바구니 담기(filled)와 시각적 위계를 구분한다.
+function BuyNowBtn({ onClick, disabled }) {
   const [hovered, setHovered] = useState(false)
   return (
     <button
@@ -731,19 +747,16 @@ function BuyNowBtn({ onClick, disabled, price }) {
         padding: '16px 22px',
         fontSize: 14,
         letterSpacing: '0.04em',
-        display: 'flex',
-        justifyContent: 'space-between',
         opacity: disabled ? 0.5 : 1,
         transition: 'background 0.15s, color 0.15s',
       }}
     >
-      <span>바로 구매</span>
-      <span>{price}</span>
+      바로 구매
     </button>
   )
 }
 
-function AddCartBtn({ onClick, disabled, price }) {
+function AddCartBtn({ onClick, disabled }) {
   const [hovered, setHovered] = useState(false)
   return (
     <button
@@ -760,13 +773,10 @@ function AddCartBtn({ onClick, disabled, price }) {
         padding: '16px 22px',
         fontSize: 14,
         letterSpacing: '0.04em',
-        display: 'flex',
-        justifyContent: 'space-between',
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <span>장바구니에 담기</span>
-      <span>{price}</span>
+      장바구니에 담기
     </button>
   )
 }
