@@ -21,6 +21,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
   // Optional<Product>: 없을 수도 있다는 걸 반환 타입으로 드러내 NullPointerException을 막는다.
   Optional<Product> findByName(String name);
 
+  // tags 컬렉션을 JOIN FETCH로 함께 로드한다.
+  // ApplicationRunner는 트랜잭션 밖에서 실행되므로 findByName() 이후 p.getTags()를 호출하면
+  // LazyInitializationException이 발생한다. 이 메서드는 태그까지 한 번에 가져와 그 문제를 피한다.
+  @Query("SELECT p FROM Product p LEFT JOIN FETCH p.tags WHERE p.name = :name")
+  Optional<Product> findByNameWithTags(@Param("name") String name);
+
   // CAST(:keyword AS string): keyword/tag가 null일 때 PostgreSQL이 파라미터 타입을
   // bytea로 잘못 추론해서 LOWER(bytea) 같은 함수 호출이 실패하는 문제를 막기 위해,
   // JPQL 단계에서 명시적으로 문자열 타입임을 알려준다.

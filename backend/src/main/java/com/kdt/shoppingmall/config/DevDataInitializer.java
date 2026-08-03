@@ -281,6 +281,26 @@ public class DevDataInitializer {
 
         productRepository.save(product);
       }
+
+      // 이번 주 수확물 태그 보완: "이번주수확" 태그가 없는 상품에만 추가한다.
+      // 새 클론 환경에서는 위 루프 이후 여기서 다시 붙고,
+      // 이미 시드된 환경에서도 서버 재시작 시 자동으로 보완된다 (멱등).
+      List<String> weeklyTargets =
+          List.of("충남 금산 당근", "논산 설향 딸기", "서천 바닷바람 쌈채소", "충남 가을 배");
+      for (String targetName : weeklyTargets) {
+        // findByNameWithTags: tags 컬렉션을 JOIN FETCH로 함께 로드해 LazyInitializationException을 피한다.
+        productRepository
+            .findByNameWithTags(targetName)
+            .ifPresent(
+                p -> {
+                  boolean hasTag =
+                      p.getTags().stream().anyMatch(t -> t.getName().equals("이번주수확"));
+                  if (!hasTag) {
+                    p.addTag(new ProductTag("이번주수확"));
+                    productRepository.save(p);
+                  }
+                });
+      }
     };
   }
 }

@@ -128,7 +128,7 @@ export default function AboutPage() {
           않으며, 계절에 없는 것을 팔지 않습니다. 느리지만 정직한 이 방식이, 당신의 식탁과 이 지역의
           땅을 함께 건강하게 만든다고 생각합니다.
         </p>
-        <ShopBtn to="/shop">이번 주 수확물 보기 →</ShopBtn>
+        <ShopBtn to="/harvest">이번 주 수확물 보기 →</ShopBtn>
       </section>
     </main>
   )

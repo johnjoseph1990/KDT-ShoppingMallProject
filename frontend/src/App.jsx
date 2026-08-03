@@ -21,6 +21,7 @@ import AdminPage from './pages/AdminPage'
 import MyPage from './pages/MyPage'
 import StoryPage from './pages/StoryPage'
 import AboutPage from './pages/AboutPage'
+import HarvestPage from './pages/HarvestPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/products/:id" element={<ProductDetailPage />} />
                 <Route path="/story" element={<StoryPage />} />
                 <Route path="/about" element={<AboutPage />} />
+                <Route path="/harvest" element={<HarvestPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route
