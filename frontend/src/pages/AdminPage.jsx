@@ -8,6 +8,10 @@ import { validateImageFile, uploadErrorMessage } from '../utils/imageUpload'
 // (예전엔 이 파일에 라벨을 직접 복사해뒀다가 WAITING_FOR_DEPOSIT를 빠뜨려
 //  입금대기 주문이 "주문완료"로 잘못 표시되는 버그가 있었다)
 import { ADMIN_FILTER_STATUSES, orderStatusLabel, adminStatusOptions } from '../utils/orderStatus'
+// 페이징 경계 판정도 utils/pagination 한 곳에서만 관리한다.
+// (상품 목록 화면에는 페이지 크기 10이 하드코딩된 다른 식이 따로 있었다 — 같은 판정이
+//  두 파일에 서로 다르게 존재하면 한쪽만 고쳐지는 DEF-9 같은 사고가 반복된다)
+import { isLastPage } from '../utils/pagination'
 
 // 배지 색상은 이 화면 전용 표현이라 여기 남긴다 (라벨과 달리 다른 화면과 공유하지 않음)
 const STATUS_COLOR = {
@@ -64,14 +68,9 @@ export default function AdminPage() {
 // 예전에는 res.data.content만 꺼내 쓰고 이 값을 버리는 바람에
 // "지금이 마지막 페이지인지"를 알 방법이 없었다.
 function Pager({ page, totalPages, onChange }) {
-  // "다음"을 잠글 조건. === 대신 >= 를 쓰는 이유가 세 가지 경우를 한 번에 덮는다:
-  //  ① 정상 경계 — totalPages 5, page 4 → 4 >= 4 → 잠김
-  //  ② 결과 0건 — Spring은 결과가 없으면 totalPages를 0으로 준다.
-  //     page 0 >= -1 → 잠김. (=== 였다면 0 === -1 이 false라 빈 화면에서 버튼이 열린다)
-  //  ③ 응답 전 / 페이지 수가 갑자기 줄어든 경우 — 필터를 걸어 5페이지가 1페이지가 되면
-  //     page(3)가 범위를 넘어서는데, >= 는 이때도 잠근다. 모를 때는 잠그는 쪽이 안전하다.
-  const isLastPage = page >= totalPages - 1
-
+  // "다음"을 잠글 조건은 utils/pagination의 isLastPage가 판정한다.
+  // 정상 경계·결과 0건·범위 초과·응답 전(값 없음)을 모두 그 함수가 다루므로
+  // 여기서 조건식을 다시 쓰지 않는다. 판정 규칙과 근거는 그 파일의 주석 참고.
   return (
     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
       <Button
@@ -82,7 +81,11 @@ function Pager({ page, totalPages, onChange }) {
         이전
       </Button>
       <span>페이지 {page + 1}</span>
-      <Button variant="outline" onClick={() => onChange(page + 1)} disabled={isLastPage}>
+      <Button
+        variant="outline"
+        onClick={() => onChange(page + 1)}
+        disabled={isLastPage(page, totalPages)}
+      >
         다음
       </Button>
     </div>

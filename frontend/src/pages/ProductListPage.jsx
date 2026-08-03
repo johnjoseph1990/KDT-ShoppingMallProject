@@ -5,6 +5,10 @@ import { addToCart } from '../api/cart'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
 import { fmt } from '../utils/product'
+// 페이징 경계 판정은 utils/pagination 한 곳에서만 관리한다.
+// (예전엔 이 파일에 `(page + 1) * 10 >= totalElements`로 적혀 있었다 — 그 10은
+//  백엔드 @PageableDefault(size = 10)의 복사본이라, 서버가 20으로 바꾸면 화면만 조용히 틀려진다)
+import { isLastPage } from '../utils/pagination'
 import ProductCard from '../components/ProductCard'
 
 /* 카테고리 필터 → 상품 태그(product_tag)로 매핑.
@@ -31,6 +35,10 @@ const RATINGS = [
 export default function ProductListPage() {
   const [products, setProducts] = useState([])
   const [totalElements, setTotalElements] = useState(0)
+  // totalPages: "다음" 버튼을 잠글지 판정하는 데만 쓴다. 화면 상단의 "N개의 상품"은
+  // 여전히 totalElements(전체 건수)를 쓰므로 두 값이 둘 다 필요하다.
+  // 초기값 0 — 응답 전에는 isLastPage(0, 0)이 true라 "다음"이 잠긴 상태로 시작한다.
+  const [totalPages, setTotalPages] = useState(0)
   const [cat, setCat] = useState('all')
   // keywordInput: 입력창에 타이핑 중인 값 (매 글자마다 바뀜)
   // keyword     : 실제로 서버에 보낸 검색어 (엔터/버튼을 눌러야 바뀜)
@@ -62,6 +70,9 @@ export default function ProductListPage() {
         // totalElements: 현재 페이지가 아니라 "필터에 걸린 전체 개수".
         // 페이지당 10개만 받으므로 products.length로는 전체 개수를 알 수 없다.
         setTotalElements(res.data.totalElements ?? 0)
+        // content 옆에 함께 오는 totalPages를 버리지 않고 챙긴다.
+        // ?? 0 은 응답에 값이 없을 때의 대비 — 그 경우 "다음"은 잠긴 상태로 남는다.
+        setTotalPages(res.data.totalPages ?? 0)
       })
       .catch(() => showMessage('상품 목록을 불러오지 못했습니다'))
   }, [cat, keyword, ratingKey, page])
@@ -303,9 +314,9 @@ export default function ProductListPage() {
         <span style={{ fontSize: 13, color: 'var(--color-fg-muted)', fontWeight: 300 }}>
           페이지 {page + 1}
         </span>
-        {/* 전체 개수(totalElements) 기준으로 마지막 페이지를 판단한다.
-            products.length < 10 으로 판단하면 "정확히 10개"일 때 빈 다음 페이지로 넘어간다 */}
-        <PageBtn onClick={() => setPage((p) => p + 1)} disabled={(page + 1) * 10 >= totalElements}>
+        {/* 백엔드가 계산해서 보내주는 totalPages로 판단한다 — 이 화면은 페이지 크기를 모른다.
+            관리자 화면(AdminPage의 Pager)도 같은 함수를 쓰므로 규칙이 어긋나지 않는다 */}
+        <PageBtn onClick={() => setPage((p) => p + 1)} disabled={isLastPage(page, totalPages)}>
           다음 →
         </PageBtn>
       </div>
