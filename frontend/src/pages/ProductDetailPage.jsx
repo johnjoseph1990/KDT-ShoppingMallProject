@@ -101,6 +101,22 @@ export default function ProductDetailPage() {
     }
   }
 
+  // 장바구니를 거치지 않고 바로 주문하기 페이지로 이동한다.
+  // 내부적으로는 "장바구니 담기 + /cart 이동"으로 구현 — 별도 API 없이 기존 흐름 재사용.
+  const handleBuyNow = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+    try {
+      await addToCart({ productId: Number(id), quantity })
+      refreshCart()
+      navigate('/cart')
+    } catch (err) {
+      showMessage(err.response?.data?.message || '구매 처리에 실패했습니다')
+    }
+  }
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault()
     try {
@@ -306,50 +322,61 @@ export default function ProductDetailPage() {
             {product.stockQuantity > 0 ? `재고 ${product.stockQuantity}개` : '품절'}
           </p>
 
-          {/* 수량 스테퍼 + 장바구니 버튼 */}
-          <div style={{ display: 'flex', gap: 14, alignItems: 'stretch' }}>
-            <div style={{ display: 'flex', border: '1px solid var(--color-fg)' }}>
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                style={{
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: 'transparent',
-                  width: 44,
-                  fontSize: 16,
-                }}
-              >
-                −
-              </button>
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 40,
-                  fontSize: 14,
-                }}
-              >
-                {quantity}
-              </span>
-              <button
-                onClick={() => setQuantity((q) => Math.min(product.stockQuantity || q + 1, q + 1))}
+          {/* 수량 스테퍼 + 버튼 영역: 세로로 쌓아 바로 구매를 아래 행에 배치 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* 첫 행: 수량 스테퍼 + 장바구니 담기 */}
+            <div style={{ display: 'flex', gap: 14, alignItems: 'stretch' }}>
+              <div style={{ display: 'flex', border: '1px solid var(--color-fg)' }}>
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  style={{
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    width: 44,
+                    fontSize: 16,
+                  }}
+                >
+                  −
+                </button>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 40,
+                    fontSize: 14,
+                  }}
+                >
+                  {quantity}
+                </span>
+                <button
+                  onClick={() =>
+                    setQuantity((q) => Math.min(product.stockQuantity || q + 1, q + 1))
+                  }
+                  disabled={product.stockQuantity === 0}
+                  style={{
+                    cursor: 'pointer',
+                    border: 'none',
+                    background: 'transparent',
+                    width: 44,
+                    fontSize: 16,
+                  }}
+                >
+                  +
+                </button>
+              </div>
+              <AddCartBtn
+                onClick={handleAddToCart}
                 disabled={product.stockQuantity === 0}
-                style={{
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: 'transparent',
-                  width: 44,
-                  fontSize: 16,
-                }}
-              >
-                +
-              </button>
+                price={fmt(product.price)}
+              />
             </div>
-            <AddCartBtn
-              onClick={handleAddToCart}
+            {/* 두 번째 행: 바로 구매 — 장바구니 담기 + 주문하기 페이지로 즉시 이동 */}
+            <BuyNowBtn
+              onClick={handleBuyNow}
               disabled={product.stockQuantity === 0}
-              price={fmt(product.price)}
+              price={fmt(product.price * quantity)}
             />
           </div>
         </div>
@@ -686,6 +713,36 @@ export default function ProductDetailPage() {
 }
 
 /* 장바구니 담기 버튼 (hover 시 색상 변경) */
+// 장바구니 담기와 구분되도록 outline 스타일로 렌더링한다 (primary vs secondary CTA).
+function BuyNowBtn({ onClick, disabled, price }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => !disabled && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        cursor: disabled ? 'default' : 'pointer',
+        width: '100%',
+        border: '1px solid var(--color-fg)',
+        background: hovered ? 'var(--color-fg)' : 'transparent',
+        color: hovered ? 'var(--color-bg)' : 'var(--color-fg)',
+        padding: '16px 22px',
+        fontSize: 14,
+        letterSpacing: '0.04em',
+        display: 'flex',
+        justifyContent: 'space-between',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'background 0.15s, color 0.15s',
+      }}
+    >
+      <span>바로 구매</span>
+      <span>{price}</span>
+    </button>
+  )
+}
+
 function AddCartBtn({ onClick, disabled, price }) {
   const [hovered, setHovered] = useState(false)
   return (
