@@ -385,16 +385,10 @@ export default function ProductDetailPage() {
                   +
                 </button>
               </div>
-              <AddCartBtn
-                onClick={handleAddToCart}
-                disabled={product.stockQuantity === 0}
-              />
+              <AddCartBtn onClick={handleAddToCart} disabled={product.stockQuantity === 0} />
             </div>
             {/* 두 번째 행: 바로 구매 — 장바구니 담기 + 주문하기 페이지로 즉시 이동 */}
-            <BuyNowBtn
-              onClick={handleBuyNow}
-              disabled={product.stockQuantity === 0}
-            />
+            <BuyNowBtn onClick={handleBuyNow} disabled={product.stockQuantity === 0} />
           </div>
         </div>
       </div>

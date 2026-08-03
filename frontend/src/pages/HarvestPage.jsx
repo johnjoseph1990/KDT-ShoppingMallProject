@@ -58,7 +58,8 @@ export default function HarvestPage() {
             lineHeight: 1.5,
           }}
         >
-          {weekLabel},<br />밭에서 온 것들
+          {weekLabel},<br />
+          밭에서 온 것들
         </h1>
       </section>
 
