@@ -1,7 +1,12 @@
 #!/bin/sh
-# pre-commit: 커밋 전 포맷터 자동 실행
-# - 백엔드: Spotless (Google Java Format)
-# - 프론트엔드: Prettier
+# pre-commit: '이번 커밋에 스테이징된 파일'만 포맷터로 정리하고, 그 파일만 다시 스테이징한다.
+#
+# 왜 이렇게 바꿨나 (부분 커밋 지원):
+#   예전 훅은 spotlessApply/prettier로 저장소 '전체'를 포맷한 뒤 `git add -u`로 모든 추적
+#   파일을 다시 스테이징했다. 그 결과 스테이징하지 않은 다른 파일까지 커밋에 딸려 들어가,
+#   "논리 단위로 커밋 쪼개기"가 불가능했다(CLAUDE.md 변경이 E2E 커밋에 섞인 사고).
+#   이제 스테이징된 파일만 다루므로, 스테이징 안 한 변경은 그대로 남아 이번 커밋에 안 섞인다.
+#   덤으로, 자바가 안 바뀐 커밋에서는 Spotless를 아예 건너뛰어 커밋이 빨라진다.
 #
 # 새 PC 클론 후 한 번만 실행: git config core.hooksPath .githooks
 
@@ -9,13 +14,54 @@ set -e
 
 ROOT="$(git rev-parse --show-toplevel)"
 
-echo "▸ Spotless (backend)..."
-(cd "$ROOT/backend" && ./gradlew spotlessApply -q --no-daemon)
+# 이번 커밋에 스테이징된 파일 목록 (Added/Copied/Modified만, 삭제(D)는 포맷 대상 아님).
+STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
 
-echo "▸ Prettier (frontend)..."
-(cd "$ROOT/frontend" && npm run format --silent)
+# 스테이징된 게 없으면(예: 삭제만 있는 커밋) 할 일이 없다.
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
 
-# 포맷터가 수정한 파일을 스테이징에 다시 포함
-git add -u
+# 실제로 포맷한 파일만 모아 뒀다가 마지막에 이 파일들만 다시 스테이징한다.
+# (스테이징됐지만 포맷 대상이 아닌 파일 — 루트 .md 등 — 은 건드리지 않아,
+#  git add -p 로 만든 부분 스테이징 상태도 보존된다.)
+FORMATTED=""
 
-echo "✓ 포맷 완료"
+# ── 백엔드: 스테이징된 .java 만 Spotless 적용 ──────────────────────────
+JAVA_FILES="$(printf '%s\n' "$STAGED" | grep -E '^backend/.*\.java$' || true)"
+if [ -n "$JAVA_FILES" ]; then
+  echo "▸ Spotless (staged backend java)..."
+  # Spotless의 -PspotlessFiles 는 '절대경로에 매칭되는 정규식' 목록(쉼표 구분)을 받는다.
+  # 스테이징된 파일들을 절대경로로 바꿔 쉼표로 이어 붙여, 그 파일만 포맷한다.
+  PATTERN="$(printf '%s\n' "$JAVA_FILES" | sed "s#^#$ROOT/#" | paste -sd ',' -)"
+  (cd "$ROOT/backend" && ./gradlew spotlessApply -q --no-daemon -PspotlessFiles="$PATTERN")
+  FORMATTED="$JAVA_FILES"
+fi
+
+# ── 프론트엔드: 스테이징된 frontend/ 파일만 Prettier 적용 ──────────────
+FRONT_FILES="$(printf '%s\n' "$STAGED" | grep -E '^frontend/' || true)"
+if [ -n "$FRONT_FILES" ]; then
+  echo "▸ Prettier (staged frontend)..."
+  # frontend/ 기준 상대경로로 바꿔(프론트 로컬 prettier 사용) 넘긴다.
+  # --ignore-unknown: prettier가 못 다루는 확장자(이미지 등)는 조용히 건너뛴다.
+  REL="$(printf '%s\n' "$FRONT_FILES" | sed 's#^frontend/##')"
+  (cd "$ROOT/frontend" && echo "$REL" | xargs npx prettier --write --ignore-unknown)
+  FORMATTED="$FORMATTED
+$FRONT_FILES"
+fi
+
+# ── 포맷한 '그 파일들만' 다시 스테이징 ────────────────────────────────
+# git add -u(전체) 대신 포맷한 파일만 재-add 한다.
+# 포맷 대상이 없으면(예: 루트 .md/훅 파일만 스테이징한 커밋) 이 블록을 통째로 건너뛴다.
+# ⚠️ if 가드가 필요한 이유: FORMATTED가 비면 아래 while 루프의 마지막 판정이 false(exit 1)로
+#    끝나고, set -e 가 그 1을 잡아 커밋 전체를 죽인다. 또 루프 본문도 `&&` 대신 if 로 써서
+#    빈 줄(f="")일 때 non-zero를 반환하지 않게 한다.
+if [ -n "$FORMATTED" ]; then
+  printf '%s\n' "$FORMATTED" | while IFS= read -r f; do
+    if [ -n "$f" ]; then
+      git add -- "$f"
+    fi
+  done
+fi
+
+echo "✓ 포맷 완료 (스테이징된 파일만)"
