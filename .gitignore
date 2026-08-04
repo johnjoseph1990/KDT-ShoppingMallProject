@@ -40,6 +40,12 @@ docs/learning/slides/
 # playwright-mcp가 브라우저 자동 검증 중 스크린샷을 떨구는 출력 폴더
 .playwright-mcp/
 
+# Playwright E2E 실행 산출물 (리포트·트레이스) — 코드가 아니므로 추적 제외
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.cache/
+
 # 루트에 임시로 쌓인 QA 스크린샷 (def2-*.png, product-list-*.png 등)
 # 맨 앞의 '/'는 "저장소 루트 바로 아래만" 이라는 뜻 — 이게 없으면 패턴이
 # 모든 하위 폴더에 재귀 적용돼 frontend/src/assets/hero.png 같은 실제 에셋까지 무시된다
