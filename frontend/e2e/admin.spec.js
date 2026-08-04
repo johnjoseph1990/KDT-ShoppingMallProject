@@ -6,8 +6,9 @@ const ADMIN = { email: 'admin@shop.com', password: 'admin1234' }
 
 test('관리자가 로그인해 주문 관리 화면을 연다', async ({ page }) => {
   await page.goto('/login')
-  await page.getByPlaceholder('이메일').fill(ADMIN.email)
-  await page.getByPlaceholder('비밀번호').fill(ADMIN.password)
+  // exact: true 필수 — 전역 Footer 뉴스레터 입력창("이메일 주소")과 부분매칭돼 2개가 잡히는 걸 막는다.
+  await page.getByPlaceholder('이메일', { exact: true }).fill(ADMIN.email)
+  await page.getByPlaceholder('비밀번호', { exact: true }).fill(ADMIN.password)
   await page.getByRole('button', { name: '로그인' }).click()
 
   await page.goto('/admin')

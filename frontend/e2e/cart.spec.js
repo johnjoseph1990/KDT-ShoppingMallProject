@@ -7,8 +7,9 @@ const TEST_USER = { email: 'test@shop.com', password: 'test1234' }
 test('로그인 후 상품을 담고 주문 요약(배송비·합계)을 확인한다', async ({ page }) => {
   // given: 시드 계정으로 로그인 (세션 쿠키가 이후 요청에 자동 포함된다)
   await page.goto('/login')
-  await page.getByPlaceholder('이메일').fill(TEST_USER.email)
-  await page.getByPlaceholder('비밀번호').fill(TEST_USER.password)
+  // exact: true 필수 — 전역 Footer 뉴스레터 입력창("이메일 주소")과 부분매칭되는 걸 막는다.
+  await page.getByPlaceholder('이메일', { exact: true }).fill(TEST_USER.email)
+  await page.getByPlaceholder('비밀번호', { exact: true }).fill(TEST_USER.password)
   await page.getByRole('button', { name: '로그인' }).click()
   await expect(page).toHaveURL('/') // 로그인 성공 시 홈으로 이동
 

@@ -7,7 +7,8 @@ test('회원가입에 성공하면 로그인 페이지로 이동한다', async (
   const email = `e2e_${Date.now()}@test.com`
   await page.goto('/signup')
   await page.getByPlaceholder('이름').fill('E2E테스터')
-  await page.getByPlaceholder('이메일').fill(email)
+  // exact: true 필수 — 전역 Footer 뉴스레터 입력창("이메일 주소")과 부분매칭되는 걸 막는다.
+  await page.getByPlaceholder('이메일', { exact: true }).fill(email)
   await page.getByPlaceholder('비밀번호 (8자 이상)').fill('test1234')
   await page.getByRole('button', { name: '가입하기' }).click()
   // SignupPage는 성공 시 navigate('/login') 한다.

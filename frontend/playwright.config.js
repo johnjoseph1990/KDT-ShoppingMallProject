@@ -18,6 +18,8 @@ export default defineConfig({
   retries: isCI ? 1 : 0,
   // CI에서는 실패 분석용 HTML 리포트를 함께 생성해 아티팩트로 올린다.
   reporter: isCI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // 기대 단언 대기시간. CI 콜드 스타트(첫 API 호출이 느림) 대비로 기본 5초 → 10초.
+  expect: { timeout: 10000 },
   use: {
     baseURL: 'http://localhost:5173',
     // 실패로 재시도할 때만 추적 파일을 남겨 원인 분석을 돕는다.
