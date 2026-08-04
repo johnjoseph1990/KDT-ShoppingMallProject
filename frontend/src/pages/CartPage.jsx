@@ -4,6 +4,7 @@ import { createOrder } from '../api/orders'
 import { useCart } from '../context/CartContext'
 import { getAddresses } from '../api/addresses'
 import TextLink from '../components/TextLink'
+import { formatPhoneNumber } from '../utils/phone'
 
 const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 // 주문 생성 전 미리보기용 값. 실제 배송비는 백엔드 Order.applyShippingFee()가
@@ -17,9 +18,7 @@ export default function CartPage() {
   const { cartItems, cartTotal, refreshCart } = useCart()
   const [form, setForm] = useState({
     name: '',
-    // 연락처 기본값: 시연·테스트 편의를 위해 더미 번호를 미리 채워둔다.
-    // 실제 사용자는 그대로 두거나 자기 번호로 덮어쓸 수 있다.
-    phone: '010-1111-1111',
+    phone: '',
     zipCode: '', // 우편번호 — 주소 검색 API가 자동으로 채워준다
     address: '', // 도로명/지번 주소 — 주소 검색 API가 자동으로 채워준다
     addressDetail: '', // 상세 주소 (동·호수 등) — 직접 입력
@@ -32,6 +31,10 @@ export default function CartPage() {
   const grand = cartTotal + ship
 
   const setField = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  // 연락처는 입력값을 그대로 넣지 않고 formatPhoneNumber로 하이픈을 끼워 저장한다.
+  // 사용자가 숫자만 쳐도 화면엔 "010-1111-1111" 형태로 보이게 된다.
+  const handlePhoneChange = (e) => setForm({ ...form, phone: formatPhoneNumber(e.target.value) })
 
   // Daum 우편번호 서비스 스크립트를 컴포넌트 마운트 시 동적으로 로드한다.
   // index.html 대신 여기서 로드하면 CartPage를 방문할 때만 스크립트를 내려받는다.
@@ -179,10 +182,17 @@ export default function CartPage() {
               </FormLabel>
               <FormLabel label="연락처">
                 <input
+                  // type=tel + inputMode=numeric: 모바일에서 문자 키보드 대신 숫자 키패드가 뜬다.
+                  // autoComplete=tel: 브라우저에 저장된 전화번호로 자동완성.
+                  // maxLength=13: "010-1111-1111"(하이픈 포함 13자)이 최대 길이.
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={13}
                   placeholder="010-0000-0000"
                   required
                   style={inputStyle}
-                  onChange={setField('phone')}
+                  onChange={handlePhoneChange}
                   value={form.phone}
                 />
               </FormLabel>
