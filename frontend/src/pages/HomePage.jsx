@@ -141,7 +141,9 @@ export default function HomePage() {
             민스 파머스 마켓은 대전과 충남의 스물세 곳 소농과 함께합니다. 수확한 지 하루가 지나지
             않은 채소와 과일, 그날 구운 빵을 문 앞까지 전합니다.
           </p>
-          <HoverBtn light to="/shop">
+          {/* 히어로 CTA: /shop(전체 상품)이 아니라 /harvest(이번 주 제철 기획전)로 보낸다.
+              문구가 "이번 주 수확물"인데 전체 목록으로 가면 기대와 어긋나서 목적지를 맞췄다. */}
+          <HoverBtn light to="/harvest">
             이번 주 수확물 보기 <span>→</span>
           </HoverBtn>
         </div>
