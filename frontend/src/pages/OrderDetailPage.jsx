@@ -12,6 +12,30 @@ const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 // 토스 테스트 가상계좌가 주로 내려주는 은행코드만 최소로 매핑. 목록에 없으면 코드 그대로 보여준다.
 const BANK_NAME = { 20: '우리은행', 88: '신한은행', 81: '하나은행', '03': '기업은행' }
 
+// 결제수단 정의를 한 곳에 모아둔다. 핵심은 value와 label을 분리한 것:
+//   value  — 토스 SDK requestPayment()의 첫 인자로 그대로 넘어가는 값이라 절대 바꿀 수 없다(외부 계약).
+//   label  — 화면에 보여줄 이름. 사용자 눈높이로 자유롭게 다듬을 수 있다.
+// description은 "이걸 고르면 내 주문이 어떻게 되는가"를 알려주는 문구다. 사용자가 알고 싶은 건
+// 수단 이름이 아니라 결과(언제 발송되는지)이므로, 이 한 줄이 선택 UI의 핵심이다.
+// payLabel은 결제 버튼 문구다. 카드는 승인까지 끝나지만 가상계좌는 "계좌 발급"만 되므로,
+// 두 경우에 같은 "결제하기"를 쓰면 사용자가 결제가 끝난 줄 착각한다. 총액이 필요해 함수로 받는다.
+const PAYMENT_METHODS = [
+  {
+    value: '카드',
+    label: '신용·체크카드',
+    description: '결제 즉시 발송 준비가 시작됩니다',
+    payLabel: (total) => `${fmt(total)} 결제하기`,
+  },
+  {
+    value: '가상계좌',
+    label: '무통장입금(가상계좌)',
+    // 카드와 결정적으로 다른 점(입금 후 발송)만 담고, 자동 취소 안내는 계좌 발급 후
+    // WAITING_FOR_DEPOSIT 화면의 "입금기한" 표시로 미룬다 — 선택 직전에 취소를 언급하지 않는다.
+    description: '입금이 확인된 뒤 발송됩니다',
+    payLabel: () => '입금 계좌 발급받기',
+  },
+]
+
 export default function OrderDetailPage() {
   const { id } = useParams()
   // 이동은 전부 TextLink(<a>)가 담당하므로 useNavigate는 더 이상 필요 없다 (DEF-7)
@@ -19,6 +43,10 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null)
   const [paymentMethod, setPaymentMethod] = useState('카드')
   const [checking, setChecking] = useState(false)
+
+  // 현재 선택된 결제수단 객체를 찾아둔다. 아래 결제 버튼 문구를 만들 때 사용한다.
+  // find()는 조건에 맞는 첫 요소를 돌려준다 — paymentMethod는 항상 둘 중 하나라 없을 수 없다.
+  const selectedMethod = PAYMENT_METHODS.find((m) => m.value === paymentMethod)
 
   useEffect(() => {
     getOrder(id).then((res) => setOrder(res.data))
@@ -290,23 +318,71 @@ export default function OrderDetailPage() {
         {/* 결제대기 상태에서만 결제수단 선택 + 결제 버튼 노출 */}
         {order.status === 'ORDERED' && (
           <>
-            <div style={{ display: 'flex', gap: 20, marginBottom: 16, fontSize: 14 }}>
-              {['카드', '가상계좌'].map((m) => (
-                <label
-                  key={m}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={m}
-                    checked={paymentMethod === m}
-                    onChange={() => setPaymentMethod(m)}
-                  />
-                  {m === '가상계좌' ? '무통장입금(가상계좌)' : m}
-                </label>
-              ))}
-            </div>
+            {/* fieldset/legend: 여러 입력을 "하나의 질문에 대한 선택지"로 묶는 표준 HTML 방식이다.
+                스크린리더가 각 항목을 읽을 때 "결제수단" 그룹임을 함께 알려준다.
+                기본 테두리·여백은 사이트 톤과 맞지 않아 none/0으로 지운다. */}
+            <fieldset style={{ border: 'none', margin: '0 0 16px', padding: 0 }}>
+              <legend
+                style={{
+                  padding: 0,
+                  marginBottom: 10,
+                  fontSize: 13,
+                  color: 'var(--color-fg-muted)',
+                }}
+              >
+                결제수단
+              </legend>
+
+              {/* 가로 인라인 라디오는 모바일에서 터치 영역이 라디오 점과 짧은 글자뿐이었다.
+                  테두리 있는 카드를 세로로 쌓아 행 전체를 누를 수 있게 한다. */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {PAYMENT_METHODS.map((m) => {
+                  // 선택 여부에 따라 테두리 진하기를 바꿔 "지금 이게 선택됨"을 눈으로 알 수 있게 한다.
+                  const isSelected = paymentMethod === m.value
+                  return (
+                    // label이 input을 감싸면 카드 어디를 눌러도 선택된다(암묵적 라벨 연결).
+                    // htmlFor/id를 따로 붙이지 않아도 되고, 클릭 영역이 카드 전체로 넓어진다.
+                    <label
+                      key={m.value}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10,
+                        cursor: 'pointer',
+                        padding: '14px 16px',
+                        border: `1px solid ${isSelected ? 'var(--color-fg)' : 'var(--color-border)'}`,
+                        background: isSelected ? 'var(--color-bg-hover-light)' : 'transparent',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        // name이 같은 라디오끼리 한 그룹이 되어 "하나만 선택" 동작이 만들어진다.
+                        name="paymentMethod"
+                        // SDK에 넘어가는 값(value)과 화면 표시(label)를 분리한 지점
+                        value={m.value}
+                        checked={isSelected}
+                        onChange={() => setPaymentMethod(m.value)}
+                        style={{ marginTop: 3, cursor: 'pointer' }}
+                      />
+                      <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 14 }}>{m.label}</span>
+                        {/* 결과 안내 문구 — 수단 이름보다 이 줄이 선택을 돕는다 */}
+                        <span
+                          style={{
+                            fontSize: 12.5,
+                            fontWeight: 300,
+                            lineHeight: 1.6,
+                            color: 'var(--color-fg-muted)',
+                          }}
+                        >
+                          {m.description}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            </fieldset>
             <button
               onClick={handlePay}
               style={{
@@ -321,7 +397,8 @@ export default function OrderDetailPage() {
                 marginBottom: 24,
               }}
             >
-              결제하기
+              {/* 선택한 수단에 따라 문구가 달라진다 — 가상계좌는 이 버튼으로 "발급"만 되기 때문 */}
+              {selectedMethod.payLabel(order.totalPrice)}
             </button>
           </>
         )}
