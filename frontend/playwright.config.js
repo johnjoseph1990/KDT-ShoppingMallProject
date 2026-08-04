@@ -7,23 +7,28 @@ import { defineConfig, devices } from '@playwright/test'
 // 전제: 이 스모크는 백엔드(8080)+DB가 떠 있어야 통과한다. `docker compose up -d`로 DB를,
 //       `./gradlew bootRun`으로 백엔드를 먼저 띄운다. 프론트 dev 서버(5173)는 아래 webServer가
 //       자동 기동한다(vite dev가 /api를 8080으로 프록시하므로 세션 쿠키 인증이 그대로 동작).
+// CI 여부는 GitHub Actions가 넣어주는 CI 환경변수로 판별한다.
+const isCI = !!process.env.CI
+
 export default defineConfig({
   testDir: './e2e',
   // 세션 로그인·장바구니 등 서버 상태를 건드리는 흐름이라 병렬 대신 순차 실행이 안전하다.
   fullyParallel: false,
-  retries: 0,
-  reporter: 'list',
+  // CI에서는 네트워크·타이밍 흔들림을 흡수하려 1회 재시도(로컬은 0 — 실패를 바로 본다).
+  retries: isCI ? 1 : 0,
+  // CI에서는 실패 분석용 HTML 리포트를 함께 생성해 아티팩트로 올린다.
+  reporter: isCI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://localhost:5173',
     // 실패로 재시도할 때만 추적 파일을 남겨 원인 분석을 돕는다.
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // 프론트 dev 서버 자동 기동. 이미 5173이 떠 있으면 그걸 재사용한다.
+  // 프론트 dev 서버 자동 기동. 로컬은 이미 떠 있으면 재사용하고, CI는 항상 새로 띄운다.
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: true,
+    reuseExistingServer: !isCI,
     timeout: 120000,
   },
 })
