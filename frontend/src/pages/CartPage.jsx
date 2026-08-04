@@ -12,10 +12,22 @@ const fmt = (n) => n.toLocaleString('ko-KR') + '원'
 // 반드시 backend/.../domain/order/Order.java도 함께 바꿔야 미리보기와 실제 청구가 어긋나지 않는다.
 const FREE_SHIP = 40000
 
+// 수량 −/+ 버튼 공통 스타일. 같은 스타일을 두 버튼에 쓰므로 객체로 한 번만 정의한다.
+const qtyBtnStyle = {
+  cursor: 'pointer',
+  border: 'none',
+  background: 'transparent',
+  width: 30,
+  padding: '5px 0',
+  fontSize: 14,
+}
+
 /* 배송 정보 입력 + 주문 내역 확인 후 결제하는 체크아웃 페이지 */
 export default function CartPage() {
   const navigate = useNavigate()
-  const { cartItems, cartTotal, refreshCart } = useCart()
+  // removeItem/changeQty는 CartDrawer가 쓰던 것과 같은 함수다. 같은 함수를 재사용하면
+  // 드로어와 체크아웃의 동작이 서로 갈라지지 않는다(한쪽만 고치는 실수를 막는다).
+  const { cartItems, cartTotal, refreshCart, removeItem, changeQty } = useCart()
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -31,6 +43,17 @@ export default function CartPage() {
   const grand = cartTotal + ship
 
   const setField = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  // 체크아웃 목록에서 "−"를 눌렀을 때의 동작.
+  // 참고: CartContext의 changeQty는 quantity가 1보다 작으면 항목을 삭제한다(CartContext.jsx:51).
+  // 즉 수량 1에서 "−"를 그대로 넘기면 항목이 사라진다.
+  // 그래서 체크아웃에서는 1에서 멈춘다(B안). 배송지를 입력하다가 "−"를 한 번 더 눌러
+  // 항목이 조용히 사라지는 사고를 막는 게, 드로어와의 동작 일치보다 중요하다고 판단했다.
+  // 삭제는 옆의 "삭제" 버튼이라는 명시적인 경로로만 가능하다.
+  const handleDecrease = (item) => {
+    if (item.quantity <= 1) return
+    changeQty(item.id, item.quantity - 1)
+  }
 
   // 연락처는 입력값을 그대로 넣지 않고 formatPhoneNumber로 하이픈을 끼워 저장한다.
   // 사용자가 숫자만 쳐도 화면엔 "010-1111-1111" 형태로 보이게 된다.
@@ -293,16 +316,80 @@ export default function CartPage() {
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
+                      alignItems: 'center',
                       padding: '12px 0',
                       borderBottom: '1px solid var(--color-border)',
                       fontSize: 14,
                       gap: 12,
                     }}
                   >
-                    <span style={{ fontWeight: 300 }}>
-                      {item.productName} × {item.quantity}
-                    </span>
-                    <span>{fmt(item.price * item.quantity)}</span>
+                    {/* 왼쪽: 상품명 + 수량 조절. 수량을 여기서 바꿀 수 있으므로
+                        더 이상 "× 2"처럼 글자로만 적지 않고 컨트롤로 보여준다. */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+                      <span style={{ fontWeight: 300 }}>{item.productName}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {/* 드로어와 같은 −/수량/+ 형태. 테두리로 한 덩어리처럼 묶는다. */}
+                        <div style={{ display: 'flex', border: '1px solid var(--color-border)' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDecrease(item)}
+                            // 수량 1에서는 더 줄일 수 없으므로 버튼 자체를 비활성화한다.
+                            // handleDecrease의 가드와 중복이지만, disabled는 "누를 수 없음"을
+                            // 눈과 스크린리더에 먼저 알려주는 역할이라 둘 다 필요하다.
+                            disabled={item.quantity <= 1}
+                            // 같은 화면에 항목마다 버튼이 생기므로, 스크린리더와 테스트가
+                            // 어느 상품의 버튼인지 구분할 수 있게 상품명을 라벨에 넣는다.
+                            aria-label={`${item.productName} 수량 줄이기`}
+                            style={{
+                              ...qtyBtnStyle,
+                              // 비활성 상태를 색과 커서로도 드러낸다(disabled 속성만으론 티가 안 난다)
+                              cursor: item.quantity <= 1 ? 'default' : 'pointer',
+                              color: item.quantity <= 1 ? 'var(--color-fg-muted)' : 'inherit',
+                              opacity: item.quantity <= 1 ? 0.5 : 1,
+                            }}
+                          >
+                            −
+                          </button>
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 26,
+                              fontSize: 13,
+                            }}
+                          >
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => changeQty(item.id, item.quantity + 1)}
+                            aria-label={`${item.productName} 수량 늘리기`}
+                            style={qtyBtnStyle}
+                          >
+                            +
+                          </button>
+                        </div>
+                        {/* type="button"이 필수다 — 이 목록은 <form> 안에 있어서
+                            기본값(type="submit")이면 클릭 시 주문이 생성돼버린다. */}
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          aria-label={`${item.productName} 삭제`}
+                          style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--color-fg-muted)',
+                            fontSize: 13,
+                            padding: 0,
+                          }}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                    <span style={{ flexShrink: 0 }}>{fmt(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
