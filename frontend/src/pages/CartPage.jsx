@@ -17,7 +17,9 @@ export default function CartPage() {
   const { cartItems, cartTotal, refreshCart } = useCart()
   const [form, setForm] = useState({
     name: '',
-    phone: '',
+    // 연락처 기본값: 시연·테스트 편의를 위해 더미 번호를 미리 채워둔다.
+    // 실제 사용자는 그대로 두거나 자기 번호로 덮어쓸 수 있다.
+    phone: '010-1111-1111',
     zipCode: '', // 우편번호 — 주소 검색 API가 자동으로 채워준다
     address: '', // 도로명/지번 주소 — 주소 검색 API가 자동으로 채워준다
     addressDetail: '', // 상세 주소 (동·호수 등) — 직접 입력
