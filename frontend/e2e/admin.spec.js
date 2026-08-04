@@ -19,6 +19,7 @@ test('관리자가 로그인해 주문 관리 화면을 연다', async ({ page }
 
   // 주문 관리 탭으로 전환하면 주문 테이블 헤더가 뜬다.
   // (관리자 페이징이 마지막 페이지를 인식 못 하던 DEF-9 화면의 기본 렌더 회귀 방지)
-  await page.getByRole('button', { name: '주문 관리' }).click()
+  // Vapor UI Tabs.Button은 role="tab"이라 getByRole('button')로는 안 잡힌다 → 텍스트로 클릭.
+  await page.getByText('주문 관리', { exact: true }).click()
   await expect(page.getByText('주문일시')).toBeVisible()
 })

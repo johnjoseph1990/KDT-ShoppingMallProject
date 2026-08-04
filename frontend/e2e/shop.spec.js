@@ -8,5 +8,6 @@ test('상품 목록에서 상세로 이동하면 장바구니 버튼이 보인�
   await page.locator('a[href^="/products/"]').first().click()
   // 상세 진입을 기다린 뒤 버튼을 확인한다(목록의 카드 버튼과 혼동되지 않도록).
   await expect(page).toHaveURL(/\/products\/\d+/)
-  await expect(page.getByRole('button', { name: '장바구니에 담기' })).toBeVisible()
+  // .first(): 상세 하단 추천 카드에도 같은 이름의 버튼이 있어(비동기 로드) 메인 버튼만 특정한다.
+  await expect(page.getByRole('button', { name: '장바구니에 담기' }).first()).toBeVisible()
 })

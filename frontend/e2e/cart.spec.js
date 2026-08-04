@@ -19,7 +19,8 @@ test('로그인 후 상품을 담고 주문 요약(배송비·합계)을 확인�
   // 상세 페이지 진입을 명시적으로 기다린다. 안 기다리면 /shop 목록에 남아 있는 상태에서
   // "장바구니에 담기"가 카드 10개에 매칭돼 strict mode 위반이 난다.
   await expect(page).toHaveURL(/\/products\/\d+/)
-  await page.getByRole('button', { name: '장바구니에 담기' }).click()
+  // .first(): 상세 하단 추천 카드에도 같은 이름의 버튼이 있어(비동기 로드) 메인 버튼만 특정한다.
+  await page.getByRole('button', { name: '장바구니에 담기' }).first().click()
 
   // then: /cart 주문 요약에 배송비·합계·결제 버튼이 보인다.
   // (장바구니 표시 금액과 실제 배송비가 어긋나던 결함의 회귀를 막는 지점)
