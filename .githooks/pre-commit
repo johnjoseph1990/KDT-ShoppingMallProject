@@ -1,0 +1,21 @@
+#!/bin/sh
+# pre-commit: 커밋 전 포맷터 자동 실행
+# - 백엔드: Spotless (Google Java Format)
+# - 프론트엔드: Prettier
+#
+# 새 PC 클론 후 한 번만 실행: git config core.hooksPath .githooks
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+echo "▸ Spotless (backend)..."
+(cd "$ROOT/backend" && ./gradlew spotlessApply -q --no-daemon)
+
+echo "▸ Prettier (frontend)..."
+(cd "$ROOT/frontend" && npm run format --silent)
+
+# 포맷터가 수정한 파일을 스테이징에 다시 포함
+git add -u
+
+echo "✓ 포맷 완료"

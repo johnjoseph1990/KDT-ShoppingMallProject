@@ -52,6 +52,10 @@
 ```bash
 # 1. 클론
 git clone https://github.com/johnjoseph1990/KDT-ShoppingMallProject.git
+cd KDT-ShoppingMallProject
+
+# 1-1. pre-commit 포맷터 훅 활성화 (PC마다 한 번만 실행)
+git config core.hooksPath .githooks
 
 # 2. DB 실행 (Docker 필요) — application.properties 기본값이 PostgreSQL(localhost:5433)이므로
 #    이 컨테이너 없이 바로 bootRun 하면 연결 실패로 뜨지 않는다
