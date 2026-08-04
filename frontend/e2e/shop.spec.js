@@ -6,5 +6,7 @@ test('상품 목록에서 상세로 이동하면 장바구니 버튼이 보인�
   await page.goto('/shop')
   // 목록의 첫 상품 카드를 클릭해 상세로 진입한다.
   await page.locator('a[href^="/products/"]').first().click()
+  // 상세 진입을 기다린 뒤 버튼을 확인한다(목록의 카드 버튼과 혼동되지 않도록).
+  await expect(page).toHaveURL(/\/products\/\d+/)
   await expect(page.getByRole('button', { name: '장바구니에 담기' })).toBeVisible()
 })

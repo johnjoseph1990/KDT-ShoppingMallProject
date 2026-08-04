@@ -10,6 +10,9 @@ test('관리자가 로그인해 주문 관리 화면을 연다', async ({ page }
   await page.getByPlaceholder('이메일', { exact: true }).fill(ADMIN.email)
   await page.getByPlaceholder('비밀번호', { exact: true }).fill(ADMIN.password)
   await page.getByRole('button', { name: '로그인' }).click()
+  // 로그인 완료(홈으로 리다이렉트)를 기다린 뒤 이동한다. 안 기다리면 세션이 서기 전에
+  // /admin 에 진입해 PrivateRoute가 로그인 페이지로 되돌린다(관리자 헤딩을 못 찾는 원인).
+  await expect(page).toHaveURL('/')
 
   await page.goto('/admin')
   await expect(page.getByRole('heading', { name: '관리자 페이지' })).toBeVisible()
