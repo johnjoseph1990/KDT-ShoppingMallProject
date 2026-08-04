@@ -31,6 +31,9 @@ const pageOf = (products) => ({
 
 describe('HarvestPage — 프로모션 배너/혜택', () => {
   beforeEach(() => {
+    // 테스트 간 mock 호출 카운트가 누적돼 플래키해지지 않게 초기화한다
+    // (형제 테스트 ProductDetailPage.test.jsx와 동일한 패턴).
+    vi.clearAllMocks()
     getProducts.mockResolvedValue(pageOf([]))
   })
 
@@ -72,6 +75,22 @@ describe('HarvestPage — 상품 로딩 상태', () => {
       'href',
       '/products/2',
     )
+  })
+
+  it('상품이 4개 미만이면 열 수를 개수에 맞춰 빈 칸을 없앤다 (DEF-4 방어)', async () => {
+    // 열을 4로 고정하면 상품이 2개일 때 빈 칸 2개에 컨테이너 배경이 회색 박스로 비친다.
+    // 그리드 컨테이너의 gridTemplateColumns가 상품 수(2)에 맞춰지는지 계약으로 못박는다.
+    getProducts.mockResolvedValue(
+      pageOf([
+        { id: 1, name: '충남 금산 당근', price: 5000, stockQuantity: 10, averageRating: 4.5 },
+        { id: 2, name: '논산 설향 딸기', price: 12000, stockQuantity: 5, averageRating: 4.8 },
+      ]),
+    )
+    renderPage()
+    const card = await screen.findByRole('link', { name: '충남 금산 당근' })
+    // ProductCard 루트(<article>)의 부모가 곧 그리드 컨테이너 div다.
+    const grid = card.closest('article').parentElement
+    expect(grid).toHaveStyle({ gridTemplateColumns: 'repeat(2, 1fr)' })
   })
 
   it('태그 상품이 없으면 빈 상태 안내를 보여준다', async () => {

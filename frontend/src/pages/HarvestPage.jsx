@@ -28,7 +28,8 @@ const BENEFITS = [
 export default function HarvestPage() {
   const { showMessage } = useCart()
   const [products, setProducts] = useState([])
-  // 로딩·에러 상태를 구분해 "불러오는 중"과 "비었음"을 따로 처리한다.
+  // 로딩 중엔 "불러오는 중…"을, 응답 후엔 결과에 따라 상품 목록 또는 빈 상태를 보여준다.
+  // (API 오류 시엔 catch에서 토스트만 띄우고 화면은 빈 상태로 둔다 — 별도 error 상태는 없다)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -172,7 +173,12 @@ export default function HarvestPage() {
             className="mobile-2col"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              // 열 수를 상품 개수와 4 중 작은 값으로 잡는다.
+              // 4로 고정하면 태그 상품이 1~3개일 때 빈 그리드 칸에 컨테이너 배경
+              // (var(--color-border))이 회색 박스처럼 비친다(DEF-4와 동일한 결함).
+              // 홈은 최대 4개라 featured.length를 그대로 썼지만, 여기는 size:12라
+              // 그대로 쓰면 한 줄에 최대 12열이 되므로 Math.min으로 4열 다행을 유지한다.
+              gridTemplateColumns: `repeat(${Math.min(products.length, 4)}, 1fr)`,
               gap: 1,
               background: 'var(--color-border)',
               border: '1px solid var(--color-border)',
