@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" role="img" aria-label="청양 매운맛 반찬 꾸러미 대체 이미지">
+  <rect width="800" height="1000" fill="#5C5647"/>
+  <text x="400" y="360" text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="32" fill="#F1EEE7" opacity="0.75" letter-spacing="6">꾸러미</text>
+  <text text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="58" font-weight="700" fill="#F1EEE7">
+    <tspan x="400" y="482">청양 매운맛</tspan>
+    <tspan x="400" y="558">반찬 꾸러미</tspan>
+  </text>
+  <text x="400" y="800" text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="26" fill="#F1EEE7" opacity="0.6">상품 사진 준비 중</text>
+</svg>
