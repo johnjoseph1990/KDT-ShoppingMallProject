@@ -5,6 +5,14 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  # workflow_dispatch: Actions 탭의 "Run workflow" 버튼 / `gh workflow run CI`로
+  # 수동 실행할 수 있게 하는 트리거. 위 세 항목은 OR 조건이라 기존 동작은 그대로다.
+  #
+  # 왜 넣는가: 2026-08-07 GitHub Actions 장애(major outage) 때 push 이벤트가
+  # 아예 처리되지 않아 CI 실행이 0건 생성됐다. 장애가 복구돼도 지나간 push는
+  # 소급 실행되지 않는데, 이 트리거가 없으면 재실행할 방법이 빈 커밋뿐이었다.
+  # (이미 만들어진 실행이 없으므로 `gh run rerun`도 쓸 수 없다)
+  workflow_dispatch:
 
 jobs:
   backend:
