@@ -86,8 +86,10 @@ Azure 배포 환경을 실제로 훑은 1회차 검증(`document/2026-08-02_배�
 ## 4. 새 PC / 새 작업자가 이어받을 때 체크리스트
 
 1. `git pull origin master`
-2. `docker compose up -d` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
-   - Docker로 백엔드를 띄우는 경우 루트에 `.env`가 없으면 `TOSS_SECRET_KEY`가 빈 값으로 주입되어 가상계좌 결제가 "취소됨"으로 표시됨 — `.env.example`을 복사해 실제 토스 테스트 키를 채울 것 (3-1 참고)
+2. `docker compose up -d db` → `backend/ ./gradlew bootRun` → `frontend/ npm run dev` (상세는 `CLAUDE.md` "개발 환경 재설정" 참고)
+   - Windows는 `powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1` 한 줄로 대체 가능
+   - **개발 중 백엔드는 항상 소스(`bootRun`)로 띄운다.** `backend`/`frontend` 서비스는 `profiles: ["full"]`이라 `docker compose up -d`로는 뜨지 않는다 (2026-08-07, 낡은 컨테이너가 8080을 선점해 소스 실행이 조용히 스킵되던 결함 수정)
+   - 배포와 동일한 컨테이너 형상을 볼 때만 `docker compose --profile full up -d --build`. 이 경우 루트에 `.env`가 없으면 `TOSS_SECRET_KEY`가 빈 값으로 주입되어 가상계좌 결제가 "취소됨"으로 표시됨 — `.env.example`을 복사해 실제 토스 테스트 키를 채울 것 (3-1 참고)
 3. 이 문서의 3번 섹션에서 이어할 작업 선택 (**배포 검증 결함은 12건 전부 종결. 다음 후보는 성능 개선(N+1·인덱스)**)
 4. Claude에게 "CLAUDE_CONTEXT.md 읽고 [작업명] 이어서 해줘"라고 지시하면 됨
 
