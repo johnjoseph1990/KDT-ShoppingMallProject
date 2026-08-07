@@ -3,7 +3,7 @@
 > **마감:** 1주일 (오늘 기준 2026-07-11 시작)
 > **전략:** AI 페어 프로그래밍 — AI가 코드를 주도 작성하고, 학습자는 **각 단계마다 "이 코드가 무엇을 하는지" 이해하며 따라간다.**
 > **깊은 학습:** 제출 후 [`LEARNING_PLAN.md`](../docs/learning/LEARNING_PLAN.md)(16~20주)로 다시 진행
-> **스택:** Spring Boot + Spring Data JPA + Spring Security / React + Vapor / H2(개발) → PostgreSQL(배포) / AWS
+> **스택:** Spring Boot + Spring Data JPA + Spring Security / React + Vapor / H2(테스트) → PostgreSQL(개발·배포) / Azure Container Apps
 
 ## 📏 확정된 범위 (Scope 결정사항)
 
@@ -53,7 +53,7 @@
 - [x] 전체 흐름 점검: 회원가입→로그인→장바구니→주문→모의결제→재고→리뷰→추천
 - [x] 예외 케이스 테스트 (재고 부족, 비로그인 접근, 잘못된 입력 등)
   - 재고 부족(`ProductTest`) · 동시 주문 낙관적 락 충돌(`ProductRepositoryTest`) 테스트 보강 (2026-07-22)
-- [ ] H2 → PostgreSQL 전환 + AWS 배포
+- [x] H2 → PostgreSQL 전환 + Azure 배포 (Container Apps + PostgreSQL Flexible Server, `azure/setup.sh`)
 
 ### Day 7 — 결과물 정리 + 제출
 - [ ] 프로젝트 소개 자료 + 배포 링크 정리

@@ -67,7 +67,7 @@
 | ID | 기능 | 설명 | 우선순위 |
 |----|------|------|----------|
 | D-1 | PostgreSQL 전환 | H2 → PostgreSQL (설정 변경) | P1 |
-| D-2 | AWS 배포 | 백엔드 + 프론트 배포, 접속 가능한 URL | P1 |
+| D-2 | Azure 배포 | 백엔드 + 프론트 배포, 접속 가능한 URL (완료: https://www.minsdev.works) | P1 |
 
 ## 3. 화면 목록 (React + Vapor)
 

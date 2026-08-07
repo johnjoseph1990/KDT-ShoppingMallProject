@@ -29,7 +29,7 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 - **별점 평균, 키워드, 태그**를 활용한 정렬·추천·필터링 기능 구성
 
 ### 6. 배포 및 결과물 정리
-- 전체 시스템 테스트 후 **AWS 배포**
+- 전체 시스템 테스트 후 **클라우드 배포** — 과제 원문 표기는 AWS이나, 실제 배포는 **Azure**로 진행했습니다 (Step 7 요구사항의 "Azure 배포"를 따름)
 - 기획 문서, DB 설계 문서, 기능 명세, 발표자료 등 **결과물 정리**
 
 ---
@@ -48,7 +48,7 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 | **재고 & 동시성** | 레이스 컨디션, 비관적 락 / 낙관적 락 | 실무에서 가장 까다로운 문제 중 하나. 재고 1개에 주문 2건이 동시에 들어오면? |
 | **관리자 기능** | 권한 분리, 관리자/사용자 화면 경계 | 같은 데이터라도 "누가 보느냐"에 따라 접근 범위가 달라지는 설계 |
 | **리뷰 / 추천** | 집계(평균 별점), 정렬, 필터링 쿼리 | 원시 데이터를 사용자에게 의미 있는 정보로 가공하는 능력 |
-| **테스트 & 배포** | 예외 처리, 환경 분리(로컬/운영), AWS 배포 | "내 PC에선 됐는데"를 넘어 실제 서비스로 내보내는 경험 |
+| **테스트 & 배포** | 예외 처리, 환경 분리(로컬/운영), Azure 배포 | "내 PC에선 됐는데"를 넘어 실제 서비스로 내보내는 경험 |
 
 ### 💡 학습 원칙
 - **먼저 스스로 설계해 보고, 막히면 찾아본다.** 정답을 먼저 보면 "왜"가 남지 않습니다.
@@ -100,10 +100,13 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 - [x] 별점·태그·키워드 필터링 UI 및 베스트 상품 섹션 구성
 
 ### Step 7. 테스트, 배포 및 결과물 정리
-- [ ] 회원가입 → 주문 → 재고 → 리뷰 → 추천 전체 흐름 점검
-- [ ] 예외 상황 및 오류 케이스 테스트·수정
-- [ ] AWS 배포 및 최종 결과물(프로젝트 소개 자료) 정리
-- [ ] 배포 링크 첨부 (가능한 경우)
+- [x] 회원가입 → 주문 → 재고 → 리뷰 → 추천 전체 흐름 점검
+  - 화면 경로 5개(홈·목록/상세·회원가입·장바구니·관리자)는 Playwright E2E 스모크로 검증 (`frontend/e2e/`, CI 자동 실행)
+  - 리뷰·추천은 백엔드 테스트로 검증 (`ReviewServiceTest`, `ReviewControllerTest`, `ProductRepositoryBestProductsTest`)
+- [x] 예외 상황 및 오류 케이스 테스트·수정 (재고 부족·동시 주문 충돌·비로그인 접근 등)
+- [x] Azure 배포 (Container Apps + PostgreSQL Flexible Server, `azure/setup.sh`로 재현 가능)
+- [x] 배포 링크 첨부 — https://www.minsdev.works
+- [ ] 최종 결과물(프로젝트 소개 자료 / 발표자료) 정리
 - [ ] 시연 영상 준비
 
 #### 🚨 배포 전 체크리스트 (현재 개발 환경 전제로 꺼두거나 허술하게 둔 것들)
@@ -149,7 +152,7 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 | **Backend** | Java, Spring Boot, Spring Data JPA, Spring Security |
 | **Frontend** | React, JavaScript, Vapor (goorm Design System) |
 | **Database** | PostgreSQL (학습 초기에는 H2로 시작 후 전환) |
-| **Infra** | AWS |
+| **Infra** | Azure (Container Apps, Container Registry, PostgreSQL Flexible Server, Blob Storage) |
 | **Build/Tool** | IntelliJ IDEA, Gradle, Git/GitHub, Postman |
 
 ---
@@ -178,6 +181,10 @@ KDT-ShoppingMallProject/
 git clone <repository-url>
 cd KDT-ShoppingMallProject
 
+# DB 실행 (Docker 필요) — 기본 설정이 PostgreSQL(localhost:5433)이라 이 단계 없이
+# 바로 bootRun 하면 DB 연결 실패로 뜨지 않는다
+docker compose up -d db
+
 # 백엔드 실행 (http://localhost:8080)
 cd backend
 ./gradlew bootRun
@@ -186,6 +193,12 @@ cd backend
 cd frontend
 npm install
 npm run dev
+```
+
+Windows에서는 위 세 단계를 스크립트 하나로 대체할 수 있다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1
 ```
 
 ---
