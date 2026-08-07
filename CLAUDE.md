@@ -55,18 +55,15 @@
 ## 개발 환경 재설정 (다른 PC에서 클론 시)
 
 ```bash
-# 1. 클론
-git clone https://github.com/johnjoseph1990/KDT-ShoppingMallProject.git
-cd KDT-ShoppingMallProject
-
-# 1-1. pre-commit 포맷터 훅 활성화 (PC마다 한 번만 실행)
+# 1. pre-commit 포맷터 훅 활성화 (PC마다 한 번만 실행)
 git config core.hooksPath .githooks
 
 # 2. DB 실행 (Docker 필요) — application.properties 기본값이 PostgreSQL(localhost:5433)이므로
 #    이 컨테이너 없이 바로 bootRun 하면 연결 실패로 뜨지 않는다
-docker compose up -d
+#    backend/frontend 서비스는 profiles: ["full"] 이라 이 명령으로는 뜨지 않는다 (의도된 동작)
+docker compose up -d db
 
-# 3. 백엔드 실행 (Java 17 필요)
+# 3. 백엔드 실행 (Java 17 필요) — 개발 중에는 항상 소스로 띄운다
 cd backend
 ./gradlew bootRun
 
@@ -75,6 +72,9 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Windows에서 위 2~4번을 한 줄로 대체하는 법과, 배포와 동일한 **컨테이너 형상**을 확인하는
+법은 `dev-run` 스킬을 호출한다 (원본: `.claude/skills/dev-run/SKILL.md`).
 
 ## 커밋 메시지 컨벤션
 
@@ -150,16 +150,13 @@ CI 재시도를 예방할 수 있다.
 - 커밋 전 반드시 `spotlessApply` / `format` 실행 후 diff 확인
 
 **네이밍 규칙:**
-- 클래스: `PascalCase` (예: `OrderService`, `ProductResponse`)
-- 메서드/변수: `camelCase`, 불리언은 `is`/`has` 접두사 (예: `isOutOfStock`)
+- 불리언은 `is`/`has` 접두사 (예: `isOutOfStock`)
 - DTO는 역할 접미사로 구분: `~Request`(입력), `~Response`(출력)
 - 커스텀 예외는 `~Exception` 접미사, `GlobalExceptionHandler`에서 일괄 처리
 
 **패키지 구조 (도메인 기준 분리):**
 - `domain/{도메인명}` — 엔티티 + 해당 도메인 전용 enum (예: `domain/order/OrderStatus`)
 - `controller`, `service`, `repository`, `dto/{도메인명}`, `exception` — 계층별 최상위 패키지
-
-**커밋 메시지:** 위 "커밋 메시지 컨벤션" 참고
 
 ## 보안 테스트 (필수)
 

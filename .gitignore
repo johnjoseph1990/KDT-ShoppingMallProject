@@ -28,9 +28,17 @@ Thumbs.db
 *.log
 
 # Claude Code 로컬 설정
-# .claude/ 내용물은 무시하되(개인 설정·캐시), 팀이 공유할 에이전트 정의만 예외로 추적
+# .claude/ 내용물은 무시하되(개인 설정·캐시), 팀이 공유할 정의는 예외로 추적
+# - agents/    : 리뷰 에이전트 정의
+# - skills/    : 이 프로젝트가 직접 쓴 스킬만. 외부에서 받아온 스킬(vercel-react-best-practices 등)은
+#                우리 저장소가 관리할 대상이 아니므로 계속 무시한다
+# 부정 패턴(!)은 부모 디렉터리가 제외돼 있으면 동작하지 않는다(git이 그 안으로 내려가지 않음).
+# 그래서 skills 폴더를 한 번 열고(!), 그 안을 다시 닫은 뒤(*), 필요한 것만 다시 연다.
 .claude/*
 !.claude/agents/
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/dev-run/
 .agents/
 
 # 학습 슬라이드 (발표 확정 시에만 생성, 평소엔 추적 제외)
