@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000" role="img" aria-label="예산 노지 대파 대체 이미지">
-  <rect width="800" height="1000" fill="#4F6B3C"/>
-  <text x="400" y="360" text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="32" fill="#EDF2E6" opacity="0.75" letter-spacing="6">채소</text>
-  <text text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="58" font-weight="700" fill="#EDF2E6">
-    <tspan x="400" y="520">예산 노지 대파</tspan>
-  </text>
-  <text x="400" y="800" text-anchor="middle" font-family="Pretendard, 'Malgun Gothic', system-ui, sans-serif" font-size="26" fill="#EDF2E6" opacity="0.6">상품 사진 준비 중</text>
-</svg>

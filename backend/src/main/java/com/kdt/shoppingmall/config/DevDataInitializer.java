@@ -243,10 +243,21 @@ public class DevDataInitializer {
               // 정육을 제외한 4개 카테고리를 각 5개로 맞춰 총 30개로 만든다.
               // (30개 = 상품목록 페이지 크기 10 × 3페이지 → 페이지네이션도 시연 가능)
               //
-              // [이미지] 실제 사진 대신 저장소 안의 SVG 플레이스홀더를 가리킨다.
-              // 위 이미지 규칙 주석의 사고(상품과 무관한 사진이 걸려도 아무도 못 잡음)를
-              // 원천 차단하려고, 사진처럼 보이지 않고 상품명이 그대로 적힌 도형을 쓴다.
-              // 나중에 실제 사진이 생기면 같은 파일명으로 교체하면 시드 코드는 그대로다.
+              // [이미지] Unsplash 무료 라이선스 사진을 내려받아 저장소에 둔다(핫링크 금지).
+              // 카드 이미지 영역이 4:5(ProductCard.jsx)라 1080x1350으로 크롭해서 받았다.
+              //
+              // 위 이미지 규칙 주석의 사고("목살에 사람 얼굴 사진")를 막으려면 파일명만으로는
+              // 부족하고 **사람이 사진을 실제로 열어봐야** 한다. 그래서 12장 모두 썸네일로
+              // 먼저 받아 상품명과 대조했고, 아래 7건은 그 단계에서 걸러 다시 골랐다:
+              //   - 대파/고추: 사진 속에 영어·터키어 가격표가 크게 박혀 있었다(충남 농가 컨셉과 충돌)
+              //   - 잎채소 꾸러미: 잎채소가 아니라 적양배추·셀러리악(뿌리채소)이었다
+              //   - 아침식탁 꾸러미: 상자에 타사 브랜드 로고가 찍혀 있었다
+              //   - 사과 파운드케이크: 사과가 아니라 레몬 케이크였다
+              // 나머지(블루베리·인삼)는 구도·피사체가 상품과 어긋나 교체했다.
+              //
+              // 남은 불일치 1건: 인삼정과 사진은 '가공한 정과'가 아니라 '생 인삼 뿌리'다.
+              // Unsplash에 정과 사진이 없어 차선으로 뒀다. 실제 사진이 생기면 같은 파일명으로
+              // 교체하면 되고, 시드 코드는 건드릴 필요가 없다.
               //
               // [재고] 재고 배지(frontend/src/utils/product.js의 stockBadge)는
               // 0=품절 / 1~5=마감임박 / 6 이상=배지 없음 세 구간인데, 기존 시드는 최소 재고가
@@ -257,7 +268,7 @@ public class DevDataInitializer {
                 "노지에서 서리를 맞고 자란 대파. 흰 대가 굵고 단맛이 강해 국물 요리에 좋습니다.",
                 3_500,
                 30,
-                "/uploads/yesan-green-onion.svg",
+                "/uploads/yesan-green-onion.jpg",
                 List.of("채소")
               },
               new Object[] {
@@ -265,7 +276,7 @@ public class DevDataInitializer {
                 "맵지 않고 아삭한 풋고추. 쌈이나 된장 찍어 먹기 좋게 크기를 골라 담았습니다.",
                 7_000,
                 4, // 마감임박 배지(1~5) 시연용
-                "/uploads/cheongyang-green-pepper.svg",
+                "/uploads/cheongyang-green-pepper.jpg",
                 List.of("채소")
               },
               new Object[] {
@@ -273,7 +284,7 @@ public class DevDataInitializer {
                 "일교차 큰 황토밭에서 자란 부사. 껍질째 먹을 수 있도록 세척해 보냅니다.",
                 28_000,
                 25,
-                "/uploads/yesan-apple.svg",
+                "/uploads/yesan-apple.jpg",
                 List.of("과일")
               },
               new Object[] {
@@ -281,7 +292,7 @@ public class DevDataInitializer {
                 "당도를 재서 11브릭스 이상만 골라 담은 방울토마토. 꼭지째 수확합니다.",
                 11_000,
                 18,
-                "/uploads/nonsan-cherry-tomato.svg",
+                "/uploads/nonsan-cherry-tomato.jpg",
                 List.of("과일")
               },
               new Object[] {
@@ -289,7 +300,7 @@ public class DevDataInitializer {
                 "하우스가 아닌 노지에서 익힌 블루베리. 알은 작지만 향과 신맛이 진합니다.",
                 19_000,
                 0, // 품절 배지 + 담기 버튼 비활성화 시연용
-                "/uploads/hongseong-blueberry.svg",
+                "/uploads/hongseong-blueberry.jpg",
                 List.of("과일")
               },
               new Object[] {
@@ -297,7 +308,7 @@ public class DevDataInitializer {
                 "그 주에 가장 좋은 잎채소 대여섯 가지를 골라 담습니다. 구성은 매주 달라집니다.",
                 22_000,
                 12,
-                "/uploads/seocheon-leafy-greens-box.svg",
+                "/uploads/seocheon-leafy-greens-box.jpg",
                 List.of("꾸러미")
               },
               new Object[] {
@@ -305,7 +316,7 @@ public class DevDataInitializer {
                 "사과·달걀·빵을 한 상자에 담은 아침식사용 꾸러미. 격주 배송도 가능합니다.",
                 32_000,
                 16,
-                "/uploads/yesan-breakfast-box.svg",
+                "/uploads/yesan-breakfast-box.jpg",
                 List.of("꾸러미")
               },
               new Object[] {
@@ -313,7 +324,7 @@ public class DevDataInitializer {
                 "청양고추로 만든 밑반찬 네 가지 구성. 냉장 보관 2주.",
                 26_000,
                 3, // 마감임박 배지(1~5) 시연용
-                "/uploads/cheongyang-spicy-banchan-box.svg",
+                "/uploads/cheongyang-spicy-banchan-box.jpg",
                 List.of("꾸러미")
               },
               new Object[] {
@@ -321,7 +332,7 @@ public class DevDataInitializer {
                 "천연 발효종으로 18시간 저온 숙성해 구운 통밀빵. 굽는 날 바로 발송합니다.",
                 8_000,
                 14,
-                "/uploads/hongseong-wholewheat-sourdough.svg",
+                "/uploads/hongseong-wholewheat-sourdough.jpg",
                 List.of("베이커리")
               },
               new Object[] {
@@ -329,7 +340,7 @@ public class DevDataInitializer {
                 "4년근 인삼을 조청에 졸여 만든 정과. 설탕 대신 조청만 씁니다.",
                 16_000,
                 20,
-                "/uploads/geumsan-ginseng-jeonggwa.svg",
+                "/uploads/geumsan-ginseng-jeonggwa.jpg",
                 List.of("베이커리")
               },
               new Object[] {
@@ -337,7 +348,7 @@ public class DevDataInitializer {
                 "예산 사과를 조려 넣고 구운 파운드케이크. 한 덩이를 네 조각으로 잘라 포장합니다.",
                 13_500,
                 9,
-                "/uploads/yesan-apple-pound-cake.svg",
+                "/uploads/yesan-apple-pound-cake.jpg",
                 List.of("베이커리")
               },
               new Object[] {
@@ -345,7 +356,7 @@ public class DevDataInitializer {
                 "서천 햇감자를 으깨 넣어 촉촉한 스콘 6개입. 데워 먹으면 더 좋습니다.",
                 7_500,
                 11,
-                "/uploads/seocheon-potato-scone.svg",
+                "/uploads/seocheon-potato-scone.jpg",
                 List.of("베이커리")
               });
 
