@@ -249,4 +249,34 @@ class ProductControllerTest {
 
     mockMvc.perform(get("/api/products/99/recommendations")).andExpect(status().isNotFound());
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 아래 2개는 "스프링 MVC가 스스로 만들어내는 예외"의 응답 계약을 검증한다.
+  // 우리 서비스 코드가 던지는 예외(ResourceNotFound 등)와 달리, 요청이 서비스에
+  // 도달하기도 전에 MVC 단계에서 터지는 예외라서 productService를 mock하지 않는다.
+  //
+  // 왜 필요한가: GlobalExceptionHandler에 @ExceptionHandler(Exception.class)가 있는데,
+  // 이 핸들러를 찾는 ExceptionHandlerExceptionResolver가 스프링 기본 변환기인
+  // DefaultHandlerExceptionResolver보다 "먼저" 실행된다. 그래서 스프링이 400/405로
+  // 바꿔주던 예외까지 catch-all이 가로채 500으로 내려보낼 수 있다.
+  // (같은 문제로 AuthenticationException이 500이 되던 적이 있다 — GlobalExceptionHandler 36~40행 주석)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  @Test
+  void 경로변수_타입이_틀리면_400을_반환한다() throws Exception {
+    // GET /api/products/{id}의 id는 Long인데 "abc"가 들어오면
+    // 스프링이 MethodArgumentTypeMismatchException을 던진다 → 잘못된 요청이므로 400이어야 한다.
+    // SecurityConfig에서 GET /api/products/** 는 permitAll이라 인증 없이 프로브할 수 있다.
+    mockMvc.perform(get("/api/products/abc")).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser(roles = "USER")
+  void 지원하지_않는_HTTP_메서드는_405를_반환한다() throws Exception {
+    // ProductController에는 PATCH 매핑이 없다 → HttpRequestMethodNotSupportedException.
+    // @WithMockUser가 필수인 이유: 인증은 DispatcherServlet보다 앞선 필터체인에서 처리된다.
+    // PATCH는 SecurityConfig의 anyRequest().authenticated()에 걸리므로, 인증 없이 쏘면
+    // 401에서 끊겨 우리가 확인하려는 405 지점까지 도달조차 못 한다.
+    mockMvc.perform(patch("/api/products/1")).andExpect(status().isMethodNotAllowed());
+  }
 }

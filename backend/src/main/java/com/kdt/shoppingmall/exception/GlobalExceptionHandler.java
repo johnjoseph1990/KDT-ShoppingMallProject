@@ -10,9 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -127,6 +129,45 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, String>> handleUnreadable(HttpMessageNotReadableException e) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(Map.of("message", "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요."));
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // [DEF] 스프링 MVC가 스스로 던지는 예외들.
+  //
+  // 아래 핸들러들이 없으면 맨 마지막 handleUnexpected(Exception.class)가 이들을 가로채
+  // 500을 내려버린다. 스프링이 원래 400/405로 변환해주는 예외인데도 그렇게 되는 이유는,
+  // @ExceptionHandler를 찾는 ExceptionHandlerExceptionResolver가 스프링 기본 변환기인
+  // DefaultHandlerExceptionResolver보다 "먼저" 실행되기 때문이다.
+  // (위 36~40행의 AuthenticationException 주석과 똑같은 원인 — 같은 방식으로 고친다:
+  //  Exception.class를 지우는 게 아니라, 더 "구체적인" 핸들러를 추가하면 그쪽이 우선 매칭된다.)
+  //
+  // ResponseEntityExceptionHandler를 상속하는 방법도 있지만 쓰지 않는다.
+  // 그 경우 응답이 ProblemDetail 형태로 바뀌어, {"message": ...}를 읽는
+  // 프론트의 모든 catch 블록(err.response?.data?.message)이 한꺼번에 깨진다.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // 경로변수·쿼리파라미터의 타입 변환 실패. 예: GET /api/products/abc 인데 id가 Long인 경우.
+  // 서버 잘못이 아니라 요청이 잘못된 것이므로 400이 맞다.
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<Map<String, String>> handleTypeMismatch(
+      MethodArgumentTypeMismatchException e) {
+    // e.getName()은 문제가 된 파라미터 이름(예: "id"). 어느 값이 잘못됐는지 알려주되,
+    // 내부 타입 정보나 스택 트레이스는 노출하지 않는다.
+    String message = e.getName() + " 값의 형식이 올바르지 않습니다.";
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", message));
+  }
+
+  // 매핑되지 않은 HTTP 메서드로 호출한 경우. 예: PATCH /api/products/1 (PATCH 매핑이 없음).
+  // 405(Method Not Allowed)가 맞다 — 경로 자체는 존재하지만 그 메서드를 안 받는다는 뜻이다.
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<Map<String, String>> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException e) {
+    // e.getMethod()는 클라이언트가 보낸 메서드(예: "PATCH").
+    // e.getSupportedHttpMethods()로 허용 메서드 목록도 알 수 있지만 응답에 담지 않는다.
+    // 이 프로젝트의 클라이언트는 우리 프론트뿐이고, 메서드 불일치는 사용자가 아니라
+    // 개발자가 고칠 버그다. 공개 API가 아니므로 엔드포인트 구조를 굳이 노출하지 않는다.
+    String message = e.getMethod() + " 메서드는 지원하지 않습니다.";
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(Map.of("message", message));
   }
 
   // 위의 핸들러들이 잡지 못한 모든 예외의 최후 방어선.

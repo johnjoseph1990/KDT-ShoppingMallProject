@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.kdt.shoppingmall.config.SecurityConfig;
 import com.kdt.shoppingmall.exception.GlobalExceptionHandler;
+import com.kdt.shoppingmall.exception.UnsupportedFileTypeException;
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
 import com.kdt.shoppingmall.service.AzureBlobService;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,26 @@ class UploadControllerTest {
             "file", "test.jpg", MediaType.IMAGE_JPEG_VALUE, "imagedata".getBytes());
 
     mockMvc.perform(multipart("/api/admin/upload").file(file)).andExpect(status().isForbidden());
+  }
+
+  @Test
+  @WithMockUser(roles = "ADMIN")
+  void 이미지가_아닌_파일을_업로드하면_400을_반환한다() throws Exception {
+    // given — AzureBlobService가 이미지가 아닌 파일을 거부하는 상황을 재현한다.
+    // willThrow: 이 Mock 메서드가 호출되면 값을 돌려주는 대신 예외를 던지게 한다.
+    given(azureBlobService.upload(any(MultipartFile.class)))
+        .willThrow(new UnsupportedFileTypeException("이미지 파일만 업로드할 수 있습니다."));
+
+    MockMultipartFile file =
+        new MockMultipartFile("file", "malware.exe", "application/octet-stream", "data".getBytes());
+
+    // when & then — 예외 자체는 AzureBlobServiceTest가 이미 검증한다.
+    // 여기서 확인하는 것은 "그 예외가 HTTP 400 + message 형태로 나가는가"라는 API 계약이다.
+    // 프론트의 uploadErrorMessage()가 이 message를 그대로 화면에 띄우므로 body까지 본다.
+    mockMvc
+        .perform(multipart("/api/admin/upload").file(file))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("이미지 파일만 업로드할 수 있습니다."));
   }
 
   @Test
