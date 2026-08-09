@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>MINS Farmers Market — ERD 다이어그램 생성기</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════
+  document/erd-diagram.png 를 만드는 원본 파일.
+  발표자료(Canva)·PDF에 넣을 ERD 이미지를 여기서 뽑는다.
+
+  [재생성 방법] Git Bash에서 프로젝트 루트로 이동한 뒤 그대로 붙여넣기:
+
+    ROOT="$(pwd -W)"
+    "/c/Program Files/Google/Chrome/Application/chrome.exe" \
+      --headless --disable-gpu --hide-scrollbars \
+      --force-device-scale-factor=2 \
+      --window-size=1700,980 --virtual-time-budget=15000 \
+      --screenshot="$ROOT/document/erd-diagram.png" \
+      "file:///$ROOT/scripts/erd-diagram.html"
+
+  성공하면 "293875 bytes written to file ..." 처럼 출력된다.
+  40KB 안팎으로 작게 나오면 렌더링 실패이므로 결과 이미지를 반드시 눈으로 확인할 것.
+
+  [경로 주의 — 두 번 걸려 넘어진 지점]
+  - pwd 가 아니라 pwd -W 를 써야 한다. Git Bash의 pwd는 /c/Users/... 를 주는데
+    Chrome은 Windows 프로그램이라 이 형식을 못 읽고 ERR_FILE_NOT_FOUND 를 낸다.
+    (그런데도 스크린샷은 "오류 화면"으로 찍혀 저장되므로 조용히 망가진다)
+  - --screenshot 출력 경로도 상대경로면 실패한다. 반드시 절대경로.
+
+  [옵션 설명]
+  - --force-device-scale-factor=2 : 2배 해상도로 뽑아 슬라이드에서 글씨가 뭉개지지 않게
+  - --virtual-time-budget=15000   : mermaid가 SVG를 다 그릴 때까지 기다린다(안 주면 빈 화면이 찍힘)
+  - --window-size 는 아래 CSS의 svg width(1620px) + 좌우 padding 에 맞춘 값
+
+  [주의] 스키마를 바꾸면 document/ERD.md 와 이 파일을 함께 고쳐야 한다.
+        (두 곳에 같은 mermaid 정의가 있으므로 한쪽만 고치면 어긋난다)
+
+  [보안] mermaid 라이브러리만 CDN에서 받아오고, ERD 내용 자체는 이 파일 안에서
+        브라우저가 로컬로 그린다. 다이어그램 내용이 외부 서버로 전송되지 않는다.
+        (mermaid.ink 같은 외부 렌더러를 쓰면 스키마가 URL에 담겨 외부로 나간다)
+  ══════════════════════════════════════════════════════════════════════
+-->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #FFFFFF; }
+  #wrap { padding: 40px; background: #FFFFFF; }
+  .mermaid { font-family: 'Malgun Gothic', sans-serif; }
+  /* mermaid는 SVG에 max-width를 걸어 원본 크기로 축소해 버린다.
+     슬라이드에 넣을 이미지는 크게 뽑아야 글씨가 읽히므로 강제로 넓힌다. */
+  #wrap svg { width: 1620px !important; max-width: 1620px !important; height: auto !important; }
+</style>
+</head>
+<body>
+<div id="wrap">
+<pre class="mermaid">
+erDiagram
+    MEMBER ||--o{ CART_ITEM : "담는다"
+    MEMBER ||--o{ ORDERS : "주문한다"
+    MEMBER ||--o{ REVIEW : "작성한다"
+    MEMBER ||--o{ ADDRESS : "등록한다"
+    PRODUCT ||--o{ CART_ITEM : "담긴다"
+    PRODUCT ||--o{ ORDER_ITEM : "주문된다"
+    PRODUCT ||--o{ REVIEW : "리뷰된다"
+    PRODUCT ||--o{ PRODUCT_TAG : "가진다"
+    ORDERS ||--o{ ORDER_ITEM : "포함한다"
+    ORDERS ||--|| PAYMENT : "결제된다"
+
+    MEMBER {
+        bigint id PK
+        varchar email UK "로그인 ID"
+        varchar password "BCrypt 해시"
+        varchar name
+        varchar role "USER / ADMIN"
+    }
+    ADDRESS {
+        bigint id PK
+        bigint member_id FK
+        varchar recipient_name
+        varchar phone
+        varchar zip_code
+        varchar address
+        boolean is_default "기본 배송지"
+    }
+    PRODUCT {
+        bigint id PK
+        varchar name
+        int price
+        int stock_quantity "재고"
+        varchar image_url "Blob Storage"
+        int view_count
+        bigint version "낙관적 락"
+    }
+    PRODUCT_TAG {
+        bigint id PK
+        bigint product_id FK
+        varchar name "태그/키워드"
+    }
+    CART_ITEM {
+        bigint id PK
+        bigint member_id FK
+        bigint product_id FK
+        int quantity
+    }
+    ORDERS {
+        bigint id PK
+        bigint member_id FK
+        varchar status "6단계 상태"
+        int total_price
+        int shipping_fee
+        varchar delivery_address "배송지 스냅샷"
+    }
+    ORDER_ITEM {
+        bigint id PK
+        bigint orders_id FK
+        bigint product_id FK
+        int order_price "당시 가격 스냅샷"
+        int quantity
+    }
+    PAYMENT {
+        bigint id PK
+        bigint orders_id FK "1:1"
+        varchar status
+        varchar payment_method "CARD / VIRTUAL_ACCOUNT"
+        varchar payment_key "토스 결제 식별자"
+        varchar virtual_account_number "가상계좌"
+    }
+    REVIEW {
+        bigint id PK
+        bigint member_id FK
+        bigint product_id FK
+        int rating "1~5 별점"
+        text content
+    }
+</pre>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: 'Malgun Gothic, sans-serif',
+      fontSize: '15px',
+      primaryColor: '#F4F2E9',        // 엔티티 박스 배경 (Aesop 톤의 크림색)
+      primaryBorderColor: '#333326',  // 테두리 (design/README.md의 다크 톤)
+      primaryTextColor: '#333326',
+      lineColor: '#8A8A72'
+    }
+  });
+</script>
+</body>
+</html>

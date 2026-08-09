@@ -54,7 +54,7 @@
 ┌─────────────┐      ┌──────────────────┐      ┌────────────────────┐
 │  React 18   │─────▶│  Spring Boot 3   │─────▶│  PostgreSQL        │
 │  (Vite)     │ REST │  Spring Security │ JPA  │  (Flexible Server) │
-│  Vapor DS   │◀─────│  Spring Data JPA │◀─────│                    │
+│  Custom CSS │◀─────│  Spring Data JPA │◀─────│                    │
 └─────────────┘      └────────┬─────────┘      └────────────────────┘
                               │
                      ┌────────┴────────┐
@@ -566,7 +566,7 @@ CHECK (status IN ('ORDERED','PAID','SHIPPING','DELIVERED','CANCELED'))
 `OrderConcurrencyTest`에서 스레드 풀로 동시에 주문을 밀어넣고, 최종 재고와 성공 주문 수가 일치하는지 검증합니다.
 
 **Q. 더 개선한다면 무엇을 하시겠어요?**
-세 가지가 남아 있습니다. ① **Flyway 도입** — 슬라이드 27의 스키마 드리프트로 필요성은 확인했으나 아직 적용 전입니다. ② **성능 최적화** — N+1 쿼리·인덱스 점검이 남아 있습니다(베스트 상품 쿼리는 이미 한 번 해결했습니다). ③ **프론트/백 테스트 균형** — 백엔드 269개에 비해 프론트 104개로 상대적으로 얇습니다.
+세 가지가 남아 있습니다. ① **Flyway 도입** — 슬라이드 27의 스키마 드리프트로 필요성은 확인했으나 아직 적용 전입니다. ② **성능 최적화** — N+1 쿼리·인덱스 점검이 남아 있습니다(베스트 상품 쿼리는 이미 한 번 해결했습니다). ③ **프론트/백 테스트 균형** — 백엔드 279개에 비해 프론트 114개로 상대적으로 얇습니다.
 
 ---
 
@@ -575,7 +575,7 @@ CHECK (status IN ('ORDERED','PAID','SHIPPING','DELIVERED','CANCELED'))
 | 구분 | 사용 기술 |
 |---|---|
 | Backend | Java 17, Spring Boot 3, Spring Data JPA, Spring Security |
-| Frontend | React, Vite, Vapor (goorm Design System), React Router |
+| Frontend | React 18, Vite, React Router, Axios, 자체 CSS(사용자 화면) + Vapor(goorm DS, 관리자 화면) |
 | Database | PostgreSQL (테스트는 H2) |
 | 결제 | 토스페이먼츠 (카드 · 가상계좌) |
 | Infra | Azure Container Apps, Container Registry, PostgreSQL Flexible Server, Blob Storage |
