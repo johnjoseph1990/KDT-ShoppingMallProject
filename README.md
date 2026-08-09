@@ -70,9 +70,9 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 ## 🧭 진행 단계 (Roadmap)
 
 ### Step 1. UI 가이드 학습 및 프로젝트 방향 설정
-- [ ] [Vapor (Goorm Design System)](https://goormkdx.notion.site/Vapor-334c0ff4ce31809a9715f60a58152650?source=copy_link) 컴포넌트·스타일 가이드 학습
-- [ ] 쇼핑몰 서비스에 필요한 주요 화면과 사용자 흐름 정리
-- [ ] 개인 프로젝트 범위에 맞는 기능 우선순위 설정
+- [x] [Vapor (Goorm Design System)](https://goormkdx.notion.site/Vapor-334c0ff4ce31809a9715f60a58152650?source=copy_link) 컴포넌트·스타일 가이드 학습 → 디자인 시안 [`design/`](./design)
+- [x] 쇼핑몰 서비스에 필요한 주요 화면과 사용자 흐름 정리 → [`FUNCTIONAL_SPEC.md` §1·§3](./document/FUNCTIONAL_SPEC.md)
+- [x] 개인 프로젝트 범위에 맞는 기능 우선순위 설정 (P0/P1/P2 + 지연 시 잘라내기 순서)
 
 ### Step 2. 기능 명세 및 DB 설계
 - [x] 사용자, 상품, 주문, 리뷰 등 핵심 도메인 정의
@@ -82,21 +82,21 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 ### Step 3. Spring 기반 핵심 기능 구현
 - [x] 상품 CRUD 기능 구현
 - [x] 회원가입, 로그인, 인증 및 권한 관리 구현 (Spring Security)
-- [ ] 상품 목록·상세·등록·수정 등 기본 쇼핑몰 화면 및 기능 구현 (프론트엔드)
+- [x] 상품 목록·상세·등록·수정 등 기본 쇼핑몰 화면 및 기능 구현 (프론트엔드) — 페이지 16개 (`frontend/src/pages/`)
 
 ### Step 4. 주문 및 결제 흐름 구현
 - [x] 상품 구매 흐름 설계 및 주문 생성 기능 구현 (Cart → Order)
 - [x] 주문 상태 관리 기본 로직 구성 (`OrderStatus`)
-- [x] 주문 완료 이후 결제 및 처리 결과 흐름 연결 (모의 결제)
+- [x] 주문 완료 이후 결제 및 처리 결과 흐름 연결 — 명세는 "모의 결제(P1)"였으나 **실제 토스페이먼츠 연동**(카드 + 가상계좌)으로 구현
 
 ### Step 5. 재고 및 관리자 주문 처리 기능 확장
 - [x] 상품별 재고 관리 로직 및 UI 구성 (목록 품절·마감임박 배지, 상세 재고 수량 표시)
 - [x] 동시 주문 상황에서의 재고 동기화 처리 구조 구현 (`@Version` 낙관적 락)
-- [ ] 관리자 주문 내역 조회 및 상태 변경 기능 구현
+- [x] 관리자 주문 내역 조회 및 상태 변경 기능 구현 (`AdminOrderController`, 상태 필터 포함)
 
 ### Step 6. 리뷰 기반 추천 및 UX 개선 기능 확장
-- [ ] 리뷰 작성 / 조회 / 삭제 기능 구현
-- [ ] 평균 별점 계산, 별점 정렬, 키워드 기반 추천 기능 구현
+- [x] 리뷰 작성 / 조회 / 수정 / 삭제 기능 구현 (`ReviewController`, `ReviewServiceTest`)
+- [x] 평균 별점 계산, 별점 정렬, 키워드 기반 추천 기능 구현 (`KeywordExtractor`, `ProductRepositoryBestProductsTest`)
 - [x] 별점·태그·키워드 필터링 UI 및 베스트 상품 섹션 구성
 
 ### Step 7. 테스트, 배포 및 결과물 정리
@@ -106,8 +106,8 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 - [x] 예외 상황 및 오류 케이스 테스트·수정 (재고 부족·동시 주문 충돌·비로그인 접근 등)
 - [x] Azure 배포 (Container Apps + PostgreSQL Flexible Server, `azure/setup.sh`로 재현 가능)
 - [x] 배포 링크 첨부 — https://www.minsdev.works
-- [ ] 최종 결과물(프로젝트 소개 자료 / 발표자료) 정리
-- [ ] 시연 영상 준비
+- [x] 최종 결과물(프로젝트 소개 자료 / 발표자료) 정리 → [`document/FINAL_DELIVERABLE.md`](./document/FINAL_DELIVERABLE.md), [`document/PRESENTATION.md`](./document/PRESENTATION.md)
+- [ ] 시연 영상 준비 (촬영 대본은 [`FINAL_DELIVERABLE.md` §6](./document/FINAL_DELIVERABLE.md) 에 작성 완료)
 
 #### 🚨 배포 전 체크리스트 (현재 개발 환경 전제로 꺼두거나 허술하게 둔 것들)
 
@@ -146,15 +146,17 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 
 ## 🛠 기술 스택
 
-> 프로젝트 진행에 따라 확정 예정
-
 | 구분 | 기술 |
 |------|------|
-| **Backend** | Java, Spring Boot, Spring Data JPA, Spring Security |
-| **Frontend** | React, JavaScript, Vapor (goorm Design System) |
-| **Database** | PostgreSQL (학습 초기에는 H2로 시작 후 전환) |
-| **Infra** | Azure (Container Apps, Container Registry, PostgreSQL Flexible Server, Blob Storage) |
-| **Build/Tool** | IntelliJ IDEA, Gradle, Git/GitHub, Postman |
+| **Backend** | Java 17, Spring Boot 3, Spring Data JPA, Spring Security |
+| **Frontend** | React 18, Vite, React Router, Axios, 자체 CSS(사용자 화면) + Vapor(goorm Design System, 관리자 화면) |
+| **Database** | PostgreSQL (테스트는 H2) |
+| **결제** | 토스페이먼츠 (카드 · 가상계좌) |
+| **Infra** | Azure (Container Apps, Container Registry, PostgreSQL Flexible Server, Blob Storage, DNS) |
+| **CI/CD** | GitHub Actions (backend / frontend / e2e / deploy 4개 job) |
+| **테스트** | JUnit 5, Mockito, Vitest, Testing Library, Playwright |
+| **품질** | Spotless(Google Java Format), Prettier, JaCoCo |
+| **Build/Tool** | IntelliJ IDEA, Gradle, Git/GitHub, Postman, Docker |
 
 ---
 
@@ -162,14 +164,15 @@ KDT(K-Digital Training) 과정 **[개인 프로젝트] 쇼핑몰 만들기** 과
 
 ```
 KDT-ShoppingMallProject/
-├── backend/            # Spring Boot (Java 21, Gradle) - Web / Data JPA / Security / H2 / Validation / Lombok
+├── backend/            # Spring Boot (Java 17, Gradle) - Web / Data JPA / Security / Validation / Lombok
 │   └── src/main/java/com/kdt/shoppingmall/
-│       ├── domain/     # member, product, cart, order, payment
-│       ├── controller/ # Auth, Product, Cart, Order
+│       ├── domain/     # member, product, cart, order, payment, review, address
+│       ├── controller/ # Auth, Member, Product, Cart, Order, AdminOrder, Review, Address, Upload
 │       ├── service/    # 도메인별 비즈니스 로직
 │       └── repository/ # Spring Data JPA repository
-├── frontend/            # React (Vite)
-├── document/            # 기획서, 기능 명세서, DB 설계 문서(ERD), 개념 인덱스
+├── frontend/            # React (Vite) + Playwright E2E (e2e/)
+├── document/            # 최종 결과물, 발표자료, 기능 명세서, ERD
+├── azure/               # 인프라 재현 스크립트 (setup.sh)
 └── README.md
 ```
 
@@ -208,12 +211,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1
 
 | 산출물 | 위치 |
 |--------|------|
-| 기획 문서 | `document/` |
-| 기능 명세서 | `document/` |
-| DB 설계 문서 (ERD) | `document/` |
-| 발표자료 / 프로젝트 소개 자료 | `document/` |
-| 배포 링크 | (배포 후 추가) |
-| 시연 영상 | (제출 시 첨부) |
+| **최종 결과물 (과제 목표·Step 대응 정리)** | [`document/FINAL_DELIVERABLE.md`](./document/FINAL_DELIVERABLE.md) |
+| 발표자료 (29장) | [`document/PRESENTATION.md`](./document/PRESENTATION.md) |
+| 기능 명세서 | [`document/FUNCTIONAL_SPEC.md`](./document/FUNCTIONAL_SPEC.md) |
+| DB 설계 문서 (ERD) | [`document/ERD.md`](./document/ERD.md) |
+| 일정 계획 | [`document/SPRINT_PLAN.md`](./document/SPRINT_PLAN.md) |
+| **배포 링크** | **https://www.minsdev.works** |
+| 시연 영상 | (촬영 후 첨부 — 대본은 `FINAL_DELIVERABLE.md` §6) |
 
 ---
 
