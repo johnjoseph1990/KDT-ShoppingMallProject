@@ -60,7 +60,9 @@ class MemberControllerTest {
 
   @Test
   @WithMockMemberPrincipal
-  void 비밀번호_틀림_401() throws Exception {
+  void 비밀번호_틀림_400() throws Exception {
+    // PasswordMismatchException은 400(BAD_REQUEST)을 반환한다.
+    // 401을 쓰면 axios 인터셉터가 세션 만료로 오인해 강제 로그아웃시키기 때문이다.
     MemberUpdateRequest request = new MemberUpdateRequest(null, "wrongPass", "newPass123");
     willThrow(new PasswordMismatchException("현재 비밀번호가 올바르지 않습니다."))
         .given(memberService)
@@ -71,7 +73,7 @@ class MemberControllerTest {
             put("/api/members/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isUnauthorized())
+        .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("현재 비밀번호가 올바르지 않습니다."));
   }
 
@@ -113,8 +115,9 @@ class MemberControllerTest {
 
   @Test
   @WithMockMemberPrincipal
-  void 회원탈퇴_비밀번호_불일치_401() throws Exception {
-    // 비밀번호가 틀리면 서비스에서 PasswordMismatchException → 401
+  void 회원탈퇴_비밀번호_불일치_400() throws Exception {
+    // 비밀번호가 틀리면 서비스에서 PasswordMismatchException → 400(BAD_REQUEST).
+    // 401을 쓰면 axios 인터셉터가 세션 만료로 오인해 강제 로그아웃시키기 때문이다.
     DeleteRequest request = new DeleteRequest("wrongPass");
     willThrow(new PasswordMismatchException("현재 비밀번호가 올바르지 않습니다."))
         .given(memberService)
@@ -125,7 +128,7 @@ class MemberControllerTest {
             delete("/api/members/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isUnauthorized())
+        .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.message").value("현재 비밀번호가 올바르지 않습니다."));
   }
 
