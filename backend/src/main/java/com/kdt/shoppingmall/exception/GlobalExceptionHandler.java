@@ -54,9 +54,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
   }
 
+  // 401(UNAUTHORIZED)이 아닌 400(BAD_REQUEST)을 쓰는 이유:
+  // 이 예외는 로그인 실패가 아니라 "이미 인증된 사용자"가 비밀번호 확인 단계에서 틀린 경우다.
+  // 401을 반환하면 axios 인터셉터가 세션 만료로 오인해 강제 로그아웃시킨다.
   @ExceptionHandler(PasswordMismatchException.class)
   public ResponseEntity<Map<String, String>> handlePasswordMismatch(PasswordMismatchException e) {
-    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
   }
 
   @ExceptionHandler(EmptyCartException.class)

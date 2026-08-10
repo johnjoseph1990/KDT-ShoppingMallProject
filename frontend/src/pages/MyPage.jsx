@@ -48,13 +48,14 @@ export default function MyPage() {
   }
 
   // 탈퇴 처리: 서버 삭제 → 세션 만료 → 로컬 상태 제거 → 홈 이동
-  const handleDelete = async () => {
+  const handleDelete = async (password) => {
     try {
-      await deleteMe()
-    } catch {
+      await deleteMe(password)
+    } catch (err) {
       // 서버 삭제 실패 시 탈퇴를 중단하고 에러를 사용자에게 알린다.
       // 성공한 척 로그아웃하면 계정이 서버에 남은 채 사용자가 인지하지 못하는 불일치 상태가 된다.
-      showNotice('회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.', true)
+      const msg = err.response?.data?.message
+      showNotice(msg || '회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.', true)
       setShowDeleteModal(false)
       return
     }
@@ -904,8 +905,19 @@ function AddressForm({ initial, onSave, onCancel }) {
 }
 
 // ── 회원 탈퇴 확인 모달 ───────────────────────────────────
-// 오버레이 클릭 시 닫힘. 내부 카드 클릭은 버블링 차단.
+// 비밀번호를 입력해야 탈퇴 버튼이 활성화된다. 오버레이 클릭 시 닫힘.
 function DeleteModal({ onClose, onConfirm }) {
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!password) return
+    setLoading(true)
+    await onConfirm(password)
+    setLoading(false)
+  }
+
   return (
     <div
       style={{
@@ -956,40 +968,65 @@ function DeleteModal({ onClose, onConfirm }) {
             <br />이 작업은 되돌릴 수 없습니다.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={onClose}
+
+        {/* 비밀번호 재확인 — 세션 탈취 방지 */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <input
+            type="password"
+            placeholder="현재 비밀번호 입력"
+            required
+            autoFocus
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             style={{
-              flex: 1,
-              cursor: 'pointer',
               border: '1px solid var(--color-border)',
               background: 'transparent',
-              color: 'var(--color-fg)',
-              padding: '14px',
+              padding: '12px 14px',
               fontSize: 14,
-              letterSpacing: '0.03em',
+              outline: 'none',
+              width: '100%',
               fontFamily: "'Noto Sans KR', sans-serif",
+              fontWeight: 300,
+              boxSizing: 'border-box',
             }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              flex: 1,
-              cursor: 'pointer',
-              border: '1px solid var(--color-danger)',
-              background: 'var(--color-danger)',
-              color: '#fff',
-              padding: '14px',
-              fontSize: 14,
-              letterSpacing: '0.03em',
-              fontFamily: "'Noto Sans KR', sans-serif",
-            }}
-          >
-            탈퇴하겠습니다
-          </button>
-        </div>
+          />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                flex: 1,
+                cursor: 'pointer',
+                border: '1px solid var(--color-border)',
+                background: 'transparent',
+                color: 'var(--color-fg)',
+                padding: '14px',
+                fontSize: 14,
+                letterSpacing: '0.03em',
+                fontFamily: "'Noto Sans KR', sans-serif",
+              }}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={!password || loading}
+              style={{
+                flex: 1,
+                cursor: !password || loading ? 'not-allowed' : 'pointer',
+                border: '1px solid var(--color-danger)',
+                background: !password || loading ? '#e88' : 'var(--color-danger)',
+                color: '#fff',
+                padding: '14px',
+                fontSize: 14,
+                letterSpacing: '0.03em',
+                fontFamily: "'Noto Sans KR', sans-serif",
+              }}
+            >
+              {loading ? '처리 중...' : '탈퇴하겠습니다'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
