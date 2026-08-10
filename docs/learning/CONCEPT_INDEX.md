@@ -26,7 +26,7 @@
 | 10 | 자바스크립트 강의 | JS 문법·DOM·이벤트·**Promise/async·map/filter** | 🟡 React 전제조건 |
 | 11 | 따라하며 배우는 도커와 CI환경 | Docker·Compose·CI/CD·EB 배포 | 🟡 배포 시 |
 | 12 | GIT&GITHUB | 커밋·브랜치·머지·PR | 🔴 매일 사용 |
-| 13 | AWS | IAM·EC2·RDS·S3·CloudFront 등 | 🟡 배포 시 |
+| 13 | AWS | IAM·EC2·RDS·S3·CloudFront 등 | ⚪ 참고용 — 실제 배포는 Azure로 완료 ([대응표](#7-인프라--git매일--dockeraws-day-67)) |
 
 > 🔴 = 스프린트 Day 2~4 백엔드 코드에 직결 / 🟡 = 특정 Day(프론트·배포)에만 필요
 
@@ -184,6 +184,22 @@
 ## 7. 인프라 — Git(매일) / Docker·AWS(Day 6~7)
 
 강의: **GIT&GITHUB** + **따라하며 배우는 도커와 CI환경** + **AWS**
+
+> ⚠️ **강의는 AWS, 실제 배포는 Azure로 진행했다.** 강의 이름은 그대로 두되, 아래 표의 AWS 서비스를
+> 읽을 때는 이 대응표로 바꿔 생각하면 된다. 클라우드 벤더가 달라도 **개념(컴퓨트·관리형 DB·오브젝트
+> 스토리지·방화벽)은 같기 때문에** 강의 내용은 그대로 쓸 수 있다 — 이게 클라우드를 "서비스 이름"이
+> 아니라 "개념"으로 배워야 하는 이유다.
+>
+> | 강의(AWS) | 이 프로젝트(Azure) |
+> |---|---|
+> | EC2 / Elastic Beanstalk | **Container Apps** (컨테이너 이미지를 그대로 실행) |
+> | ECR | **Container Registry (ACR)** |
+> | RDS | **PostgreSQL Flexible Server** |
+> | S3 | **Blob Storage** (상품 이미지 업로드) |
+> | Security Group | **방화벽 규칙** (`az postgres ... firewall-rule`) |
+> | IAM | **Azure RBAC** |
+>
+> 실제 생성 명령은 `azure/setup.sh`에 전부 남겨두었다.
 
 | 개념 | 이 프로젝트에서 쓰이는 곳 | 강의 위치 |
 |------|---------------------------|-----------|

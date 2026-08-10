@@ -33,6 +33,70 @@ class DevDataInitializerTest {
     assertThat(meatCount).isEqualTo(10);
   }
 
+  // [카테고리 균형] 프론트 상품목록의 카테고리 필터(ProductListPage.jsx)는
+  // 채소·과일·정육·베이커리·꾸러미 5개 태그로 고정돼 있다. 어느 하나가 1~2개뿐이면
+  // 그 탭을 눌렀을 때 카드가 한 장만 뜨는 "고장 난 화면"처럼 보인다.
+  // 정육(10개)을 제외한 4개 카테고리를 각 5개로 못 박아, 시드가 균형을 잃으면 테스트가 깨지게 한다.
+  @Test
+  void 정육을_제외한_카테고리는_각각_5개씩_시드된다() throws Exception {
+    new DevDataInitializer().seedProducts(productRepository).run(null);
+
+    // List.of(...)로 검사할 태그를 나열하고 for문으로 한 번에 확인한다.
+    // 테스트를 4개로 나누는 대신 하나로 묶되, as(...)로 어느 카테고리가 깨졌는지 알 수 있게 한다.
+    for (String tag : List.of("채소", "과일", "베이커리", "꾸러미")) {
+      long count =
+          productRepository.searchProducts(null, tag, Pageable.unpaged()).getTotalElements();
+
+      assertThat(count).as("'%s' 카테고리 상품 수", tag).isEqualTo(5);
+    }
+  }
+
+  // 전체 개수도 함께 못 박는다. 상품목록 페이지 크기가 10(ProductController의 @PageableDefault)이라
+  // 30개여야 페이지네이션이 3페이지로 동작하는 걸 시연할 수 있다.
+  @Test
+  void 상품은_모두_30개_시드된다() throws Exception {
+    new DevDataInitializer().seedProducts(productRepository).run(null);
+
+    assertThat(productRepository.count()).isEqualTo(30);
+  }
+
+  // [재고 배지 시연 보장]
+  // 프론트의 stockBadge(frontend/src/utils/product.js)는 재고를 세 구간으로 나눈다.
+  //   재고 0      → '품절' 배지 + 담기 버튼 disabled
+  //   재고 1~5    → '마감임박' 배지
+  //   재고 6 이상 → 배지 없음
+  // 예전 시드는 최소 재고가 10이라 클론 직후 화면에서 배지가 하나도 안 보였다.
+  // = 코드는 있는데 시연이 불가능한 UI. 이 테스트로 "시드가 세 구간을 모두 만든다"를 못 박는다.
+  //
+  // [단언 강도를 왜 '정확히 N개'가 아니라 '1개 이상'으로 했나]
+  // 위의 카테고리·전체 개수 테스트는 '균형' 자체가 명세라서 정확한 값(isEqualTo)을 쓴다.
+  // 반면 이 테스트가 지키려는 건 개수가 아니라 "배지를 화면에서 보여줄 수 있는가"다.
+  // 정확한 개수로 못 박으면 나중에 품절 상품을 하나 더 넣는 무관한 변경에도 테스트가 깨진다.
+  // 목적에 맞는 최소 조건만 단언해 취성(brittle) 테스트가 되지 않게 한다.
+  @Test
+  void 재고_배지_세_구간을_모두_시연할_수_있게_시드된다() throws Exception {
+    new DevDataInitializer().seedProducts(productRepository).run(null);
+
+    List<Product> products = productRepository.findAll();
+
+    // stream(): 컬렉션을 훑는 도구. filter(조건)로 걸러 count()로 개수를 센다.
+    // p -> p.getStockQuantity() == 0 은 "상품 p를 받아 재고가 0인지 판단하는 식"(람다).
+    long soldOut = products.stream().filter(p -> p.getStockQuantity() == 0).count();
+    long almostGone =
+        products.stream()
+            .filter(p -> p.getStockQuantity() >= 1 && p.getStockQuantity() <= 5)
+            .count();
+    long noBadge = products.stream().filter(p -> p.getStockQuantity() >= 6).count();
+
+    // as(...): 실패했을 때 출력될 메시지. 6개월 뒤 이 테스트가 빨개졌을 때
+    // 코드를 읽지 않고도 "왜 이 조건이 필요한지"를 알 수 있어야 한다.
+    assertThat(soldOut).as("재고 0인 상품이 없으면 '품절' 배지와 담기 버튼 비활성화를 시연할 수 없다").isGreaterThanOrEqualTo(1);
+
+    assertThat(almostGone).as("재고 1~5인 상품이 없으면 '마감임박' 배지를 시연할 수 없다").isGreaterThanOrEqualTo(1);
+
+    assertThat(noBadge).as("재고 6 이상인 상품이 없으면 '배지 없음' 기본 상태를 시연할 수 없다").isGreaterThanOrEqualTo(1);
+  }
+
   @Test
   void 시드를_두_번_실행해도_상품이_중복되지_않는다() throws Exception {
     ApplicationRunner runner = new DevDataInitializer().seedProducts(productRepository);

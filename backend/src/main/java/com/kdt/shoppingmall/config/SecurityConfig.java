@@ -1,6 +1,7 @@
 package com.kdt.shoppingmall.config;
 
 import com.kdt.shoppingmall.security.MemberUserDetailsService;
+import org.springframework.boot.web.servlet.server.CookieSameSiteSupplier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -66,10 +67,16 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        // 세션 기반 REST API + Postman/curl 테스트 전제로 CSRF는 끈다 (프로덕션이면 재검토 필요)
+        // 세션 기반 REST API + Postman/curl 테스트 전제로 CSRF는 끈다.
         // CSRF(Cross-Site Request Forgery)는 브라우저가 쿠키를 자동으로 실어 보내는 특성을
         // 악용해 사용자 몰래 요청을 보내는 공격이다. 원래 세션 기반 인증에서는 CSRF 토큰
         // 검증을 켜두는 게 정석이지만, 지금은 REST 클라이언트 테스트 편의를 위해 꺼둔 상태.
+        //
+        // ★ 이걸 끈 대가는 아래 sessionCookieSameSiteSupplier()가 일부 갚는다 —
+        //   쿠키에 SameSite=Lax를 붙여 "다른 사이트에서 시작된 요청"에는 세션 쿠키가
+        //   실리지 않게 한다. 다만 SameSite는 브라우저가 지켜주는 방어라 CSRF 토큰의
+        //   완전한 대체재는 아니다(비브라우저 클라이언트에는 효과 없음).
+        //   토큰 방식 도입은 프론트 전 구간 수정이 따라오므로 별도 작업으로 남긴다.
         .csrf(csrf -> csrf.disable())
         // exceptionHandling: 인증/인가 실패 시 어떤 응답을 내려줄지 설정하는 부분.
         // authenticationEntryPoint는 "인증 자체가 안 된(로그인 안 했거나 정보가 틀린)" 경우
@@ -122,5 +129,41 @@ public class SecurityConfig {
                     .authenticated());
     // build()를 호출해야 지금까지 이어붙인 설정들이 실제 SecurityFilterChain 객체로 완성된다.
     return http.build();
+  }
+
+  // 세션 쿠키(JSESSIONID)에 SameSite=Lax 속성을 붙인다.
+  //
+  // 왜 필요한가 — 위 69~73행에서 CSRF 방어를 껐기 때문이다.
+  //   CSRF 토큰이 없으면, "남의 사이트에서 우리 서버로 몰래 보낸 요청"을 막을 방법은
+  //   브라우저가 그 요청에 세션 쿠키를 안 실어 보내게 만드는 것뿐이다. 그 지시가 SameSite다.
+  //   Lax = "다른 사이트에서 시작된 요청(폼 전송·XHR 등)에는 이 쿠키를 붙이지 마라.
+  //          단, 사용자가 링크를 눌러 직접 이동하는 경우(GET 화면 이동)는 예외로 허용."
+  //   설정하지 않으면 최신 크롬의 기본값(Lax)에 기대게 되는데, 그건 우리 서버가 정한 게
+  //   아니라 브라우저 정책이라 보증되지 않는다(브라우저마다 기본값이 다르다).
+  //
+  // 왜 Strict가 아니라 Lax인가:
+  //   우리 배포는 nginx 하나가 React 화면과 /api를 함께 서빙하는 **단일 오리진**이라
+  //   (frontend/nginx.conf 참조) Strict가 추가로 막아주는 요청이 사실상 없다. 반면
+  //   Strict는 외부 링크를 타고 사이트에 들어오는 경우 등에서 조용히 깨지는 실패 모드가
+  //   있어, 얻는 것 없이 위험만 늘어난다.
+  //
+  // 왜 application.properties가 아니라 @Bean인가 (중요):
+  //   `server.servlet.session.cookie.same-site=Lax` 한 줄로도 같은 효과를 낼 수 있지만,
+  //   그러면 회귀 테스트를 쓸 수 없다. 스프링 부트는 classpath의 application.properties를
+  //   "맨 처음 발견한 하나"만 읽는데, 테스트 실행 시에는 src/test/resources 쪽이 먼저
+  //   잡혀서 여기(src/main/resources)의 설정이 테스트에서 보이지 않기 때문이다.
+  //   빈으로 만들면 스프링 컨텍스트의 일부라 테스트가 실제로 관찰할 수 있다.
+  //   → SessionCookieSecurityTest 가 진짜 톰캣을 띄워 Set-Cookie 헤더를 검사한다.
+  //
+  // CookieSameSiteSupplier: 스프링 부트가 제공하는 인터페이스로, 내장 웹서버(톰캣)가
+  //   쿠키를 응답에 실을 때 "이 쿠키에 SameSite를 뭘로 붙일까?"를 물어보는 대상이다.
+  //   ofLax()는 모든 쿠키에 Lax를 적용한다(지금 이 앱이 쓰는 쿠키는 세션 쿠키뿐이다).
+  //
+  // 남은 과제: 운영에서는 `Secure` 속성(HTTPS 연결에서만 쿠키 전송)도 붙는 게 맞지만,
+  //   로컬 개발은 HTTP라 그대로 켜면 로그인이 깨진다. prod 프로파일 분리가 필요해
+  //   이번 변경 범위에서는 제외한다.
+  @Bean
+  public CookieSameSiteSupplier sessionCookieSameSiteSupplier() {
+    return CookieSameSiteSupplier.ofLax();
   }
 }

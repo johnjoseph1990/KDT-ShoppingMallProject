@@ -13,13 +13,24 @@
 
 ## 실행 전 준비 (전체 스택이 떠 있어야 한다)
 
+> **백엔드는 반드시 소스(`bootRun`)로 띄울 것.** E2E는 8080이 컨테이너든 소스든 가리지 않고
+> 통과하기 때문에, 낡은 `mins-backend` 컨테이너를 상대로 "통과"하면 **빌드 시점의 코드를
+> 검증한 것**이라 결과가 무의미하다. 배포 전 게이트로서 완전한 거짓 신호가 된다.
+
 ```bash
-# 1) DB
-docker compose up -d
+# 1) DB — 서비스명 db를 명시한다 (필터 없이 올리면 backend 컨테이너가 8080을 선점)
+docker compose up -d db
 # 2) 백엔드 (8080)
 cd backend && ./gradlew bootRun
 # 3) (최초 1회) Playwright 브라우저 설치
 cd frontend && npx playwright install chromium
+```
+
+Windows에서는 위 1~2번을 한 줄로 대체할 수 있다. 낡은 컨테이너가 떠 있으면 자동으로 정리하고
+소스로 다시 띄운다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-up.ps1
 ```
 
 프론트 dev 서버(5173)는 `playwright.config.js`의 `webServer`가 자동으로 띄운다.

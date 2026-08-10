@@ -13,9 +13,19 @@ test('로그인 후 상품을 담고 주문 요약(배송비·합계)을 확인�
   await page.getByRole('button', { name: '로그인' }).click()
   await expect(page).toHaveURL('/') // 로그인 성공 시 홈으로 이동
 
-  // when: 첫 상품 상세로 가서 장바구니에 담는다
+  // when: 재고가 있는 상품 상세로 가서 장바구니에 담는다.
+  //
+  // 전에는 .first()로 목록 첫 상품을 골랐는데, 그 상품이 품절이면 상세 페이지의
+  // "장바구니에 담기"가 disabled라 클릭이 영원히 재시도되며 실패했다(실제로 발생).
+  // 재고는 주문·테스트로 계속 변하는 런타임 상태이므로, 스펙이 "첫 상품이 재고를
+  // 갖고 있다"는 가정에 기대면 안 된다. 품절 카드는 버튼이 disabled + aria-label이
+  // '품절된 상품'이므로(ProductCard.jsx:164-165), 담을 수 있는 카드만 골라낸다.
   await page.goto('/shop')
-  await page.locator('a[href^="/products/"]').first().click()
+  const inStockCard = page
+    .locator('article')
+    .filter({ has: page.getByRole('button', { name: '장바구니에 담기' }) })
+    .first()
+  await inStockCard.locator('a[href^="/products/"]').first().click()
   // 상세 페이지 진입을 명시적으로 기다린다. 안 기다리면 /shop 목록에 남아 있는 상태에서
   // "장바구니에 담기"가 카드 10개에 매칭돼 strict mode 위반이 난다.
   await expect(page).toHaveURL(/\/products\/\d+/)
@@ -28,4 +38,12 @@ test('로그인 후 상품을 담고 주문 요약(배송비·합계)을 확인�
   await expect(page.getByText('배송비')).toBeVisible()
   await expect(page.getByText('합계')).toBeVisible()
   await expect(page.getByRole('button', { name: /결제하기/ })).toBeVisible()
+
+  // then: 주문 내역에서 항목을 바로 빼거나 수량을 고칠 수 있다.
+  // 전에는 편집이 장바구니 드로어에만 있어서, 배송지를 입력하던 사용자가 항목을
+  // 빼려면 헤더 카트 아이콘으로 되돌아가야 했다.
+  // .first(): 장바구니에 이전 실행에서 담긴 항목이 남아 있을 수 있어 버튼이 여러 개
+  // 매칭된다 — strict mode 위반을 피해 첫 항목만 확인한다.
+  await expect(page.getByRole('button', { name: /삭제$/ }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /수량 늘리기$/ }).first()).toBeVisible()
 })
