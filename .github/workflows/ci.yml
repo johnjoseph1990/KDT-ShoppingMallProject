@@ -211,7 +211,12 @@ jobs:
     # E2E 스모크까지 통과해야 배포한다 — '배포 후 발견'을 '배포 전 차단'으로 옮기는 게 목적.
     needs: [backend, frontend, e2e]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # [2026-09-24 배포 중단] Azure 비용 절감을 위해 리소스 그룹(mins-shopping-rg)을 삭제한다.
+    # 배포 대상이 없어졌으므로 `false &&`로 job을 끈다 — 켜 두면 master push마다
+    # az containerapp update가 "리소스 없음"으로 실패해 CI가 계속 빨갛게 된다.
+    # 재배포 시: 인프라를 다시 만든 뒤 앞의 `false &&`만 지우면 원래 조건으로 돌아간다.
+    # (job 단위 if가 false면 이 job은 "skipped"로 표시되고, 테스트 job들은 그대로 돈다)
+    if: false && github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
 
